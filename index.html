@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RespiratórioLAMIC | Agenda de Testes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { navy: { 700: '#1e40af', 800: '#1e3a8a', 900: '#172554' } }
+                }
+            }
+        }
+    </script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal { display: none; }
+        .modal.active { display: flex; animation: fadeIn 0.2s ease-in-out; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #172554; border-radius: 10px; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1rem; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] font-sans text-slate-800 h-screen flex flex-col overflow-hidden">
+    
+    <header class="bg-navy-900 text-white shadow-2xl shrink-0 z-50 border-b border-navy-700">
+        <div class="container mx-auto px-6 py-2 flex justify-between items-center">
+            <div class="flex items-center gap-6">
+                <div class="h-14 flex items-center text-3xl text-blue-400"><i class="fas fa-lungs"></i></div>
+                <div class="h-8 w-[1px] bg-navy-700 hidden md:block"></div>
+                <span class="text-lg font-light tracking-[0.2em] uppercase hidden md:block">Respiratório<span class="font-black text-blue-400">LAMIC</span></span>
+            </div>
+            <nav class="flex bg-navy-800/50 rounded-xl p-1.5 border border-navy-700">
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="px-6 py-2.5 rounded-lg bg-blue-600 transition-all font-bold text-xs tracking-widest shadow-lg">
+                    <i class="fas fa-calendar-alt mr-2"></i>AGENDA
+                </button>
+                <button onclick="switchTab('dados')" id="btn-dados" class="px-6 py-2.5 rounded-lg hover:bg-navy-700 transition-all font-bold text-xs tracking-widest ml-1">
+                    <i class="fas fa-table-list mr-2"></i>TABELA
+                </button>
+                <button onclick="switchTab('indicadores')" id="btn-indicadores" class="px-6 py-2.5 rounded-lg hover:bg-navy-700 transition-all font-bold text-xs tracking-widest ml-1">
+                    <i class="fas fa-chart-line mr-2"></i>INDICADORES
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-auto p-6">
+        
+        <section id="tab-dashboard" class="tab-content active container mx-auto">
+            <div class="glass-card p-6 rounded-2xl shadow-sm border border-slate-200 mb-8 flex justify-between items-center">
+                <h2 class="text-navy-900 font-black text-xl uppercase tracking-tighter flex items-center gap-3">
+                    <i class="fas fa-calendar-day text-blue-500"></i> Visão Geral de Agendamentos
+                </h2>
+                <div class="flex items-center gap-4">
+                    <button onclick="changeMonth(-1)" class="h-10 w-10 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center font-bold transition-all"><i class="fas fa-chevron-left"></i></button>
+                    <h3 id="current-month-label" class="font-black text-navy-900 uppercase tracking-widest text-sm w-40 text-center">Abril 2026</h3>
+                    <button onclick="changeMonth(1)" class="h-10 w-10 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center font-bold transition-all"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="calendar-grid mb-4">
+                    <div class="text-center text-[10px] font-black uppercase text-red-500 tracking-widest">Dom</div>
+                    <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Seg</div>
+                    <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Ter</div>
+                    <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Qua</div>
+                    <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Qui</div>
+                    <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Sex</div>
+                    <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Sáb</div>
+                </div>
+                <div id="calendar-body" class="calendar-grid"></div>
+            </div>
+        </section>
+
+        <section id="tab-dados" class="tab-content container mx-auto">
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                <div class="p-6 bg-slate-50 border-b border-slate-200">
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-6">
+                        <div>
+                            <h2 class="text-2xl font-black text-navy-900 tracking-tighter uppercase">Relação de Testes</h2>
+                            <p class="text-xs text-slate-400 font-bold">GERENCIAMENTO DE PACIENTES RESPIRATÓRIOS</p>
+                        </div>
+                        <button onclick="openRecordModal()" class="w-full lg:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-black text-[11px] tracking-widest shadow-lg transition-all">
+                            <i class="fas fa-plus mr-2"></i>NOVO AGENDAMENTO
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input type="text" id="filter-search" onkeyup="updateTableFilters()" placeholder="Buscar Paciente ou Pedido..." class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+                        <select id="filter-atendente" onchange="updateTableFilters()" class="border border-slate-200 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Filtrar por Atendente</option>
+                        </select>
+                        <select id="filter-substrato" onchange="updateTableFilters()" class="border border-slate-200 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Filtrar por Substrato</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-navy-900 text-white text-[10px] uppercase tracking-[0.2em] font-black">
+                            <tr>
+                                <th class="p-5 border-b border-navy-800">Data/Hora</th>
+                                <th class="p-5 border-b border-navy-800">Paciente (Idade)</th>
+                                <th class="p-5 border-b border-navy-800">Exame / Substrato</th>
+                                <th class="p-5 border-b border-navy-800">Nº Pedido / Atendente</th>
+                                <th class="p-5 border-b border-navy-800 text-center">Checklist</th>
+                                <th class="p-5 border-b border-navy-800 text-center">Status</th>
+                                <th class="p-5 border-b border-navy-800 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="text-sm divide-y divide-slate-100">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs font-bold text-slate-500">
+                    <span id="pagination-info">Mostrando 0 de 0</span>
+                    <div class="flex gap-2">
+                        <button onclick="changePage(-1)" class="px-3 py-1 border border-slate-300 rounded hover:bg-white transition-all disabled:opacity-50">Anterior</button>
+                        <button onclick="changePage(1)" class="px-3 py-1 border border-slate-300 rounded hover:bg-white transition-all disabled:opacity-50">Próximo</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-indicadores" class="tab-content container mx-auto">
+            
+            <div class="glass-card p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-navy-900 font-black text-sm uppercase tracking-tighter flex items-center gap-2">
+                        <i class="fas fa-filter text-blue-500"></i> Filtro de Período para Análise
+                    </h3>
+                    <select id="ind-filter-type" onchange="toggleIndFilters(); renderIndicadores()" class="text-xs font-bold border-slate-200 rounded-lg bg-slate-50 py-2 px-3 focus:outline-none">
+                        <option value="all">Geral (Todo o período)</option>
+                        <option value="year" selected>Ano Inteiro</option>
+                        <option value="month">Mês Específico</option>
+                        <option value="range">Período Personalizado</option>
+                    </select>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div id="ind-box-year">
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Ano Base</label>
+                        <input type="number" id="ind-year" value="2026" onchange="renderIndicadores()" class="w-full border border-slate-200 rounded-lg text-sm py-2 px-3">
+                    </div>
+                    <div id="ind-box-month" class="hidden">
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Mês Referência</label>
+                        <input type="month" id="ind-month" onchange="renderIndicadores()" class="w-full border border-slate-200 rounded-lg text-sm py-2 px-3">
+                    </div>
+                    <div id="ind-box-start" class="hidden">
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Data Início</label>
+                        <input type="date" id="ind-start" onchange="renderIndicadores()" class="w-full border border-slate-200 rounded-lg text-sm py-2 px-3">
+                    </div>
+                    <div id="ind-box-end" class="hidden">
+                        <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Data Fim</label>
+                        <input type="date" id="ind-end" onchange="renderIndicadores()" class="w-full border border-slate-200 rounded-lg text-sm py-2 px-3">
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-blue-600">
+                    <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest">Total de Exames</p>
+                    <p id="kpi-total" class="text-xl font-black text-navy-900 mt-1">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-emerald-500">
+                    <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest">Total TRESP</p>
+                    <p id="kpi-tresp" class="text-xl font-black text-emerald-600 mt-1">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-indigo-500">
+                    <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest">Total TSBAC</p>
+                    <p id="kpi-tsbac" class="text-xl font-black text-indigo-600 mt-1">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-green-400">
+                    <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest">Concluídos</p>
+                    <p id="kpi-concluidos" class="text-xl font-black text-green-600 mt-1">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-yellow-400">
+                    <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest">Pendentes</p>
+                    <p id="kpi-pendentes" class="text-xl font-black text-yellow-600 mt-1">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-red-500">
+                    <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest">Cancelados</p>
+                    <p id="kpi-cancelados" class="text-xl font-black text-red-600 mt-1">0</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-black text-navy-900 uppercase mb-6 tracking-widest">Volume Mensal de Exames</h3>
+                    <canvas id="chart-bar-monthly"></canvas>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-black text-navy-900 uppercase mb-6 tracking-widest">Tendência por Exame</h3>
+                    <canvas id="chart-line-trend"></canvas>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-black text-navy-900 uppercase mb-6 tracking-widest">Distribuição por Tipo de Exame</h3>
+                    <canvas id="chart-donut-exame" style="max-height: 300px;"></canvas>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="text-xs font-black text-navy-900 uppercase mb-6 tracking-widest">Substratos Mais Utilizados</h3>
+                    <canvas id="chart-donut-substrato" style="max-height: 300px;"></canvas>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="modal-record" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[110] justify-center items-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-4xl overflow-hidden border border-white/20 my-auto">
+            <div class="bg-navy-900 p-6 text-white flex justify-between items-center">
+                <div>
+                    <h3 id="modal-title" class="font-black uppercase tracking-tight text-xl">Novo Agendamento</h3>
+                    <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Protocolo Médico</p>
+                </div>
+                <button onclick="closeModals()" class="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-all"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            
+            <div id="form-error" class="hidden bg-red-100 text-red-700 p-4 font-bold text-xs uppercase tracking-widest text-center border-b border-red-200"></div>
+
+            <form id="record-form" onsubmit="saveRecord(event)" class="p-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+                <input type="hidden" id="reg-id">
+                
+                <div class="col-span-1 md:col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Data *</label>
+                    <input type="date" id="reg-data" required class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="col-span-1 md:col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Hora Inicial *</label>
+                    <input type="time" id="reg-hora-inicio" required onchange="calculateTimes()" class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="col-span-1 md:col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Duração Calculada</label>
+                    <input type="text" id="reg-duracao" readonly class="w-full bg-slate-50 border border-slate-200 text-slate-500 font-black rounded-xl py-2.5 px-3 cursor-not-allowed">
+                </div>
+                <div class="col-span-1 md:col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Hora Final Estimada</label>
+                    <input type="time" id="reg-hora-fim" readonly class="w-full bg-slate-50 border border-slate-200 text-slate-500 font-black rounded-xl py-2.5 px-3 cursor-not-allowed">
+                </div>
+
+                <div class="col-span-1 md:col-span-4 border-t border-slate-100 my-1"></div>
+
+                <div class="col-span-1 md:col-span-2">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Nome do Paciente *</label>
+                    <input type="text" id="reg-paciente" list="pacientes-list" required class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm uppercase">
+                    <datalist id="pacientes-list"></datalist>
+                </div>
+                <div class="col-span-1 md:col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Idade *</label>
+                    <input type="number" id="reg-idade" required min="0" class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
+                </div>
+                <div class="col-span-1 md:col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Whatsapp *</label>
+                    <input type="text" id="reg-contato" required placeholder="(00) 00000-0000" class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
+                </div>
+
+                <div class="col-span-1 md:col-span-2">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Exame *</label>
+                    <select id="reg-exame" required onchange="updateSubstratos(); calculateTimes()" class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm font-bold text-navy-900">
+                        <option value="">Selecione...</option>
+                        <option value="TRESP">TRESP (Teste Respi. de Hidrogênio)</option>
+                        <option value="TSBAC">TSBAC (Teste de Supercrescimento)</option>
+                    </select>
+                </div>
+                <div class="col-span-1 md:col-span-2">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Substrato *</label>
+                    <select id="reg-substrato" required class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
+                        <option value="">Aguardando exame...</option>
+                    </select>
+                </div>
+
+                <div class="col-span-1 md:col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Nº do Pedido *</label>
+                    <input type="text" id="reg-pedido" required class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
+                </div>
+                <div class="col-span-1 md:col-span-2">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Atendente Responsável *</label>
+                    <input type="text" id="reg-atendente" list="atendentes-list" required class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm uppercase placeholder-slate-400" placeholder="Busque ou selecione...">
+                    <datalist id="atendentes-list"></datalist>
+                </div>
+                <div class="col-span-1 md:col-span-1">
+                    <label class="block text-[10px] font-black text-blue-500 uppercase mb-2">Status do Teste *</label>
+                    <select id="reg-status" required onchange="toggleCancelado()" class="w-full border border-blue-200 bg-blue-50 rounded-xl py-2.5 px-3 shadow-sm font-black text-blue-800">
+                        <option value="Agendado">Agendado</option>
+                        <option value="Concluído">Concluído</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
+                </div>
+
+                <div class="col-span-1 md:col-span-4 border-t border-slate-100 my-1"></div>
+
+                <div class="col-span-1 md:col-span-4 bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">Checklist Operacional</label>
+                        <p class="text-[10px] text-slate-500">Preenchimento obrigatório para concluir processo</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <input type="hidden" id="chk-orientacao-val" value="false">
+                        <input type="hidden" id="chk-anexo-val" value="false">
+                        <button type="button" id="btn-chk-orientacao" onclick="toggleCheck('orientacao')" class="px-5 py-2.5 border-2 border-slate-200 bg-white rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-400 transition-all flex items-center gap-2"><i class="fas fa-check-circle text-lg"></i> Orientação</button>
+                        <button type="button" id="btn-chk-anexo" onclick="toggleCheck('anexo')" class="px-5 py-2.5 border-2 border-slate-200 bg-white rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-400 transition-all flex items-center gap-2"><i class="fas fa-file-medical text-lg"></i> Anexo Unilab</button>
+                    </div>
+                </div>
+
+                <div class="col-span-1 md:col-span-4 flex justify-start items-center">
+                    <button type="button" id="btn-toggle-comentario" onclick="toggleComentario()" class="px-5 py-2.5 bg-blue-100 text-blue-700 border border-blue-200 hover:bg-blue-600 hover:text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-sm flex items-center gap-2">
+                        <i class="fas fa-comment-dots text-sm"></i> Adicionar Comentário
+                    </button>
+                </div>
+
+                <div id="box-motivo" class="col-span-1 md:col-span-4 bg-slate-50 p-5 rounded-2xl border border-slate-200 transition-all hidden">
+                    <label id="lbl-comentario" class="block text-[10px] font-black text-slate-400 uppercase mb-2">Comentários Operacionais (Opcional)</label>
+                    <textarea id="reg-comentarios" rows="2" class="w-full border border-slate-200 bg-white rounded-xl py-3 px-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" placeholder="Observações do exame ou motivo do cancelamento..."></textarea>
+                </div>
+
+                <div class="col-span-1 md:col-span-4 mt-2 flex gap-4">
+                    <button type="submit" class="flex-1 bg-navy-900 text-white font-black py-4 rounded-2xl hover:bg-blue-600 shadow-xl transition-all uppercase tracking-widest text-xs">Confirmar Salvar</button>
+                    <button type="button" onclick="closeModals()" class="px-8 py-4 border-2 border-slate-100 rounded-2xl font-black text-slate-400 hover:bg-slate-50 transition-all text-xs uppercase tracking-widest">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-day-details" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[100] justify-center items-center p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-navy-900 p-6 text-white flex justify-between items-center">
+                <div>
+                    <h3 class="font-black uppercase tracking-tight text-xl">Marcações do Dia</h3>
+                    <p id="day-details-date" class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">00/00/0000</p>
+                </div>
+                <button onclick="closeModals()"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6">
+                <div id="day-appointments-list" class="flex flex-col gap-3">
+                </div>
+                <button onclick="closeModals(); openRecordModalWithDate(document.getElementById('day-details-date').innerText)" class="w-full mt-6 bg-slate-100 text-navy-900 border border-slate-200 font-black py-4 rounded-xl shadow-sm hover:bg-slate-200 transition-all uppercase tracking-widest text-xs">
+                    <i class="fas fa-plus mr-2"></i> Agendar neste dia
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-obs" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[100] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div class="bg-navy-900 p-6 text-white flex justify-between items-center">
+                <h3 class="font-black uppercase text-sm tracking-widest">Comentários do Agendamento</h3>
+                <button onclick="closeModals()"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-8">
+                <input type="hidden" id="obs-id">
+                <textarea id="obs-text" rows="6" class="w-full border-slate-200 rounded-2xl p-5 border focus:outline-none focus:ring-2 focus:ring-navy-800 text-sm shadow-inner bg-slate-50" placeholder="Insira observações médicas..."></textarea>
+                <button onclick="saveObservation()" class="w-full mt-6 bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-navy-900 transition-all uppercase tracking-widest text-xs">Salvar Anotação</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ESTADO DA APLICAÇÃO
+        let appointments = JSON.parse(localStorage.getItem('respiroLamicData')) || [];
+        
+        // MIGRAR DADOS ANTIGOS PARA NOVA ESTRUTURA DE STATUS
+        appointments = appointments.map(app => {
+            if(!app.status) {
+                app.status = app.chkConcluido ? 'Concluído' : 'Agendado';
+            }
+            return app;
+        });
+
+        let atendentesList = [];
+        let currentDate = new Date();
+        let tablePage = 1;
+        const itemsPerPage = 20;
+
+        // Gráficos
+        let charts = {};
+
+        // INICIALIZAÇÃO
+        window.onload = () => {
+            loadAtendentes();
+            renderTable();
+            renderCalendar();
+            updateDatalists();
+            updateFilterDropdowns();
+        };
+
+        // UI CHECKLIST E COMENTARIOS
+        function toggleComentario() {
+            const box = document.getElementById('box-motivo');
+            box.classList.toggle('hidden');
+        }
+
+        function toggleCheck(type) {
+            const input = document.getElementById(`chk-${type}-val`);
+            const isChecked = input.value === 'true';
+            input.value = !isChecked ? 'true' : 'false';
+            updateCheckUI(type, !isChecked);
+        }
+
+        function updateCheckUI(type, isChecked) {
+            const btn = document.getElementById(`btn-chk-${type}`);
+            if (isChecked) {
+                btn.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-600');
+                btn.classList.remove('border-slate-200', 'bg-white', 'text-slate-400');
+            } else {
+                btn.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-600');
+                btn.classList.add('border-slate-200', 'bg-white', 'text-slate-400');
+            }
+        }
+
+        function toggleCancelado() {
+            const status = document.getElementById('reg-status').value;
+            const boxMotivo = document.getElementById('box-motivo');
+            const txtMotivo = document.getElementById('reg-comentarios');
+            const lblMotivo = document.getElementById('lbl-comentario');
+            const btnToggle = document.getElementById('btn-toggle-comentario');
+            
+            if (status === 'Cancelado') {
+                txtMotivo.required = true;
+                boxMotivo.classList.remove('hidden');
+                btnToggle.classList.add('hidden');
+                
+                boxMotivo.classList.add('bg-red-50', 'border-red-200');
+                boxMotivo.classList.remove('bg-slate-50', 'border-slate-200');
+                lblMotivo.innerText = "Motivo do Cancelamento *";
+                lblMotivo.classList.add('text-red-600');
+                lblMotivo.classList.remove('text-slate-400');
+                txtMotivo.classList.add('focus:ring-red-500');
+                txtMotivo.classList.remove('focus:ring-blue-500');
+            } else {
+                txtMotivo.required = false;
+                boxMotivo.classList.add('hidden');
+                btnToggle.classList.remove('hidden');
+                
+                boxMotivo.classList.remove('bg-red-50', 'border-red-200');
+                boxMotivo.classList.add('bg-slate-50', 'border-slate-200');
+                lblMotivo.innerText = "Comentários Operacionais (Opcional)";
+                lblMotivo.classList.remove('text-red-600');
+                lblMotivo.classList.add('text-slate-400');
+                txtMotivo.classList.remove('focus:ring-red-500');
+                txtMotivo.classList.add('focus:ring-blue-500');
+            }
+        }
+
+        // FETCH ATENDENTES
+        async function loadAtendentes() {
+            try {
+                const response = await fetch("https://script.google.com/macros/s/AKfycbzUd6efhfzkCmYd88_eIIL6dGIQxIINsw-6Y_qM3PRemUbZ06obtF9xKY1S8WRfvXyq9Q/exec");
+                atendentesList = await response.json();
+                const list = document.getElementById('atendentes-list');
+                list.innerHTML = atendentesList.map(name => `<option value="${name}">`).join('');
+                updateFilterDropdowns();
+            } catch (e) { console.error("Erro ao carregar atendentes", e); }
+        }
+
+        function updateDatalists() {
+            const list = document.getElementById('pacientes-list');
+            const uniquePatients = [...new Set(appointments.map(a => a.paciente))];
+            list.innerHTML = uniquePatients.map(name => `<option value="${name}">`).join('');
+        }
+
+        function updateFilterDropdowns() {
+            const atendenteFilter = document.getElementById('filter-atendente');
+            const uniqueAtendentes = [...new Set(appointments.map(a => a.atendente))];
+            atendenteFilter.innerHTML = '<option value="">Filtrar por Atendente</option>' + 
+                uniqueAtendentes.map(name => `<option value="${name}">${name}</option>`).join('');
+
+            const substratoFilter = document.getElementById('filter-substrato');
+            const uniqueSubstratos = [...new Set(appointments.map(a => a.substrato))];
+            substratoFilter.innerHTML = '<option value="">Filtrar por Substrato</option>' + 
+                uniqueSubstratos.map(sub => `<option value="${sub}">${sub}</option>`).join('');
+        }
+
+        // NAVEGAÇÃO DE ABAS
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            
+            document.querySelectorAll('nav button').forEach(b => b.className = "px-6 py-2.5 rounded-lg hover:bg-navy-700 transition-all font-bold text-xs tracking-widest ml-1");
+            document.getElementById(`btn-${tab}`).className = "px-6 py-2.5 rounded-lg bg-blue-600 transition-all font-bold text-xs tracking-widest shadow-lg";
+            
+            if(tab === 'dashboard') renderCalendar();
+            if(tab === 'indicadores') renderIndicadores();
+        }
+
+        // FUNÇÕES DE NORMALIZAÇÃO
+        function normalizeStr(str) {
+            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+        }
+
+        function formatAtendenteName(fullName) {
+            const connectors = ['da', 'de', 'do', 'dos', 'das', 'e'];
+            if (!fullName) return '';
+            const parts = fullName.trim().split(/\s+/);
+            if (parts.length <= 2) return fullName.trim();
+            if (connectors.includes(parts[1].toLowerCase()) && parts.length >= 3) {
+                return `${parts[0]} ${parts[1]} ${parts[2]}`;
+            }
+            return `${parts[0]} ${parts[1]}`;
+        }
+
+        // CÁLCULOS DE HORÁRIO
+        function calculateTimes() {
+            const exame = document.getElementById('reg-exame').value;
+            const inicio = document.getElementById('reg-hora-inicio').value;
+            const duracaoField = document.getElementById('reg-duracao');
+            const fimField = document.getElementById('reg-hora-fim');
+            let addHours = 0;
+            if (exame === 'TRESP') { duracaoField.value = '3 Horas'; addHours = 3; }
+            else if (exame === 'TSBAC') { duracaoField.value = '2 Horas'; addHours = 2; }
+            else { duracaoField.value = ''; fimField.value = ''; return; }
+            if (inicio) {
+                let [h, m] = inicio.split(':').map(Number);
+                h = (h + addHours) % 24;
+                fimField.value = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+            }
+        }
+
+        function updateSubstratos() {
+            const exame = document.getElementById('reg-exame').value;
+            const subSelect = document.getElementById('reg-substrato');
+            subSelect.innerHTML = '';
+            if (exame === 'TRESP') {
+                ['Lactose', 'Frutose', 'Sorbitol', 'Sacarose', 'D-Xilose', 'Frutano'].forEach(o => subSelect.innerHTML += `<option value="${o}">${o}</option>`);
+            } else if (exame === 'TSBAC') {
+                ['Lactulose', 'Glicose'].forEach(o => subSelect.innerHTML += `<option value="${o}">${o}</option>`);
+            }
+        }
+
+        // REGRAS DE NEGÓCIO
+        function validateAppointment(dataObj) {
+            const appDate = new Date(dataObj.data + 'T12:00:00');
+            if (appDate.getDay() === 0) return "Não é permitido marcar exames aos domingos.";
+            if (appointments.filter(a => a.data === dataObj.data && a.id !== dataObj.id && a.status !== 'Cancelado').length >= 3 && dataObj.status !== 'Cancelado') return "Limite diário alcançado (Máx 3 ativos).";
+            
+            const samePatient = appointments.filter(a => 
+                normalizeStr(a.paciente) === normalizeStr(dataObj.paciente) && 
+                parseInt(a.idade) === parseInt(dataObj.idade) && 
+                a.id !== dataObj.id && 
+                a.status !== 'Cancelado'
+            );
+            
+            for (let app of samePatient) {
+                const existingDate = new Date(app.data + 'T12:00:00');
+                const diffDays = Math.ceil(Math.abs(appDate - existingDate) / (1000 * 60 * 60 * 24));
+                if (diffDays < 2 && dataObj.status !== 'Cancelado') {
+                    return "Intervalo insuficiente. Só é permitido marcar após 48 Horas da última marcação do paciente.";
+                }
+            }
+            return null;
+        }
+
+        // SALVAR
+        function saveRecord(e) {
+            e.preventDefault();
+            const id = document.getElementById('reg-id').value;
+            const atendenteInput = document.getElementById('reg-atendente').value.trim();
+            const errDiv = document.getElementById('form-error');
+            
+            errDiv.classList.add('hidden');
+            
+            // Validação Checklist & Status
+            const statusVal = document.getElementById('reg-status').value;
+            const chkOr = document.getElementById('chk-orientacao-val').value === 'true';
+            const chkAn = document.getElementById('chk-anexo-val').value === 'true';
+            
+            if (statusVal === 'Concluído' && (!chkOr || !chkAn)) {
+                errDiv.innerText = "ERRO: Para marcar o status como Concluído, todo o checklist (Orientação e Anexo) deve estar ativado.";
+                errDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Validação rigorosa do Atendente se a lista existir
+            if (atendentesList.length > 0 && !atendentesList.includes(atendenteInput.toUpperCase())) {
+                const caseSensitiveMatch = atendentesList.find(a => a.toUpperCase() === atendenteInput.toUpperCase());
+                if (caseSensitiveMatch) {
+                    document.getElementById('reg-atendente').value = caseSensitiveMatch; 
+                } else {
+                    errDiv.innerText = "ATENDENTE INVÁLIDO. O nome inserido não corresponde a nenhum atendente da lista obrigatória.";
+                    errDiv.classList.remove('hidden');
+                    return;
+                }
+            }
+
+            const record = {
+                id: id ? parseInt(id) : Date.now(),
+                data: document.getElementById('reg-data').value,
+                horaInicio: document.getElementById('reg-hora-inicio').value,
+                horaFim: document.getElementById('reg-hora-fim').value,
+                duracao: document.getElementById('reg-duracao').value,
+                paciente: document.getElementById('reg-paciente').value,
+                idade: parseInt(document.getElementById('reg-idade').value),
+                contato: document.getElementById('reg-contato').value,
+                exame: document.getElementById('reg-exame').value,
+                substrato: document.getElementById('reg-substrato').value,
+                pedido: document.getElementById('reg-pedido').value,
+                atendente: document.getElementById('reg-atendente').value,
+                chkOrientacao: chkOr,
+                chkAnexo: chkAn,
+                chkConcluido: statusVal === 'Concluído', // legado/garantia
+                status: statusVal,
+                comentarios: document.getElementById('reg-comentarios').value
+            };
+            
+            const error = validateAppointment(record);
+            if (error) {
+                errDiv.innerText = error; errDiv.classList.remove('hidden');
+                return;
+            }
+            
+            if(id) appointments = appointments.map(a => a.id == id ? record : a); else appointments.push(record);
+            localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
+            closeModals(); renderTable(); renderCalendar(); updateDatalists(); updateFilterDropdowns();
+        }
+
+        // FILTROS E PAGINAÇÃO (TABELA)
+        function updateTableFilters() {
+            tablePage = 1;
+            renderTable();
+        }
+
+        function changePage(dir) {
+            tablePage += dir;
+            renderTable();
+        }
+
+        function renderTable() {
+            const body = document.getElementById('table-body');
+            const search = normalizeStr(document.getElementById('filter-search').value);
+            const atendente = document.getElementById('filter-atendente').value;
+            const substrato = document.getElementById('filter-substrato').value;
+
+            let filtered = appointments.filter(a => {
+                const matchSearch = !search || normalizeStr(a.paciente).includes(search) || normalizeStr(a.pedido).includes(search);
+                const matchAtendente = !atendente || a.atendente === atendente;
+                const matchSubstrato = !substrato || a.substrato === substrato;
+                return matchSearch && matchAtendente && matchSubstrato;
+            });
+
+            filtered.sort((a,b) => b.id - a.id);
+
+            const total = filtered.length;
+            const totalPages = Math.ceil(total / itemsPerPage);
+            const start = (tablePage - 1) * itemsPerPage;
+            const pageData = filtered.slice(start, start + itemsPerPage);
+
+            body.innerHTML = '';
+            pageData.forEach(app => {
+                const isInfantil = app.idade < 12;
+                const isCanceled = app.status === 'Cancelado';
+                const isComplete = app.status === 'Concluído';
+                const isChecklistComplete = app.chkOrientacao && app.chkAnexo;
+                
+                let rowClass = 'hover:bg-slate-50';
+                if (isCanceled) rowClass = 'opacity-60 bg-slate-50';
+                else if (isComplete) rowClass = 'bg-green-50 hover:bg-green-100';
+                else if (isInfantil) rowClass = 'bg-orange-50 hover:bg-orange-100';
+
+                const tr = document.createElement('tr');
+                tr.className = `transition-colors group ${rowClass}`;
+                
+                const exameColor = app.exame === 'TRESP' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800';
+                
+                const statusIcon = app.status === 'Concluído' ? '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-green-100 text-green-600" title="Concluído"><i class="fas fa-check-double"></i></div>' : 
+                                   app.status === 'Cancelado' ? '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-red-100 text-red-600" title="Cancelado"><i class="fas fa-ban"></i></div>' : 
+                                   '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-yellow-100 text-yellow-600" title="Agendado"><i class="fas fa-clock"></i></div>';
+                
+                const checklistIcon = isChecklistComplete 
+                    ? '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-blue-100 text-blue-600" title="Checklist Completo"><i class="fas fa-clipboard-check"></i></div>' 
+                    : '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-slate-100 text-slate-400" title="Checklist Incompleto"><i class="fas fa-clipboard-list"></i></div>';
+                
+                tr.innerHTML = `
+                    <td class="p-5">
+                        <div class="font-black text-navy-900 ${isCanceled ? 'line-through' : ''}">${app.data.split('-').reverse().join('/')}</div>
+                        <div class="text-[10px] text-slate-500 font-bold uppercase">${app.horaInicio} - ${app.horaFim}</div>
+                    </td>
+                    <td class="p-5">
+                        <div class="font-bold text-slate-700 uppercase text-xs flex items-center gap-2 ${isCanceled ? 'line-through' : ''}">
+                            ${app.paciente} ${isInfantil && !isComplete && !isCanceled ? '<span class="bg-orange-500 text-white text-[8px] px-1 rounded">INFANTIL</span>' : ''}
+                        </div>
+                        <div class="text-[10px] text-slate-400 font-bold">${app.idade} anos</div>
+                    </td>
+                    <td class="p-5">
+                        <span class="px-2 py-1 rounded text-[9px] font-black uppercase border ${exameColor}">${app.exame}</span>
+                        <div class="text-[10px] font-bold text-slate-600 mt-1 uppercase">${app.substrato}</div>
+                    </td>
+                    <td class="p-5">
+                        <div class="font-black text-slate-600 text-xs">${app.pedido}</div>
+                        <div class="text-[10px] text-slate-400"><i class="fas fa-user-circle mr-1"></i>${app.atendente}</div>
+                    </td>
+                    <td class="p-5 text-center">
+                        ${checklistIcon}
+                    </td>
+                    <td class="p-5 text-center">
+                        ${statusIcon}
+                    </td>
+                    <td class="p-5">
+                        <div class="flex justify-center gap-2">
+                            <a href="https://wa.me/55${app.contato.replace(/\D/g, '')}" target="_blank" class="h-8 w-8 rounded-lg flex items-center justify-center text-green-500 border border-green-200 hover:bg-green-500 hover:text-white transition-all"><i class="fab fa-whatsapp"></i></a>
+                            <button onclick="openObsModal(${app.id})" class="h-8 w-8 rounded-lg flex items-center justify-center ${app.comentarios ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'text-slate-400 hover:bg-slate-100'} transition-all"><i class="fas fa-comment"></i></button>
+                            <button onclick="editRecord(${app.id})" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 border border-slate-100 hover:bg-navy-900 hover:text-white transition-all"><i class="fas fa-edit"></i></button>
+                        </div>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+
+            document.getElementById('pagination-info').innerText = `Mostrando ${total === 0 ? 0 : start + 1} a ${Math.min(start + itemsPerPage, total)} de ${total}`;
+            document.querySelectorAll('button[onclick^="changePage"]').forEach((btn, idx) => {
+                if(idx === 0) btn.disabled = tablePage === 1;
+                else btn.disabled = tablePage >= totalPages || total === 0;
+            });
+        }
+
+        // INDICADORES & FILTROS
+        function toggleIndFilters() {
+            const type = document.getElementById('ind-filter-type').value;
+            document.getElementById('ind-box-year').classList.toggle('hidden', type !== 'year');
+            document.getElementById('ind-box-month').classList.toggle('hidden', type !== 'month');
+            document.getElementById('ind-box-start').classList.toggle('hidden', type !== 'range');
+            document.getElementById('ind-box-end').classList.toggle('hidden', type !== 'range');
+        }
+
+        function filterIndData() {
+            const type = document.getElementById('ind-filter-type').value;
+            return appointments.filter(app => {
+                if (type === 'all') return true;
+                if (type === 'year') return app.data.startsWith(document.getElementById('ind-year').value);
+                if (type === 'month') return app.data.startsWith(document.getElementById('ind-month').value);
+                if (type === 'range') {
+                    const s = document.getElementById('ind-start').value;
+                    const e = document.getElementById('ind-end').value;
+                    return (s ? app.data >= s : true) && (e ? app.data <= e : true);
+                }
+                return true;
+            });
+        }
+
+        function renderIndicadores() {
+            const indData = filterIndData();
+
+            const tresp = indData.filter(a => a.exame === 'TRESP');
+            const tsbac = indData.filter(a => a.exame === 'TSBAC');
+            const concluidos = indData.filter(a => a.status === 'Concluído');
+            const pendentes = indData.filter(a => a.status === 'Agendado');
+            const cancelados = indData.filter(a => a.status === 'Cancelado');
+            
+            document.getElementById('kpi-total').innerText = indData.length;
+            document.getElementById('kpi-tresp').innerText = tresp.length;
+            document.getElementById('kpi-tsbac').innerText = tsbac.length;
+            document.getElementById('kpi-concluidos').innerText = concluidos.length;
+            document.getElementById('kpi-pendentes').innerText = pendentes.length;
+            document.getElementById('kpi-cancelados').innerText = cancelados.length;
+
+            const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+            
+            // Gráfico de Barras Mensal
+            const monthlyData = new Array(12).fill(0);
+            indData.forEach(a => monthlyData[new Date(a.data + 'T12:00:00').getMonth()]++);
+
+            if(charts.bar) charts.bar.destroy();
+            charts.bar = new Chart(document.getElementById('chart-bar-monthly'), {
+                type: 'bar',
+                data: { labels: months, datasets: [{ label: 'Volume Total', data: monthlyData, backgroundColor: '#1e40af' }] }
+            });
+
+            // Gráfico de Linha Dupla - Tendência por Exame
+            const currentRealMonth = new Date().getMonth();
+            const filterYear = parseInt(document.getElementById('ind-year').value);
+            const isCurrentYear = filterYear === new Date().getFullYear();
+            
+            const trespData = new Array(12).fill(null);
+            const tsbacData = new Array(12).fill(null);
+            
+            for (let i = 0; i < 12; i++) {
+                if (isCurrentYear && i > currentRealMonth) break; // Trava o gráfico em meses futuros do ano atual
+                trespData[i] = 0;
+                tsbacData[i] = 0;
+            }
+
+            indData.forEach(a => {
+                const m = new Date(a.data + 'T12:00:00').getMonth();
+                if (trespData[m] !== null && a.exame === 'TRESP') trespData[m]++;
+                if (tsbacData[m] !== null && a.exame === 'TSBAC') tsbacData[m]++;
+            });
+
+            if(charts.line) charts.line.destroy();
+            charts.line = new Chart(document.getElementById('chart-line-trend'), {
+                type: 'line',
+                data: { 
+                    labels: months, 
+                    datasets: [
+                        { label: 'TRESP', data: trespData, borderColor: '#3b82f6', backgroundColor: '#3b82f6', tension: 0.3 },
+                        { label: 'TSBAC', data: tsbacData, borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.3 }
+                    ] 
+                }
+            });
+
+            // Gráfico Donut - Exames
+            if(charts.donutE) charts.donutE.destroy();
+            charts.donutE = new Chart(document.getElementById('chart-donut-exame'), {
+                type: 'doughnut',
+                data: { labels: ['TRESP', 'TSBAC'], datasets: [{ data: [tresp.length, tsbac.length], backgroundColor: ['#3b82f6', '#10b981'] }] }
+            });
+
+            // Gráfico Donut - Substratos
+            if(charts.donutS) charts.donutS.destroy();
+            const subMap = {};
+            indData.forEach(a => subMap[a.substrato] = (subMap[a.substrato] || 0) + 1);
+            charts.donutS = new Chart(document.getElementById('chart-donut-substrato'), {
+                type: 'doughnut',
+                data: { labels: Object.keys(subMap), datasets: [{ data: Object.values(subMap), backgroundColor: ['#6366f1', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#8b5cf6'] }] }
+            });
+        }
+
+        // CALENDÁRIO
+        function changeMonth(dir) { currentDate.setMonth(currentDate.getMonth() + dir); renderCalendar(); }
+        function renderCalendar() {
+            const body = document.getElementById('calendar-body'); body.innerHTML = '';
+            const year = currentDate.getFullYear(); const month = currentDate.getMonth();
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            document.getElementById('current-month-label').innerText = `${monthNames[month]} ${year}`;
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            for (let i = 0; i < firstDay; i++) body.innerHTML += `<div class="p-4 rounded-xl border border-dashed border-slate-200 opacity-50 bg-slate-50"></div>`;
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dateObj = new Date(year, month, day);
+                const isSunday = dateObj.getDay() === 0;
+                
+                // Exclui os cancelados da contagem de lotação do dia
+                const dayApps = appointments.filter(a => a.data === dateStr && a.status !== 'Cancelado');
+                const hasInfantil = dayApps.some(a => a.idade < 12);
+                let boxClass = isSunday ? 'bg-red-50/30 border-red-100 opacity-60' : 'bg-white hover:border-blue-300 border-slate-200 cursor-pointer';
+                if(dayApps.length > 0 && !isSunday) {
+                    if(hasInfantil) boxClass = 'bg-orange-50 border-orange-300 cursor-pointer';
+                    else boxClass = dayApps.length >= 3 ? 'bg-orange-50 border-orange-200 cursor-pointer' : 'bg-blue-50 border-blue-200 cursor-pointer';
+                }
+                const dots = dayApps.map(a => `<div class="h-2 w-2 rounded-full ${a.exame === 'TRESP' ? 'bg-blue-500' : 'bg-emerald-500'}"></div>`).join('');
+                body.innerHTML += `<div onclick="${isSunday ? '' : `openDayDetails('${dateStr}')`}" class="p-3 h-24 border rounded-xl flex flex-col items-center group relative transition-all ${boxClass}">
+                    <span class="font-black text-sm ${isSunday ? 'text-red-400' : 'text-navy-900'}">${day}</span>
+                    <div class="mt-2 flex gap-1 justify-center">${dots}</div>
+                    ${dayApps.length ? `<span class="text-[8px] font-black uppercase mt-1 text-slate-500">${dayApps.length}/3 Vagas</span>` : ''}
+                </div>`;
+            }
+        }
+
+        // MODAIS
+        function closeModals() { 
+            document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); 
+            document.getElementById('form-error').classList.add('hidden');
+        }
+        
+        function openRecordModal() {
+            document.getElementById('record-form').reset();
+            document.getElementById('reg-id').value = '';
+            
+            // Reseta Checklist
+            document.getElementById('chk-orientacao-val').value = 'false';
+            document.getElementById('chk-anexo-val').value = 'false';
+            updateCheckUI('orientacao', false);
+            updateCheckUI('anexo', false);
+            
+            // Reseta Status e Comentários
+            document.getElementById('reg-status').value = 'Agendado';
+            toggleCancelado();
+            
+            document.getElementById('modal-title').innerText = "Novo Agendamento";
+            document.getElementById('modal-record').classList.add('active');
+        }
+        
+        function openRecordModalWithDate(dateStr) {
+            openRecordModal();
+            if (dateStr.includes('/')) document.getElementById('reg-data').value = dateStr.split('/').reverse().join('-');
+        }
+
+        function openDayDetails(dateStr) {
+            const dayApps = appointments.filter(a => a.data === dateStr).sort((a,b) => a.horaInicio.localeCompare(b.horaInicio));
+            document.getElementById('day-details-date').innerText = dateStr.split('-').reverse().join('/');
+            const list = document.getElementById('day-appointments-list');
+            
+            list.innerHTML = dayApps.length ? dayApps.map(app => {
+                
+                let bgClass = 'bg-slate-50 border-slate-200';
+                let textColor = 'text-slate-500';
+                let accentColor = app.exame === 'TRESP' ? 'bg-blue-600' : 'bg-emerald-600';
+                
+                if (app.status === 'Cancelado') {
+                    bgClass = 'bg-slate-100 opacity-70 border-slate-200';
+                    textColor = 'text-slate-400 line-through';
+                    accentColor = 'bg-slate-400';
+                } else if (app.status === 'Concluído') {
+                    bgClass = 'bg-green-50 border-green-200';
+                    textColor = 'text-green-700';
+                } else if (app.idade < 12) {
+                    bgClass = 'bg-orange-50 border-orange-200';
+                    textColor = 'text-orange-700';
+                }
+                
+                const isChecklistComplete = app.chkOrientacao && app.chkAnexo;
+                const checklistBadge = isChecklistComplete 
+                    ? '<div class="h-8 w-8 rounded-md border border-blue-200 bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm" title="Checklist Completo"><i class="fas fa-clipboard-check"></i></div>' 
+                    : '<div class="h-8 w-8 rounded-md border border-slate-200 bg-slate-50 text-slate-400 flex items-center justify-center shadow-sm" title="Checklist Incompleto"><i class="fas fa-clipboard-list"></i></div>';
+                
+                return `
+                <div class="border rounded-xl p-4 ${bgClass} relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-1.5 ${accentColor}"></div>
+                    <div class="absolute right-4 top-4">
+                        ${checklistBadge}
+                    </div>
+                    <div class="flex justify-between items-start pl-2">
+                        <div>
+                            <div class="font-black ${app.status === 'Cancelado' ? 'text-slate-400 line-through' : 'text-navy-900'} text-sm uppercase">${app.horaInicio} - ${app.horaFim} | ${app.paciente} (${app.idade} anos)</div>
+                            <div class="text-[10px] font-black ${textColor} uppercase">${app.exame} | ${app.substrato} ${app.idade < 12 && app.status !== 'Concluído' && app.status !== 'Cancelado' ? '[INFANTIL]' : ''}</div>
+                        </div>
+                    </div>
+                    <div class="pl-2 pt-3 border-t border-slate-200 mt-3 flex justify-between items-center">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] font-bold text-slate-500">👤 ${formatAtendenteName(app.atendente)}</span>
+                            <span class="text-[10px] font-bold text-slate-500 mt-0.5">Pedido: ${app.pedido}</span>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <a href="https://wa.me/55${app.contato.replace(/\D/g, '')}" target="_blank" class="h-8 w-8 rounded-md border border-green-200 bg-white text-green-600 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all shadow-sm" title="WhatsApp"><i class="fab fa-whatsapp text-lg"></i></a>
+                            <button onclick="editRecord(${app.id})" class="px-3 py-1.5 bg-blue-50 text-blue-700 font-black text-[9px] uppercase rounded-md border border-blue-200 hover:bg-blue-600 hover:text-white transition-all shadow-sm"><i class="fas fa-eye mr-1"></i> Visualizar</button>
+                            <button onclick="deleteRecord(${app.id})" class="px-3 py-1.5 bg-red-50 text-red-700 font-black text-[9px] uppercase rounded-md border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm"><i class="fas fa-trash mr-1"></i> Excluir</button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('') : '<p class="text-center py-6 text-slate-400 font-bold uppercase text-[10px]">Sem marcações</p>';
+            
+            document.getElementById('modal-day-details').classList.add('active');
+        }
+
+        function editRecord(id) {
+            const app = appointments.find(a => a.id == id);
+            if(!app) return;
+            document.getElementById('reg-id').value = app.id;
+            document.getElementById('reg-data').value = app.data;
+            document.getElementById('reg-hora-inicio').value = app.horaInicio;
+            document.getElementById('reg-paciente').value = app.paciente;
+            document.getElementById('reg-idade').value = app.idade;
+            document.getElementById('reg-contato').value = app.contato;
+            document.getElementById('reg-exame').value = app.exame;
+            updateSubstratos();
+            document.getElementById('reg-substrato').value = app.substrato;
+            document.getElementById('reg-duracao').value = app.duracao;
+            document.getElementById('reg-hora-fim').value = app.horaFim;
+            document.getElementById('reg-pedido').value = app.pedido;
+            document.getElementById('reg-atendente').value = app.atendente;
+            
+            // Restaura Checklist
+            document.getElementById('chk-orientacao-val').value = app.chkOrientacao ? 'true' : 'false';
+            document.getElementById('chk-anexo-val').value = app.chkAnexo ? 'true' : 'false';
+            updateCheckUI('orientacao', app.chkOrientacao);
+            updateCheckUI('anexo', app.chkAnexo);
+            
+            // Restaura Status
+            document.getElementById('reg-status').value = app.status;
+            document.getElementById('reg-comentarios').value = app.comentarios || '';
+            
+            // Trata exibição do campo comentário
+            toggleCancelado();
+            if (app.comentarios && app.status !== 'Cancelado') {
+                document.getElementById('box-motivo').classList.remove('hidden');
+            }
+            
+            document.getElementById('modal-title').innerText = "Editar Agendamento";
+            document.getElementById('modal-record').classList.add('active');
+        }
+
+        function deleteRecord(id) {
+            const confirmacao = prompt('Para excluir a marcação permanentemente, digite "SIM":');
+            if (confirmacao === "SIM") {
+                appointments = appointments.filter(a => a.id !== id);
+                localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
+                renderTable(); renderCalendar(); closeModals();
+            } else if (confirmacao !== null) {
+                alert("Ação cancelada. A exclusão não foi concluída porque a confirmação falhou.");
+            }
+        }
+
+        function openObsModal(id) {
+            const app = appointments.find(a => a.id == id);
+            document.getElementById('obs-id').value = app.id;
+            document.getElementById('obs-text').value = app.comentarios || '';
+            document.getElementById('modal-obs').classList.add('active');
+        }
+
+        function saveObservation() {
+            const id = document.getElementById('obs-id').value;
+            appointments = appointments.map(a => a.id == id ? {...a, comentarios: document.getElementById('obs-text').value} : a);
+            localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
+            closeModals(); renderTable();
+        }
+    </script>
+</body>
+</html>
