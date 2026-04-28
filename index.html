@@ -497,7 +497,18 @@
             return database.ref('appointments').once('value')
                 .then(snapshot => {
                     const data = snapshot.val();
-                    const firebaseAppointments = data ? Object.values(data) : [];
+                    let firebaseAppointments = [];
+                    
+                    if (data) {
+                        // Verificar se data é array (estrutura antiga) ou objeto (nova estrutura)
+                        if (Array.isArray(data)) {
+                            // Estrutura antiga
+                            firebaseAppointments = data;
+                        } else {
+                            // Nova estrutura - objeto com IDs como chaves
+                            firebaseAppointments = Object.values(data);
+                        }
+                    }
                     
                     // Migrar dados antigos para nova estrutura de status
                     firebaseAppointments = firebaseAppointments.map(app => {
@@ -551,7 +562,13 @@
         }
 
         function saveAppointmentsToFirebase() {
-            return database.ref('appointments').set(appointments)
+            // Converter array para objeto com IDs como chaves para melhor sincronização
+            const appointmentsObject = {};
+            appointments.forEach(app => {
+                appointmentsObject[app.id] = app;
+            });
+            
+            return database.ref('appointments').set(appointmentsObject)
                 .then(() => {
                     console.log("Agendamentos salvos com sucesso no Firebase");
                     // Atualizar localStorage APENAS como backup dos dados do Firebase
@@ -567,6 +584,7 @@
                     } else {
                         alert("Erro ao sincronizar com Firebase. Verifique sua conexão.");
                     }
+                    throw error; // Propagar erro para tratamento acima
                 });
         }
 
@@ -612,7 +630,26 @@
             // Listener para atualizações em tempo real com prioridade do Firebase
             database.ref('appointments').on('value', (snapshot) => {
                 const data = snapshot.val();
-                const firebaseAppointments = data ? Object.values(data) : [];
+                let firebaseAppointments = [];
+                
+                if (data) {
+                    // Verificar se data é array (estrutura antiga) ou objeto (nova estrutura)
+                    if (Array.isArray(data)) {
+                        // Estrutura antiga - converter para nova
+                        firebaseAppointments = data;
+                        // Migrar para nova estrutura em background
+                        setTimeout(() => {
+                            const appointmentsObject = {};
+                            firebaseAppointments.forEach(app => {
+                                appointmentsObject[app.id] = app;
+                            });
+                            database.ref('appointments').set(appointmentsObject);
+                        }, 1000);
+                    } else {
+                        // Nova estrutura - objeto com IDs como chaves
+                        firebaseAppointments = Object.values(data);
+                    }
+                }
                 
                 // Migrar dados antigos para nova estrutura de status
                 const processedAppointments = firebaseAppointments.map(app => {
@@ -1226,9 +1263,24 @@
         function deleteRecord(id) {
             const confirmacao = prompt('Para excluir a marcação permanentemente, digite "SIM":');
             if (confirmacao === "SIM") {
+                // Remover localmente primeiro para feedback imediato
                 appointments = appointments.filter(a => a.id !== id);
-                saveAppointmentsToFirebase();
-                renderTable(); renderCalendar(); closeModals();
+                
+                // Salvar no Firebase com tratamento de erro melhorado
+                saveAppointmentsToFirebase()
+                    .then(() => {
+                        console.log("Agendamento excluído e sincronizado com sucesso");
+                        // Forçar atualização da UI após sincronização
+                        renderTable(); 
+                        renderCalendar(); 
+                        closeModals();
+                    })
+                    .catch(error => {
+                        console.error("Erro ao excluir agendamento:", error);
+                        alert("Erro ao excluir o agendamento. Tente novamente.");
+                        // Reverter alteração local se falhou
+                        loadAppointmentsFromFirebase();
+                    });
             } else if (confirmacao !== null) {
                 alert("Ação cancelada. A exclusão não foi concluída porque a confirmação falhou.");
             }
