@@ -8,6 +8,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
     <script>
         tailwind.config = {
             theme: {
@@ -28,6 +32,8 @@
         ::-webkit-scrollbar-thumb { background: #172554; border-radius: 10px; }
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1rem; }
+        @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .animate-spin-slow { animation: spin-slow 8s linear infinite; }
     </style>
 </head>
 <body class="bg-[#f8fafc] font-sans text-slate-800 h-screen flex flex-col overflow-hidden">
@@ -35,7 +41,9 @@
     <header class="bg-navy-900 text-white shadow-2xl shrink-0 z-50 border-b border-navy-700">
         <div class="container mx-auto px-6 py-2 flex justify-between items-center">
             <div class="flex items-center gap-6">
-                <div class="h-14 flex items-center text-3xl text-blue-400"><i class="fas fa-lungs"></i></div>
+                <div class="h-14 flex items-center">
+                    <img src="https://i.imgur.com/vXM6l52.png" alt="RespiratórioLAMIC Logo" class="h-full w-auto object-contain">
+                </div>
                 <div class="h-8 w-[1px] bg-navy-700 hidden md:block"></div>
                 <span class="text-lg font-light tracking-[0.2em] uppercase hidden md:block">Respiratório<span class="font-black text-blue-400">LAMIC</span></span>
             </div>
@@ -48,6 +56,9 @@
                 </button>
                 <button onclick="switchTab('indicadores')" id="btn-indicadores" class="px-6 py-2.5 rounded-lg hover:bg-navy-700 transition-all font-bold text-xs tracking-widest ml-1">
                     <i class="fas fa-chart-line mr-2"></i>INDICADORES
+                </button>
+                <button onclick="switchTab('config')" id="btn-config" class="w-10 h-10 rounded-lg hover:bg-navy-700 transition-all font-bold text-xs tracking-widest ml-1 flex items-center justify-center">
+                    <i class="fas fa-cog text-lg"></i>
                 </button>
             </nav>
         </div>
@@ -220,6 +231,75 @@
                 </div>
             </div>
         </section>
+
+        <section id="tab-config" class="tab-content container mx-auto">
+            <div class="max-w-4xl mx-auto">
+                <div class="glass-card p-8 rounded-3xl shadow-xl border border-slate-200 mb-8">
+                    <div class="text-center mb-8">
+                        <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-navy-900 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                            <i class="fas fa-cog text-white text-3xl animate-spin-slow"></i>
+                        </div>
+                        <h2 class="text-3xl font-black text-navy-900 uppercase tracking-tighter mb-2">Configurações do Sistema</h2>
+                        <p class="text-slate-500 font-medium">Gerenciamento de Dados e Backup</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                        <!-- Backup/Export -->
+                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-2xl border border-blue-200 hover:shadow-lg transition-all">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mr-4">
+                                    <i class="fas fa-download text-white text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-black text-navy-900 text-lg">Exportar Dados</h3>
+                                    <p class="text-slate-600 text-sm">Baixe todos os agendamentos em formato JSON</p>
+                                </div>
+                            </div>
+                            <button onclick="exportData()" class="w-full bg-blue-600 text-white font-black py-3 rounded-xl hover:bg-blue-700 transition-all shadow-lg">
+                                <i class="fas fa-file-export mr-2"></i>Exportar Backup Completo
+                            </button>
+                            <div class="mt-4 text-xs text-slate-500">
+                                <i class="fas fa-info-circle mr-1"></i>Inclui todos os agendamentos, pacientes e configurações
+                            </div>
+                        </div>
+
+                        <!-- Import/Restore -->
+                        <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-2xl border border-emerald-200 hover:shadow-lg transition-all">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center mr-4">
+                                    <i class="fas fa-upload text-white text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-black text-navy-900 text-lg">Importar Dados</h3>
+                                    <p class="text-slate-600 text-sm">Restaure agendamentos a partir de um backup</p>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <input type="file" id="import-file" accept=".json" class="hidden" onchange="importData(event)">
+                                <button onclick="document.getElementById('import-file').click()" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl hover:bg-emerald-700 transition-all shadow-lg">
+                                    <i class="fas fa-file-import mr-2"></i>Importar Backup
+                                </button>
+                            </div>
+                            <div class="mt-4 text-xs text-slate-500">
+                                <i class="fas fa-exclamation-triangle mr-1 text-yellow-500"></i>Atenção: Isso substituirá todos os dados atuais
+                            </div>
+                        </div>
+
+                                            </div>
+
+                    <!-- Status Information -->
+                    <div class="mt-8 bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                        <h4 class="font-black text-navy-900 mb-4 flex items-center">
+                            <i class="fas fa-info-circle text-blue-500 mr-2"></i>Status do Sistema
+                        </h4>
+                        <div class="text-center">
+                            <div class="text-3xl font-black text-navy-900 mb-2" id="total-appointments">0</div>
+                            <div class="text-slate-600 font-medium">Total de Agendamentos</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <div id="modal-record" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[110] justify-center items-center p-4 overflow-y-auto">
@@ -378,8 +458,23 @@
     </div>
 
     <script>
+        // CONFIGURAÇÃO DO FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyAykEcKqLPOi0WfDuoxZC-tPKko7k27Wh4",
+            authDomain: "agendaresp.firebaseapp.com",
+            databaseURL: "https://agendaresp-default-rtdb.firebaseio.com",
+            projectId: "agendaresp",
+            storageBucket: "agendaresp.firebasestorage.app",
+            messagingSenderId: "812520906432",
+            appId: "1:812520906432:web:03fa5edf2b2e42cb3cd725"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
         // ESTADO DA APLICAÇÃO
-        let appointments = JSON.parse(localStorage.getItem('respiroLamicData')) || [];
+        let appointments = [];
         
         // MIGRAR DADOS ANTIGOS PARA NOVA ESTRUTURA DE STATUS
         appointments = appointments.map(app => {
@@ -397,13 +492,149 @@
         // Gráficos
         let charts = {};
 
+        // FUNÇÕES DO FIREBASE
+        function loadAppointmentsFromFirebase() {
+            return database.ref('appointments').once('value')
+                .then(snapshot => {
+                    const data = snapshot.val();
+                    const firebaseAppointments = data ? Object.values(data) : [];
+                    
+                    // Migrar dados antigos para nova estrutura de status
+                    firebaseAppointments = firebaseAppointments.map(app => {
+                        if(!app.status) {
+                            app.status = app.chkConcluido ? 'Concluído' : 'Agendado';
+                        }
+                        return app;
+                    });
+                    
+                    // SEMPRE priorizar Firebase sobre localStorage
+                    appointments = firebaseAppointments;
+                    
+                    // Atualizar localStorage com dados do Firebase (backup)
+                    localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
+                    
+                    console.log("Dados carregados do Firebase. LocalStorage atualizado como backup.");
+                    
+                    renderTable();
+                    renderCalendar();
+                    updateDatalists();
+                    updateFilterDropdowns();
+                })
+                .catch(error => {
+                    console.error("Erro ao carregar do Firebase:", error);
+                    // Apenas usar localStorage como último recurso, mas não salvar nele
+                    const localData = localStorage.getItem('respiroLamicData');
+                    if (localData) {
+                        appointments = JSON.parse(localData);
+                        appointments = appointments.map(app => {
+                            if(!app.status) {
+                                app.status = app.chkConcluido ? 'Concluído' : 'Agendado';
+                            }
+                            return app;
+                        });
+                        
+                        // Tentar sincronizar dados locais com Firebase quando possível
+                        setTimeout(() => {
+                            saveAppointmentsToFirebase();
+                        }, 1000);
+                        
+                        renderTable();
+                        renderCalendar();
+                        updateDatalists();
+                        updateFilterDropdowns();
+                        
+                        console.warn("Usando dados locais temporariamente. Tentando sincronizar com Firebase...");
+                    } else {
+                        console.error("Nenhum dado encontrado localmente.");
+                    }
+                });
+        }
+
+        function saveAppointmentsToFirebase() {
+            return database.ref('appointments').set(appointments)
+                .then(() => {
+                    console.log("Agendamentos salvos com sucesso no Firebase");
+                    // Atualizar localStorage APENAS como backup dos dados do Firebase
+                    localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
+                })
+                .catch(error => {
+                    console.error("Erro ao salvar no Firebase:", error);
+                    // NÃO salvar no localStorage automaticamente para evitar conflitos
+                    // Apenas salvar se for fallback crítico
+                    if (!navigator.onLine) {
+                        localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
+                        console.warn("Offline: Dados salvos temporariamente no localStorage.");
+                    } else {
+                        alert("Erro ao sincronizar com Firebase. Verifique sua conexão.");
+                    }
+                });
+        }
+
+        // Função para forçar sincronização do localStorage com Firebase
+        function syncLocalStorageToFirebase() {
+            const localData = localStorage.getItem('respiroLamicData');
+            if (localData) {
+                try {
+                    const localAppointments = JSON.parse(localData);
+                    database.ref('appointments').once('value')
+                        .then(snapshot => {
+                            const firebaseData = snapshot.val();
+                            const firebaseAppointments = firebaseData ? Object.values(firebaseData) : [];
+                            
+                            // Se Firebase está vazio, usar dados locais
+                            if (firebaseAppointments.length === 0 && localAppointments.length > 0) {
+                                appointments = localAppointments;
+                                return saveAppointmentsToFirebase();
+                            }
+                            // Se Firebase tem dados, manter como prioridade
+                            else if (firebaseAppointments.length > 0) {
+                                appointments = firebaseAppointments;
+                                localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
+                                console.log("Firebase tem prioridade. Dados locais ignorados.");
+                            }
+                        });
+                } catch (error) {
+                    console.error("Erro ao sincronizar localStorage com Firebase:", error);
+                }
+            }
+        }
+
         // INICIALIZAÇÃO
         window.onload = () => {
             loadAtendentes();
-            renderTable();
-            renderCalendar();
-            updateDatalists();
-            updateFilterDropdowns();
+            loadAppointmentsFromFirebase();
+            
+            // Verificar sincronização inicial após carregar
+            setTimeout(() => {
+                syncLocalStorageToFirebase();
+            }, 2000);
+            
+            // Listener para atualizações em tempo real com prioridade do Firebase
+            database.ref('appointments').on('value', (snapshot) => {
+                const data = snapshot.val();
+                const firebaseAppointments = data ? Object.values(data) : [];
+                
+                // Migrar dados antigos para nova estrutura de status
+                const processedAppointments = firebaseAppointments.map(app => {
+                    if(!app.status) {
+                        app.status = app.chkConcluido ? 'Concluído' : 'Agendado';
+                    }
+                    return app;
+                });
+                
+                // SEMPRE priorizar Firebase - ignorar comparação para forçar sincronização
+                appointments = processedAppointments;
+                
+                // Atualizar localStorage com dados do Firebase (sempre como backup)
+                localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
+                
+                renderTable();
+                renderCalendar();
+                updateDatalists();
+                updateFilterDropdowns();
+                
+                console.log("Dados sincronizados do Firebase. LocalStorage atualizado como backup.");
+            });
         };
 
         // UI CHECKLIST E COMENTARIOS
@@ -632,7 +863,7 @@
             }
             
             if(id) appointments = appointments.map(a => a.id == id ? record : a); else appointments.push(record);
-            localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
+            saveAppointmentsToFirebase();
             closeModals(); renderTable(); renderCalendar(); updateDatalists(); updateFilterDropdowns();
         }
 
@@ -996,7 +1227,7 @@
             const confirmacao = prompt('Para excluir a marcação permanentemente, digite "SIM":');
             if (confirmacao === "SIM") {
                 appointments = appointments.filter(a => a.id !== id);
-                localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
+                saveAppointmentsToFirebase();
                 renderTable(); renderCalendar(); closeModals();
             } else if (confirmacao !== null) {
                 alert("Ação cancelada. A exclusão não foi concluída porque a confirmação falhou.");
@@ -1013,9 +1244,108 @@
         function saveObservation() {
             const id = document.getElementById('obs-id').value;
             appointments = appointments.map(a => a.id == id ? {...a, comentarios: document.getElementById('obs-text').value} : a);
-            localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
+            saveAppointmentsToFirebase();
             closeModals(); renderTable();
         }
+
+        // FUNÇÕES DE BACKUP E CONFIGURAÇÕES
+        function updateConfigStatus() {
+            document.getElementById('total-appointments').innerText = appointments.length;
+        }
+
+        function exportData() {
+            const backupData = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                appointments: appointments,
+                atendentesList: atendentesList,
+                metadata: {
+                    totalAppointments: appointments.length,
+                    firebaseConnected: !!database,
+                    exportType: 'full_backup'
+                }
+            };
+
+            const dataStr = JSON.stringify(backupData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `respiroLamic_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            alert('✅ Backup exportado com sucesso!\n\nArquivo salvo como: respiroLamic_backup_' + new Date().toISOString().split('T')[0] + '.json');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    
+                    if (!backupData.appointments || !Array.isArray(backupData.appointments)) {
+                        throw new Error('Formato de backup inválido');
+                    }
+
+                    const confirmImport = confirm(
+                        `⚠️ ATENÇÃO!\n\n` +
+                        `Você está prestes a importar ${backupData.appointments.length} agendamentos.\n` +
+                        `Isso SUBSTITUIRÁ todos os dados atuais.\n\n` +
+                        `Deseja continuar?`
+                    );
+
+                    if (confirmImport) {
+                        appointments = backupData.appointments;
+                        
+                        // Migrar dados antigos para nova estrutura se necessário
+                        appointments = appointments.map(app => {
+                            if(!app.status) {
+                                app.status = app.chkConcluido ? 'Concluído' : 'Agendado';
+                            }
+                            return app;
+                        });
+
+                        // Restaurar lista de atendentes se existir
+                        if (backupData.atendentesList && Array.isArray(backupData.atendentesList)) {
+                            atendentesList = backupData.atendentesList;
+                            updateFilterDropdowns();
+                        }
+
+                        saveAppointmentsToFirebase();
+                        renderTable();
+                        renderCalendar();
+                        updateDatalists();
+                        updateConfigStatus();
+
+                        alert('✅ Backup importado com sucesso!\n\n' + 
+                              backupData.appointments.length + ' agendamentos restaurados.');
+                    }
+                } catch (error) {
+                    alert('❌ Erro ao importar backup:\n\n' + error.message + '\n\nVerifique se o arquivo é um backup válido.');
+                }
+            };
+            reader.readAsText(file);
+            
+            // Limpar o input para permitir importar o mesmo arquivo novamente
+            event.target.value = '';
+        }
+
+        
+        // Atualizar status quando abrir aba de config
+        const originalSwitchTab = switchTab;
+        switchTab = function(tab) {
+            originalSwitchTab(tab);
+            if (tab === 'config') {
+                updateConfigStatus();
+            }
+        };
     </script>
 </body>
 </html>
