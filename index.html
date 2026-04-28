@@ -278,7 +278,14 @@
                         <option value="TSBAC">TSBAC (Teste de Supercrescimento)</option>
                     </select>
                 </div>
-                <div class="col-span-1 md:col-span-2">
+                <div class="col-span-1 md:col-span-1">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Metano *</label>
+                    <select id="reg-metano" required class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
+                        <option value="Sim">Sim</option>
+                        <option value="Não" selected>Não</option>
+                    </select>
+                </div>
+                <div class="col-span-1 md:col-span-1">
                     <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Substrato *</label>
                     <select id="reg-substrato" required class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
                         <option value="">Aguardando exame...</option>
@@ -607,6 +614,7 @@
                 idade: parseInt(document.getElementById('reg-idade').value),
                 contato: document.getElementById('reg-contato').value,
                 exame: document.getElementById('reg-exame').value,
+                metano: document.getElementById('reg-metano').value,
                 substrato: document.getElementById('reg-substrato').value,
                 pedido: document.getElementById('reg-pedido').value,
                 atendente: document.getElementById('reg-atendente').value,
@@ -697,7 +705,7 @@
                     </td>
                     <td class="p-5">
                         <span class="px-2 py-1 rounded text-[9px] font-black uppercase border ${exameColor}">${app.exame}</span>
-                        <div class="text-[10px] font-bold text-slate-600 mt-1 uppercase">${app.substrato}</div>
+                        <div class="text-[10px] font-bold text-slate-600 mt-1 uppercase">${app.substrato}${app.metano === 'Sim' ? ' (metano)' : ''}</div>
                     </td>
                     <td class="p-5">
                         <div class="font-black text-slate-600 text-xs">${app.pedido}</div>
@@ -926,7 +934,7 @@
                     <div class="flex justify-between items-start pl-2">
                         <div>
                             <div class="font-black ${app.status === 'Cancelado' ? 'text-slate-400 line-through' : 'text-navy-900'} text-sm uppercase">${app.horaInicio} - ${app.horaFim} | ${app.paciente} (${app.idade} anos)</div>
-                            <div class="text-[10px] font-black ${textColor} uppercase">${app.exame} | ${app.substrato} ${app.idade < 12 && app.status !== 'Concluído' && app.status !== 'Cancelado' ? '[INFANTIL]' : ''}</div>
+                            <div class="text-[10px] font-black ${textColor} uppercase">${app.exame} | ${app.substrato}${app.metano === 'Sim' ? ' (metano)' : ''} ${app.idade < 12 && app.status !== 'Concluído' && app.status !== 'Cancelado' ? '[INFANTIL]' : ''}</div>
                         </div>
                     </div>
                     <div class="pl-2 pt-3 border-t border-slate-200 mt-3 flex justify-between items-center">
@@ -957,6 +965,7 @@
             document.getElementById('reg-contato').value = app.contato;
             document.getElementById('reg-exame').value = app.exame;
             updateSubstratos();
+            document.getElementById('reg-metano').value = app.metano || '';
             document.getElementById('reg-substrato').value = app.substrato;
             document.getElementById('reg-duracao').value = app.duracao;
             document.getElementById('reg-hora-fim').value = app.horaFim;
