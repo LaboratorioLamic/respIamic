@@ -752,6 +752,7 @@
         window.onload = () => {
             loadAtendentes();
             loadAppointmentsFromFirebase();
+            setupHolidaysRealtimeListener();
             
             // Verificar sincronização inicial após carregar
             setTimeout(() => {
@@ -1052,20 +1053,23 @@
                 document.getElementById('chk-anexo-val').value = chkAnValue;
             }
             
-            // Aviso para checklist incompleto em agendamentos
+            // Aviso para checklist incompleto em agendamentos (exceto para "Em andamento")
             if (!chkOr || !chkAn) {
-                const checklistItems = [];
-                if (!chkOr) checklistItems.push("Enviar orientação ao paciente");
-                if (!chkAn) checklistItems.push("Anexar guia no sistema UniLab");
-                
-                // Salvar ação pendente e mostrar modal
-                pendingChecklistAction = () => {
-                    // Continuar com o salvamento
-                    proceedWithSave(id, atendenteInput, chkOr, chkAn, statusVal);
-                };
-                
-                showChecklistConfirmModal(checklistItems);
-                return;
+                // Não mostrar alerta para status "Em andamento"
+                if (statusVal !== 'Em andamento') {
+                    const checklistItems = [];
+                    if (!chkOr) checklistItems.push("Enviar orientação ao paciente");
+                    if (!chkAn) checklistItems.push("Anexar guia no sistema UniLab");
+                    
+                    // Salvar ação pendente e mostrar modal
+                    pendingChecklistAction = () => {
+                        // Continuar com o salvamento
+                        proceedWithSave(id, atendenteInput, chkOr, chkAn, statusVal);
+                    };
+                    
+                    showChecklistConfirmModal(checklistItems);
+                    return;
+                }
             }
 
             // Se não houver problema com checklist, continuar com validação
@@ -1612,7 +1616,15 @@
         }
 
         function saveHolidaysToFirebase() {
-            database.ref('holidays').set(holidays);
+            database.ref('holidays').set(holidays)
+                .then(() => {
+                    console.log('Status de feriado salvo com sucesso no Firebase');
+                    showNotification('Status de feriado atualizado com sucesso', 'success');
+                })
+                .catch((error) => {
+                    console.error('Erro ao salvar status de feriado:', error);
+                    showNotification('Erro ao salvar status de feriado', 'error');
+                });
         }
 
         function loadHolidaysFromFirebase() {
@@ -1621,8 +1633,25 @@
                     const data = snapshot.val();
                     if (data) {
                         holidays = data;
+                        console.log('Feriados carregados do Firebase:', holidays);
                     }
+                })
+                .catch((error) => {
+                    console.error('Erro ao carregar feriados do Firebase:', error);
+                    showNotification('Erro ao carregar status de feriados', 'error');
                 });
+        }
+
+        // Configurar listener em tempo real para atualizações de feriados
+        function setupHolidaysRealtimeListener() {
+            database.ref('holidays').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    holidays = data;
+                    console.log('Feriados atualizados em tempo real:', holidays);
+                    renderCalendar();
+                }
+            });
         }
 
         function editRecord(id) {
