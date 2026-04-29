@@ -89,6 +89,20 @@
                     <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Sáb</div>
                 </div>
                 <div id="calendar-body" class="calendar-grid"></div>
+                
+                <!-- Legenda dos exames -->
+                <div class="mt-4 flex justify-center">
+                    <div class="flex items-center gap-4 text-xs text-slate-500">
+                        <div class="flex items-center gap-1">
+                            <div class="h-2 w-2 rounded-full bg-blue-500"></div>
+                            <span>TRESP</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <div class="h-2 w-2 rounded-full bg-emerald-500"></div>
+                            <span>TSBAC</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -888,6 +902,20 @@
         // REGRAS DE NEGÓCIO
         function validateAppointment(dataObj) {
             const appDate = new Date(dataObj.data + 'T12:00:00');
+            const dayOfWeek = appDate.getDay();
+            const startTime = dataObj.horaInicio;
+            
+            // Validação de horários permitidos
+            if (dayOfWeek === 6) { // Sábado
+                if (startTime < '07:00' || startTime > '09:00') {
+                    return "Aos sábados, o horário permitido para agendamento é entre 07:00 e 09:00.";
+                }
+            } else if (dayOfWeek >= 1 && dayOfWeek <= 5) { // Segunda a Sexta
+                if (startTime < '07:00' || startTime > '14:00') {
+                    return "De segunda a sexta, o horário permitido para agendamento é entre 07:00 e 14:00.";
+                }
+            }
+            
             if (appDate.getDay() === 0) return "Não é permitido marcar exames aos domingos.";
             if (appointments.filter(a => a.data === dataObj.data && a.id !== dataObj.id && a.status !== 'Cancelado').length >= 3 && dataObj.status !== 'Cancelado') return "Limite diário alcançado (Máx 3 ativos).";
             
