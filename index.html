@@ -161,7 +161,7 @@
                         </button>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div class="relative">
                             <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
                             <input type="text" id="filter-search" onkeyup="updateTableFilters()" placeholder="Buscar Paciente ou Pedido..." class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
@@ -171,6 +171,9 @@
                         </select>
                         <select id="filter-substrato" onchange="updateTableFilters()" class="border border-slate-200 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="">Filtrar por Substrato</option>
+                        </select>
+                        <select id="filter-status" onchange="updateTableFilters()" class="border border-slate-200 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Filtrar por Status</option>
                         </select>
                     </div>
                 </div>
@@ -925,15 +928,71 @@
         }
 
         function updateFilterDropdowns() {
+            const search = normalizeStr(document.getElementById('filter-search').value);
+            const atendente = document.getElementById('filter-atendente').value;
+            const substrato = document.getElementById('filter-substrato').value;
+            const status = document.getElementById('filter-status').value;
+            
+            // Para cada filtro, calcular os dados base sem considerar o filtro atual
+            // Filtro de atendente: considerar busca, substrato e status
+            let filteredForAtendente = appointments.filter(a => {
+                const matchSearch = !search || normalizeStr(a.paciente).includes(search) || normalizeStr(a.pedido).includes(search);
+                const matchSubstrato = !substrato || a.substrato === substrato;
+                const matchStatus = !status || a.status === status;
+                return matchSearch && matchSubstrato && matchStatus;
+            });
+            
+            // Filtro de substrato: considerar busca, atendente e status
+            let filteredForSubstrato = appointments.filter(a => {
+                const matchSearch = !search || normalizeStr(a.paciente).includes(search) || normalizeStr(a.pedido).includes(search);
+                const matchAtendente = !atendente || a.atendente === atendente;
+                const matchStatus = !status || a.status === status;
+                return matchSearch && matchAtendente && matchStatus;
+            });
+            
+            // Filtro de status: considerar busca, atendente e substrato
+            let filteredForStatus = appointments.filter(a => {
+                const matchSearch = !search || normalizeStr(a.paciente).includes(search) || normalizeStr(a.pedido).includes(search);
+                const matchAtendente = !atendente || a.atendente === atendente;
+                const matchSubstrato = !substrato || a.substrato === substrato;
+                return matchSearch && matchAtendente && matchSubstrato;
+            });
+            
+            // Atualizar filtro de atendente
             const atendenteFilter = document.getElementById('filter-atendente');
-            const uniqueAtendentes = [...new Set(appointments.map(a => a.atendente))];
+            const uniqueAtendentes = [...new Set(filteredForAtendente.map(a => a.atendente))];
             atendenteFilter.innerHTML = '<option value="">Filtrar por Atendente</option>' + 
                 uniqueAtendentes.map(name => `<option value="${name}">${name}</option>`).join('');
+            
+            if (atendente && !uniqueAtendentes.includes(atendente)) {
+                atendenteFilter.value = '';
+            } else {
+                atendenteFilter.value = atendente;
+            }
 
+            // Atualizar filtro de substrato
             const substratoFilter = document.getElementById('filter-substrato');
-            const uniqueSubstratos = [...new Set(appointments.map(a => a.substrato))];
+            const uniqueSubstratos = [...new Set(filteredForSubstrato.map(a => a.substrato))];
             substratoFilter.innerHTML = '<option value="">Filtrar por Substrato</option>' + 
                 uniqueSubstratos.map(sub => `<option value="${sub}">${sub}</option>`).join('');
+            
+            if (substrato && !uniqueSubstratos.includes(substrato)) {
+                substratoFilter.value = '';
+            } else {
+                substratoFilter.value = substrato;
+            }
+
+            // Atualizar filtro de status
+            const statusFilter = document.getElementById('filter-status');
+            const uniqueStatuses = [...new Set(filteredForStatus.map(a => a.status))];
+            statusFilter.innerHTML = '<option value="">Filtrar por Status</option>' + 
+                uniqueStatuses.map(status => `<option value="${status}">${status}</option>`).join('');
+            
+            if (status && !uniqueStatuses.includes(status)) {
+                statusFilter.value = '';
+            } else {
+                statusFilter.value = status;
+            }
         }
 
         // NAVEGAÇÃO DE ABAS
@@ -1180,12 +1239,14 @@
             const search = normalizeStr(document.getElementById('filter-search').value);
             const atendente = document.getElementById('filter-atendente').value;
             const substrato = document.getElementById('filter-substrato').value;
+            const status = document.getElementById('filter-status').value;
 
             let filtered = appointments.filter(a => {
                 const matchSearch = !search || normalizeStr(a.paciente).includes(search) || normalizeStr(a.pedido).includes(search);
                 const matchAtendente = !atendente || a.atendente === atendente;
                 const matchSubstrato = !substrato || a.substrato === substrato;
-                return matchSearch && matchAtendente && matchSubstrato;
+                const matchStatus = !status || a.status === status;
+                return matchSearch && matchAtendente && matchSubstrato && matchStatus;
             });
 
             filtered.sort((a,b) => b.id - a.id);
@@ -1324,20 +1385,34 @@
             const filterYear = parseInt(document.getElementById('ind-year').value);
             const isCurrentYear = filterYear === new Date().getFullYear();
             
-            const trespData = new Array(12).fill(null);
-            const tsbacData = new Array(12).fill(null);
+            const trespData = new Array(12).fill(0);
+            const tsbacData = new Array(12).fill(0);
             
-            for (let i = 0; i < 12; i++) {
-                if (isCurrentYear && i > currentRealMonth) break; // Trava o gráfico em meses futuros do ano atual
-                trespData[i] = 0;
-                tsbacData[i] = 0;
-            }
-
-            indData.forEach(a => {
-                const m = new Date(a.data + 'T12:00:00').getMonth();
-                if (trespData[m] !== null && a.exame === 'TRESP') trespData[m]++;
-                if (tsbacData[m] !== null && a.exame === 'TSBAC') tsbacData[m]++;
+            // Se não for o ano atual, mostrar todos os meses
+            // Se for o ano atual, mostrar apenas até o mês atual
+            const maxMonth = isCurrentYear ? currentRealMonth : 11;
+            
+            // Filtrar dados apenas do ano selecionado
+            const yearFilteredData = indData.filter(a => {
+                const dataYear = new Date(a.data + 'T12:00:00').getFullYear();
+                return dataYear === filterYear;
             });
+
+            yearFilteredData.forEach(a => {
+                const m = new Date(a.data + 'T12:00:00').getMonth();
+                if (m <= maxMonth) {
+                    if (a.exame === 'TRESP') trespData[m]++;
+                    if (a.exame === 'TSBAC') tsbacData[m]++;
+                }
+            });
+            
+            // Para meses futuros do ano atual, definir como null para não aparecer no gráfico
+            if (isCurrentYear) {
+                for (let i = currentRealMonth + 1; i < 12; i++) {
+                    trespData[i] = null;
+                    tsbacData[i] = null;
+                }
+            }
 
             if(charts.line) charts.line.destroy();
             charts.line = new Chart(document.getElementById('chart-line-trend'), {
