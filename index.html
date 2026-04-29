@@ -427,9 +427,16 @@
     <div id="modal-day-details" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[100] justify-center items-center p-4">
         <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden">
             <div class="bg-navy-900 p-6 text-white flex justify-between items-center">
-                <div>
-                    <h3 class="font-black uppercase tracking-tight text-xl">Marcações do Dia</h3>
-                    <p id="day-details-date" class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">00/00/0000</p>
+                <div class="flex items-center gap-4">
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-xl">Marcações do Dia</h3>
+                        <p id="day-details-date" class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">00/00/0000</p>
+                    </div>
+                    <button id="btn-holiday-toggle" onclick="toggleHolidayMode()" class="relative h-8 w-14 bg-red-500 hover:bg-red-600 rounded-full transition-all duration-300 shadow-lg border-2 border-red-400/50">
+                        <div id="holiday-toggle-slider" class="absolute top-0.5 left-0.5 h-7 w-7 bg-white rounded-full shadow-md transition-transform duration-300 flex items-center justify-center">
+                            <i class="fas fa-calendar-times text-red-500 text-xs"></i>
+                        </div>
+                    </button>
                 </div>
                 <button onclick="closeModals()"><i class="fas fa-times text-xl"></i></button>
             </div>
@@ -526,10 +533,12 @@
                     
                     console.log("Dados carregados do Firebase. LocalStorage atualizado como backup.");
                     
-                    renderTable();
-                    renderCalendar();
-                    updateDatalists();
-                    updateFilterDropdowns();
+                    return loadHolidaysFromFirebase().then(() => {
+                        renderTable();
+                        renderCalendar();
+                        updateDatalists();
+                        updateFilterDropdowns();
+                    });
                 })
                 .catch(error => {
                     console.error("Erro ao carregar do Firebase:", error);
@@ -549,10 +558,12 @@
                             saveAppointmentsToFirebase();
                         }, 1000);
                         
-                        renderTable();
-                        renderCalendar();
-                        updateDatalists();
-                        updateFilterDropdowns();
+                        return loadHolidaysFromFirebase().then(() => {
+                            renderTable();
+                            renderCalendar();
+                            updateDatalists();
+                            updateFilterDropdowns();
+                        });
                         
                         console.warn("Usando dados locais temporariamente. Tentando sincronizar com Firebase...");
                     } else {
@@ -1118,20 +1129,44 @@
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dateObj = new Date(year, month, day);
                 const isSunday = dateObj.getDay() === 0;
+                const isHoliday = holidays[dateStr];
                 
                 // Exclui os cancelados da contagem de lotação do dia
                 const dayApps = appointments.filter(a => a.data === dateStr && a.status !== 'Cancelado');
                 const hasInfantil = dayApps.some(a => a.idade < 12);
-                let boxClass = isSunday ? 'bg-red-50/30 border-red-100 opacity-60' : 'bg-white hover:border-blue-300 border-slate-200 cursor-pointer';
-                if(dayApps.length > 0 && !isSunday) {
-                    if(hasInfantil) boxClass = 'bg-orange-50 border-orange-300 cursor-pointer';
-                    else boxClass = dayApps.length >= 3 ? 'bg-orange-50 border-orange-200 cursor-pointer' : 'bg-blue-50 border-blue-200 cursor-pointer';
+                
+                // Define classes baseado no estado do dia
+                let boxClass, textColor, clickAction;
+                
+                if (isHoliday) {
+                    // Estilo de feriado (cinza, como domingo)
+                    boxClass = 'bg-slate-100 border-slate-300 opacity-60 cursor-pointer';
+                    textColor = 'text-slate-400';
+                    clickAction = `openDayDetails('${dateStr}')`;
+                } else if (isSunday) {
+                    boxClass = 'bg-red-50/30 border-red-100 opacity-60 cursor-pointer';
+                    textColor = 'text-red-400';
+                    clickAction = `openDayDetails('${dateStr}')`;
+                } else {
+                    boxClass = 'bg-white hover:border-blue-300 border-slate-200 cursor-pointer';
+                    textColor = 'text-navy-900';
+                    clickAction = `openDayDetails('${dateStr}')`;
+                    
+                    if(dayApps.length > 0) {
+                        if(hasInfantil) boxClass = 'bg-orange-50 border-orange-300 cursor-pointer';
+                        else boxClass = dayApps.length >= 3 ? 'bg-orange-50 border-orange-200 cursor-pointer' : 'bg-blue-50 border-blue-200 cursor-pointer';
+                    }
                 }
+                
                 const dots = dayApps.map(a => `<div class="h-2 w-2 rounded-full ${a.exame === 'TRESP' ? 'bg-blue-500' : 'bg-emerald-500'}"></div>`).join('');
-                body.innerHTML += `<div onclick="${isSunday ? '' : `openDayDetails('${dateStr}')`}" class="p-3 h-24 border rounded-xl flex flex-col items-center group relative transition-all ${boxClass}">
-                    <span class="font-black text-sm ${isSunday ? 'text-red-400' : 'text-navy-900'}">${day}</span>
+                const holidayIcon = isHoliday ? '<div class="absolute top-1 right-1 text-red-400"><i class="fas fa-calendar-times text-xs"></i></div>' : '';
+                
+                body.innerHTML += `<div onclick="${clickAction}" class="p-3 h-24 border rounded-xl flex flex-col items-center group relative transition-all ${boxClass}">
+                    ${holidayIcon}
+                    <span class="font-black text-sm ${textColor}">${day}</span>
                     <div class="mt-2 flex gap-1 justify-center">${dots}</div>
-                    ${dayApps.length ? `<span class="text-[8px] font-black uppercase mt-1 text-slate-500">${dayApps.length}/3 Vagas</span>` : ''}
+                    ${dayApps.length && !isHoliday ? `<span class="text-[8px] font-black uppercase mt-1 text-slate-500">${dayApps.length}/3 Vagas</span>` : ''}
+                    ${isHoliday ? '<span class="text-[8px] font-black uppercase mt-1 text-red-400">Feriado</span>' : ''}
                 </div>`;
             }
         }
@@ -1220,6 +1255,111 @@
             }).join('') : '<p class="text-center py-6 text-slate-400 font-bold uppercase text-[10px]">Sem marcações</p>';
             
             document.getElementById('modal-day-details').classList.add('active');
+            
+            // Verifica se o dia é feriado e atualiza o botão
+            updateHolidayToggle(dateStr);
+        }
+
+        // Estado para controle de feriados
+        let holidays = {};
+
+        function toggleHolidayMode() {
+            const dateStr = document.getElementById('day-details-date').innerText.split('/').reverse().join('-');
+            const btn = document.getElementById('btn-holiday-toggle');
+            const slider = document.getElementById('holiday-toggle-slider');
+            const icon = slider.querySelector('i');
+            
+            if (holidays[dateStr]) {
+                // Desativa modo feriado (volta para ativo/verde) - bolinha vai para direita
+                delete holidays[dateStr];
+                btn.classList.remove('bg-red-500', 'border-red-400/50');
+                btn.classList.add('bg-green-500', 'border-green-400/50');
+                slider.style.transform = 'translateX(24px)';
+                icon.className = 'fas fa-check text-white text-xs';
+                
+                // Reabilita botão de agendar
+                const scheduleBtn = document.querySelector('button[onclick*="openRecordModalWithDate"]');
+                if (scheduleBtn) {
+                    scheduleBtn.disabled = false;
+                    scheduleBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-slate-200');
+                    scheduleBtn.classList.add('bg-slate-100', 'hover:bg-slate-200');
+                }
+            } else {
+                // Ativa modo feriado (só se não houver marcações) - bolinha vai para esquerda
+                const dayApps = appointments.filter(a => a.data === dateStr);
+                if (dayApps.length === 0) {
+                    holidays[dateStr] = true;
+                    btn.classList.remove('bg-green-500', 'border-green-400/50');
+                    btn.classList.add('bg-red-500', 'border-red-400/50');
+                    slider.style.transform = 'translateX(0)';
+                    icon.className = 'fas fa-calendar-times text-white text-xs';
+                    
+                    // Desabilita botão de agendar
+                    const scheduleBtn = document.querySelector('button[onclick*="openRecordModalWithDate"]');
+                    if (scheduleBtn) {
+                        scheduleBtn.disabled = true;
+                        scheduleBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-slate-200');
+                        scheduleBtn.classList.remove('bg-slate-100', 'hover:bg-slate-200');
+                    }
+                } else {
+                    alert('Não é possível marcar como feriado. Existem marcações neste dia.');
+                }
+            }
+            
+            // Salva no Firebase
+            saveHolidaysToFirebase();
+            
+            // Atualiza o calendário
+            renderCalendar();
+        }
+
+        function updateHolidayToggle(dateStr) {
+            const btn = document.getElementById('btn-holiday-toggle');
+            const slider = document.getElementById('holiday-toggle-slider');
+            const icon = slider.querySelector('i');
+            const scheduleBtn = document.querySelector('button[onclick*="openRecordModalWithDate"]');
+            
+            if (holidays[dateStr]) {
+                // Modo feriado ativo (vermelho) - bolinha à esquerda
+                btn.classList.remove('bg-green-500', 'border-green-400/50');
+                btn.classList.add('bg-red-500', 'border-red-400/50');
+                slider.style.transform = 'translateX(0)';
+                icon.className = 'fas fa-calendar-times text-white text-xs';
+                
+                // Desabilita botão de agendar
+                if (scheduleBtn) {
+                    scheduleBtn.disabled = true;
+                    scheduleBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-slate-200');
+                    scheduleBtn.classList.remove('bg-slate-100', 'hover:bg-slate-200');
+                }
+            } else {
+                // Modo ativo (verde) - bolinha à direita
+                btn.classList.remove('bg-red-500', 'border-red-400/50');
+                btn.classList.add('bg-green-500', 'border-green-400/50');
+                slider.style.transform = 'translateX(24px)';
+                icon.className = 'fas fa-check text-white text-xs';
+                
+                // Reabilita botão de agendar
+                if (scheduleBtn) {
+                    scheduleBtn.disabled = false;
+                    scheduleBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-slate-200');
+                    scheduleBtn.classList.add('bg-slate-100', 'hover:bg-slate-200');
+                }
+            }
+        }
+
+        function saveHolidaysToFirebase() {
+            database.ref('holidays').set(holidays);
+        }
+
+        function loadHolidaysFromFirebase() {
+            return database.ref('holidays').once('value')
+                .then(snapshot => {
+                    const data = snapshot.val();
+                    if (data) {
+                        holidays = data;
+                    }
+                });
         }
 
         function editRecord(id) {
