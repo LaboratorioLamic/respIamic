@@ -1145,9 +1145,9 @@
                     textColor = 'text-slate-400';
                     clickAction = `openDayDetails('${dateStr}')`;
                 } else if (isSunday) {
-                    boxClass = 'bg-red-50/30 border-red-100 opacity-60 cursor-pointer';
+                    boxClass = 'bg-red-50/30 border-red-100 opacity-60 cursor-not-allowed';
                     textColor = 'text-red-400';
-                    clickAction = `openDayDetails('${dateStr}')`;
+                    clickAction = '';
                 } else {
                     boxClass = 'bg-white hover:border-blue-300 border-slate-200 cursor-pointer';
                     textColor = 'text-navy-900';
