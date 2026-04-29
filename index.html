@@ -1288,8 +1288,11 @@
                     clickAction = `openDayDetails('${dateStr}')`;
                     
                     if(dayApps.length > 0) {
-                        if(hasInfantil) boxClass = 'bg-orange-50 border-orange-300 cursor-pointer';
-                        else boxClass = dayApps.length >= 3 ? 'bg-orange-50 border-orange-200 cursor-pointer' : 'bg-blue-50 border-blue-200 cursor-pointer';
+                        if(hasInfantil) {
+                            boxClass = dayApps.length >= 3 ? 'bg-orange-50 border-orange-300 cursor-pointer' : 'bg-orange-50 border-orange-300 cursor-pointer';
+                        } else {
+                            boxClass = dayApps.length >= 3 ? 'bg-blue-50 border-blue-200 cursor-pointer' : 'bg-blue-50 border-blue-200 cursor-pointer';
+                        }
                     }
                 }
                 
@@ -1396,6 +1399,17 @@
             
             // Verifica se o dia é feriado e atualiza o botão
             updateHolidayToggle(dateStr);
+            
+            // Oculta ou mostra o botão de agendar baseado no número de agendamentos ativos
+            const activeApps = dayApps.filter(a => a.status !== 'Cancelado');
+            const scheduleBtn = document.querySelector('button[onclick*="openRecordModalWithDate"]');
+            if (scheduleBtn) {
+                if (activeApps.length >= 3) {
+                    scheduleBtn.style.display = 'none';
+                } else {
+                    scheduleBtn.style.display = 'block';
+                }
+            }
         }
 
         // Estado para controle de feriados
