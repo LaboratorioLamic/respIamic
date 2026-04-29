@@ -62,7 +62,7 @@
 <body class="bg-[#f8fafc] font-sans text-slate-800 h-screen flex flex-col overflow-hidden">
     
     <!-- Container de Notificações -->
-    <div id="notification-container" class="fixed top-4 right-4 z-[9999] space-y-2 pointer-events-none"></div>
+    <div id="notification-container" class="fixed top-[60px] right-4 z-[9999] space-y-2 pointer-events-none"></div>
     
     <header class="bg-navy-900 text-white shadow-2xl shrink-0 z-50 border-b border-navy-700">
         <div class="container mx-auto px-6 py-2 flex justify-between items-center">
@@ -1569,10 +1569,11 @@
                     }
                 } else {
                     showNotification('Não é possível marcar como feriado. Existem marcações neste dia.', 'warning');
+                    return; // Interrompe a função se houver marcações
                 }
             }
             
-            // Salva no Firebase
+            // Salva no Firebase (só se houver alteração)
             saveHolidaysToFirebase();
             
             // Atualiza o calendário
