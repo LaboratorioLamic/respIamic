@@ -34,9 +34,35 @@
         .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1rem; }
         @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .animate-spin-slow { animation: spin-slow 8s linear infinite; }
+        
+        /* Estilos das Notificações */
+        .notification {
+            pointer-events: auto;
+            transform: translateX(100%);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            animation: slideIn 0.4s ease-out forwards, slideOut 0.3s ease-in 9.7s forwards;
+        }
+        
+        @keyframes slideIn {
+            0% { transform: translateX(100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(100%); opacity: 0; }
+        }
+        
+        .notification-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        .notification-error { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+        .notification-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        .notification-info { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
     </style>
 </head>
 <body class="bg-[#f8fafc] font-sans text-slate-800 h-screen flex flex-col overflow-hidden">
+    
+    <!-- Container de Notificações -->
+    <div id="notification-container" class="fixed top-4 right-4 z-[9999] space-y-2 pointer-events-none"></div>
     
     <header class="bg-navy-900 text-white shadow-2xl shrink-0 z-50 border-b border-navy-700">
         <div class="container mx-auto px-6 py-2 flex justify-between items-center">
@@ -326,8 +352,6 @@
                 <button onclick="closeModals()" class="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-all"><i class="fas fa-times text-xl"></i></button>
             </div>
             
-            <div id="form-error" class="hidden bg-red-100 text-red-700 p-4 font-bold text-xs uppercase tracking-widest text-center border-b border-red-200"></div>
-
             <form id="record-form" onsubmit="saveRecord(event)" class="p-8 grid grid-cols-1 md:grid-cols-4 gap-6">
                 <input type="hidden" id="reg-id">
                 
@@ -555,6 +579,41 @@
         // Gráficos
         let charts = {};
 
+        // SISTEMA DE NOTIFICAÇÕES
+        function showNotification(message, type = 'info', duration = 10000) {
+            const container = document.getElementById('notification-container');
+            const notification = document.createElement('div');
+            
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            
+            notification.className = `notification notification-${type} rounded-xl shadow-2xl p-4 min-w-[320px] max-w-[400px] flex items-start gap-3`;
+            notification.innerHTML = `
+                <div class="flex-shrink-0">
+                    <i class="fas ${icons[type]} text-xl"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="font-bold text-sm uppercase tracking-wider">${message}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="flex-shrink-0 hover:opacity-70 transition-opacity">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            container.appendChild(notification);
+            
+            // Remover automaticamente após o tempo definido
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, duration);
+        }
+
         // FUNÇÕES DO FIREBASE
         function loadAppointmentsFromFirebase() {
             return database.ref('appointments').once('value')
@@ -649,7 +708,7 @@
                         localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
                         console.warn("Offline: Dados salvos temporariamente no localStorage.");
                     } else {
-                        alert("Erro ao sincronizar com Firebase. Verifique sua conexão.");
+                        showNotification("Erro ao sincronizar com Firebase. Verifique sua conexão.", "error");
                     }
                     throw error; // Propagar erro para tratamento acima
                 });
@@ -941,9 +1000,6 @@
             e.preventDefault();
             const id = document.getElementById('reg-id').value;
             const atendenteInput = document.getElementById('reg-atendente').value.trim();
-            const errDiv = document.getElementById('form-error');
-            
-            errDiv.classList.add('hidden');
             
             // Validação Checklist & Status
             const statusVal = document.getElementById('reg-status').value;
@@ -951,8 +1007,7 @@
             const chkAn = document.getElementById('chk-anexo-val').value === 'true';
             
             if (statusVal === 'Concluído' && (!chkOr || !chkAn)) {
-                errDiv.innerText = "ERRO: Para marcar o status como Concluído, todo o checklist (Orientação e Anexo) deve estar ativado.";
-                errDiv.classList.remove('hidden');
+                showNotification("ERRO: Para marcar o status como Concluído, todo o checklist (Orientação e Anexo) deve estar ativado.", "error");
                 return;
             }
             
@@ -965,7 +1020,7 @@
                 // Salvar ação pendente e mostrar modal
                 pendingChecklistAction = () => {
                     // Continuar com o salvamento
-                    proceedWithSave(id, atendenteInput, errDiv, chkOr, chkAn, statusVal);
+                    proceedWithSave(id, atendenteInput, chkOr, chkAn, statusVal);
                 };
                 
                 showChecklistConfirmModal(checklistItems);
@@ -973,18 +1028,17 @@
             }
 
             // Se não houver problema com checklist, continuar com validação
-            proceedWithSave(id, atendenteInput, errDiv, chkOr, chkAn, statusVal);
+            proceedWithSave(id, atendenteInput, chkOr, chkAn, statusVal);
         }
 
-        function proceedWithSave(id, atendenteInput, errDiv, chkOr, chkAn, statusVal) {
+        function proceedWithSave(id, atendenteInput, chkOr, chkAn, statusVal) {
             // Validação rigorosa do Atendente se a lista existir
             if (atendentesList.length > 0 && !atendentesList.includes(atendenteInput.toUpperCase())) {
                 const caseSensitiveMatch = atendentesList.find(a => a.toUpperCase() === atendenteInput.toUpperCase());
                 if (caseSensitiveMatch) {
                     document.getElementById('reg-atendente').value = caseSensitiveMatch; 
                 } else {
-                    errDiv.innerText = "ATENDENTE INVÁLIDO. O nome inserido não corresponde a nenhum atendente da lista obrigatória.";
-                    errDiv.classList.remove('hidden');
+                    showNotification("ATENDENTE INVÁLIDO. O nome inserido não corresponde a nenhum atendente da lista obrigatória.", "error");
                     return;
                 }
             }
@@ -1012,12 +1066,13 @@
             
             const error = validateAppointment(record);
             if (error) {
-                errDiv.innerText = error; errDiv.classList.remove('hidden');
+                showNotification(error, "error");
                 return;
             }
             
             if(id) appointments = appointments.map(a => a.id == id ? record : a); else appointments.push(record);
             saveAppointmentsToFirebase();
+            showNotification(id ? "Agendamento atualizado com sucesso!" : "Agendamento criado com sucesso!", "success");
             closeModals(); renderTable(); renderCalendar(); updateDatalists(); updateFilterDropdowns();
         }
 
@@ -1312,7 +1367,6 @@
         // MODAIS
         function closeModals() { 
             document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); 
-            document.getElementById('form-error').classList.add('hidden');
         }
         
         function openRecordModal() {
@@ -1454,7 +1508,7 @@
                         scheduleBtn.classList.remove('bg-slate-100', 'hover:bg-slate-200');
                     }
                 } else {
-                    alert('Não é possível marcar como feriado. Existem marcações neste dia.');
+                    showNotification('Não é possível marcar como feriado. Existem marcações neste dia.', 'warning');
                 }
             }
             
@@ -1569,12 +1623,12 @@
                     })
                     .catch(error => {
                         console.error("Erro ao excluir agendamento:", error);
-                        alert("Erro ao excluir o agendamento. Tente novamente.");
+                        showNotification("Erro ao excluir o agendamento. Tente novamente.", "error");
                         // Reverter alteração local se falhou
                         loadAppointmentsFromFirebase();
                     });
             } else if (confirmacao !== null) {
-                alert("Ação cancelada. A exclusão não foi concluída porque a confirmação falhou.");
+                showNotification("Ação cancelada. A exclusão não foi concluída porque a confirmação falhou.", "warning");
             }
         }
 
@@ -1622,7 +1676,7 @@
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
 
-            alert('✅ Backup exportado com sucesso!\n\nArquivo salvo como: respiroLamic_backup_' + new Date().toISOString().split('T')[0] + '.json');
+            showNotification('✅ Backup exportado com sucesso! Arquivo salvo como: respiroLamic_backup_' + new Date().toISOString().split('T')[0] + '.json', 'success');
         }
 
         function importData(event) {
@@ -1668,11 +1722,10 @@
                         updateDatalists();
                         updateConfigStatus();
 
-                        alert('✅ Backup importado com sucesso!\n\n' + 
-                              backupData.appointments.length + ' agendamentos restaurados.');
+                        showNotification('✅ Backup importado com sucesso! ' + backupData.appointments.length + ' agendamentos restaurados.', 'success');
                     }
                 } catch (error) {
-                    alert('❌ Erro ao importar backup:\n\n' + error.message + '\n\nVerifique se o arquivo é um backup válido.');
+                    showNotification('❌ Erro ao importar backup: ' + error.message + '. Verifique se o arquivo é um backup válido.', 'error');
                 }
             };
             reader.readAsText(file);
