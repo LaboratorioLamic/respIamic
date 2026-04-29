@@ -307,7 +307,7 @@
             <div class="bg-navy-900 p-6 text-white flex justify-between items-center">
                 <div>
                     <h3 id="modal-title" class="font-black uppercase tracking-tight text-xl">Novo Agendamento</h3>
-                    <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Protocolo Médico</p>
+                    <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Protocolo do paciente</p>
                 </div>
                 <button onclick="closeModals()" class="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-all"><i class="fas fa-times text-xl"></i></button>
             </div>
@@ -464,6 +464,47 @@
         </div>
     </div>
 
+    <div id="modal-checklist-confirm" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[120] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/20">
+            <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-6 text-white">
+                <div class="flex items-center gap-4">
+                    <div class="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-exclamation-triangle text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-lg">Checklist Incompleto</h3>
+                        <p class="text-[10px] text-white/80 font-bold uppercase tracking-widest">Verificação obrigatória</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div class="mb-6">
+                    <p class="text-slate-700 font-medium mb-4">Você está agendando sem preencher as seguintes atividades:</p>
+                    <div id="checklist-missing-items" class="space-y-2">
+                        <!-- Items will be inserted here -->
+                    </div>
+                </div>
+                
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                    <p class="text-amber-800 text-sm font-medium">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        É importante completar o checklist para garantir o padrão de qualidade do atendimento.
+                    </p>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button onclick="confirmChecklistIncomplete()" class="flex-1 bg-navy-900 text-white font-black py-3 rounded-xl hover:bg-blue-600 shadow-lg transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-check mr-2"></i>Continuar Mesmo Assim
+                    </button>
+                    <button onclick="cancelChecklistConfirm()" class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-arrow-left mr-2"></i>Voltar ao Formulário
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // CONFIGURAÇÃO DO FIREBASE
         const firebaseConfig = {
@@ -482,6 +523,7 @@
 
         // ESTADO DA APLICAÇÃO
         let appointments = [];
+        let pendingChecklistAction = null;
         
         // MIGRAR DADOS ANTIGOS PARA NOVA ESTRUTURA DE STATUS
         appointments = appointments.map(app => {
@@ -820,11 +862,26 @@
         function updateSubstratos() {
             const exame = document.getElementById('reg-exame').value;
             const subSelect = document.getElementById('reg-substrato');
+            const metanoDiv = document.getElementById('reg-metano').closest('.col-span-1');
+            
             subSelect.innerHTML = '';
+            
             if (exame === 'TRESP') {
                 ['Lactose', 'Frutose', 'Sorbitol', 'Sacarose', 'D-Xilose', 'Frutano'].forEach(o => subSelect.innerHTML += `<option value="${o}">${o}</option>`);
+                // Ocultar campo metano para TRESP
+                metanoDiv.classList.add('hidden');
+                document.getElementById('reg-metano').required = false;
+                document.getElementById('reg-metano').value = 'Não';
             } else if (exame === 'TSBAC') {
                 ['Lactulose', 'Glicose'].forEach(o => subSelect.innerHTML += `<option value="${o}">${o}</option>`);
+                // Mostrar campo metano para TSBAC
+                metanoDiv.classList.remove('hidden');
+                document.getElementById('reg-metano').required = true;
+            } else {
+                // Se nenhum exame selecionado, ocultar metano
+                metanoDiv.classList.add('hidden');
+                document.getElementById('reg-metano').required = false;
+                document.getElementById('reg-metano').value = 'Não';
             }
         }
 
@@ -870,7 +927,28 @@
                 errDiv.classList.remove('hidden');
                 return;
             }
+            
+            // Aviso para checklist incompleto em agendamentos
+            if (!chkOr || !chkAn) {
+                const checklistItems = [];
+                if (!chkOr) checklistItems.push("Enviar orientação ao paciente");
+                if (!chkAn) checklistItems.push("Anexar laudo no sistema UniLab");
+                
+                // Salvar ação pendente e mostrar modal
+                pendingChecklistAction = () => {
+                    // Continuar com o salvamento
+                    proceedWithSave(id, atendenteInput, errDiv, chkOr, chkAn, statusVal);
+                };
+                
+                showChecklistConfirmModal(checklistItems);
+                return;
+            }
 
+            // Se não houver problema com checklist, continuar com validação
+            proceedWithSave(id, atendenteInput, errDiv, chkOr, chkAn, statusVal);
+        }
+
+        function proceedWithSave(id, atendenteInput, errDiv, chkOr, chkAn, statusVal) {
             // Validação rigorosa do Atendente se a lista existir
             if (atendentesList.length > 0 && !atendentesList.includes(atendenteInput.toUpperCase())) {
                 const caseSensitiveMatch = atendentesList.find(a => a.toUpperCase() === atendenteInput.toUpperCase());
@@ -913,6 +991,34 @@
             if(id) appointments = appointments.map(a => a.id == id ? record : a); else appointments.push(record);
             saveAppointmentsToFirebase();
             closeModals(); renderTable(); renderCalendar(); updateDatalists(); updateFilterDropdowns();
+        }
+
+        // FUNÇÕES DA MODAL DE CHECKLIST
+        function showChecklistConfirmModal(checklistItems) {
+            const itemsContainer = document.getElementById('checklist-missing-items');
+            itemsContainer.innerHTML = checklistItems.map(item => `
+                <div class="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div class="h-6 w-6 bg-red-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-times text-white text-xs"></i>
+                    </div>
+                    <span class="text-red-800 font-medium text-sm">${item}</span>
+                </div>
+            `).join('');
+            
+            document.getElementById('modal-checklist-confirm').classList.add('active');
+        }
+
+        function confirmChecklistIncomplete() {
+            document.getElementById('modal-checklist-confirm').classList.remove('active');
+            if (pendingChecklistAction) {
+                pendingChecklistAction();
+                pendingChecklistAction = null;
+            }
+        }
+
+        function cancelChecklistConfirm() {
+            document.getElementById('modal-checklist-confirm').classList.remove('active');
+            pendingChecklistAction = null;
         }
 
         // FILTROS E PAGINAÇÃO (TABELA)
@@ -1191,6 +1297,9 @@
             // Reseta Status e Comentários
             document.getElementById('reg-status').value = 'Agendado';
             toggleCancelado();
+            
+            // Oculta campo metano inicialmente
+            updateSubstratos();
             
             document.getElementById('modal-title').innerText = "Novo Agendamento";
             document.getElementById('modal-record').classList.add('active');
