@@ -127,6 +127,18 @@
                             <div class="h-2 w-2 rounded-full bg-emerald-500"></div>
                             <span>TSBAC</span>
                         </div>
+                        <div class="flex items-center gap-1">
+                            <div class="h-3 w-3 rounded border border-blue-200 bg-blue-50"></div>
+                            <span>Adulto</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <div class="h-3 w-3 rounded border border-orange-300 bg-orange-50"></div>
+                            <span>Infantil</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <div class="h-3 w-3 rounded border border-purple-300 bg-purple-50"></div>
+                            <span>Em andamento</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1390,7 +1402,12 @@
                     clickAction = `openDayDetails('${dateStr}')`;
                     
                     if(dayApps.length > 0) {
-                        if(hasInfantil) {
+                        // Verifica se há agendamentos "Em andamento" para priorizar a cor roxa
+                        const hasAndamento = dayApps.some(a => a.status === 'Em andamento');
+                        
+                        if(hasAndamento) {
+                            boxClass = dayApps.length >= 3 ? 'bg-purple-50 border-purple-300 cursor-pointer' : 'bg-purple-50 border-purple-300 cursor-pointer';
+                        } else if(hasInfantil) {
                             boxClass = dayApps.length >= 3 ? 'bg-orange-50 border-orange-300 cursor-pointer' : 'bg-orange-50 border-orange-300 cursor-pointer';
                         } else {
                             boxClass = dayApps.length >= 3 ? 'bg-blue-50 border-blue-200 cursor-pointer' : 'bg-blue-50 border-blue-200 cursor-pointer';
