@@ -239,6 +239,10 @@
                     <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest">Concluídos</p>
                     <p id="kpi-concluidos" class="text-xl font-black text-green-600 mt-1">0</p>
                 </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-purple-500">
+                    <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest">Em andamento</p>
+                    <p id="kpi-andamento" class="text-xl font-black text-purple-600 mt-1">0</p>
+                </div>
                 <div class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-yellow-400">
                     <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest">Pendentes</p>
                     <p id="kpi-pendentes" class="text-xl font-black text-yellow-600 mt-1">0</p>
@@ -410,7 +414,7 @@
                     </select>
                 </div>
 
-                <div class="col-span-1 md:col-span-1">
+                <div id="campo-pedido-container" class="col-span-1 md:col-span-1">
                     <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Nº do Pedido *</label>
                     <input type="text" id="reg-pedido" required class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
                 </div>
@@ -423,6 +427,7 @@
                     <label class="block text-[10px] font-black text-blue-500 uppercase mb-2">Status do Teste *</label>
                     <select id="reg-status" required onchange="toggleCancelado()" class="w-full border border-blue-200 bg-blue-50 rounded-xl py-2.5 px-3 shadow-sm font-black text-blue-800">
                         <option value="Agendado">Agendado</option>
+                        <option value="Em andamento">Em andamento</option>
                         <option value="Concluído">Concluído</option>
                         <option value="Cancelado">Cancelado</option>
                     </select>
@@ -830,6 +835,33 @@
             const txtMotivo = document.getElementById('reg-comentarios');
             const lblMotivo = document.getElementById('lbl-comentario');
             const btnToggle = document.getElementById('btn-toggle-comentario');
+            const campoPedido = document.getElementById('reg-pedido');
+            const campoPedidoContainer = document.getElementById('campo-pedido-container');
+            const checklistBox = document.querySelector('.bg-slate-50.p-5.rounded-2xl.border.border-slate-200');
+            
+            // Ajusta campos obrigatórios baseado no status
+            if (status === 'Em andamento') {
+                campoPedido.required = false;
+                campoPedido.classList.remove('border-red-300');
+                campoPedido.classList.add('border-slate-200');
+                
+                // Oculta campo Nº do Pedido completamente
+                if (campoPedidoContainer) campoPedidoContainer.classList.add('hidden');
+                
+                // Esconde checklist
+                if (checklistBox) checklistBox.classList.add('hidden');
+            } else {
+                campoPedido.required = true;
+                // Mantém borda normal, sem vermelho
+                campoPedido.classList.remove('border-red-300');
+                campoPedido.classList.add('border-slate-200');
+                
+                // Mostra campo Nº do Pedido
+                if (campoPedidoContainer) campoPedidoContainer.classList.remove('hidden');
+                
+                // Mostra checklist
+                if (checklistBox) checklistBox.classList.remove('hidden');
+            }
             
             if (status === 'Cancelado') {
                 txtMotivo.required = true;
@@ -1011,6 +1043,15 @@
                 return;
             }
             
+            if (statusVal === 'Em andamento') {
+                // Para "Em andamento", o checklist não é obrigatório
+                // Se estiver preenchido, mantém os valores, senão define como false
+                const chkOrValue = chkOr ? 'true' : 'false';
+                const chkAnValue = chkAn ? 'true' : 'false';
+                document.getElementById('chk-orientacao-val').value = chkOrValue;
+                document.getElementById('chk-anexo-val').value = chkAnValue;
+            }
+            
             // Aviso para checklist incompleto em agendamentos
             if (!chkOr || !chkAn) {
                 const checklistItems = [];
@@ -1154,6 +1195,7 @@
                 
                 const statusIcon = app.status === 'Concluído' ? '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-green-100 text-green-600" title="Concluído"><i class="fas fa-check-double"></i></div>' : 
                                    app.status === 'Cancelado' ? '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-red-100 text-red-600" title="Cancelado"><i class="fas fa-ban"></i></div>' : 
+                                   app.status === 'Em andamento' ? '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-purple-100 text-purple-600" title="Em andamento"><i class="fas fa-spinner"></i></div>' :
                                    '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-yellow-100 text-yellow-600" title="Agendado"><i class="fas fa-clock"></i></div>';
                 
                 const checklistIcon = isChecklistComplete 
@@ -1234,6 +1276,7 @@
             const tresp = indData.filter(a => a.exame === 'TRESP');
             const tsbac = indData.filter(a => a.exame === 'TSBAC');
             const concluidos = indData.filter(a => a.status === 'Concluído');
+            const andamento = indData.filter(a => a.status === 'Em andamento');
             const pendentes = indData.filter(a => a.status === 'Agendado');
             const cancelados = indData.filter(a => a.status === 'Cancelado');
             
@@ -1241,6 +1284,7 @@
             document.getElementById('kpi-tresp').innerText = tresp.length;
             document.getElementById('kpi-tsbac').innerText = tsbac.length;
             document.getElementById('kpi-concluidos').innerText = concluidos.length;
+            document.getElementById('kpi-andamento').innerText = andamento.length;
             document.getElementById('kpi-pendentes').innerText = pendentes.length;
             document.getElementById('kpi-cancelados').innerText = cancelados.length;
 
@@ -1410,6 +1454,10 @@
                     bgClass = 'bg-slate-100 opacity-70 border-slate-200';
                     textColor = 'text-slate-400 line-through';
                     accentColor = 'bg-slate-400';
+                } else if (app.status === 'Em andamento') {
+                    bgClass = 'bg-purple-50 border-purple-200';
+                    textColor = 'text-purple-700';
+                    accentColor = 'bg-purple-600';
                 } else if (app.status === 'Concluído') {
                     bgClass = 'bg-green-50 border-green-200';
                     textColor = 'text-green-700';
@@ -1419,9 +1467,15 @@
                 }
                 
                 const isChecklistComplete = app.chkOrientacao && app.chkAnexo;
-                const checklistBadge = isChecklistComplete 
-                    ? '<div class="h-8 w-8 rounded-md border border-blue-200 bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm" title="Checklist Completo"><i class="fas fa-clipboard-check"></i></div>' 
-                    : '<div class="h-8 w-8 rounded-md border border-slate-200 bg-slate-50 text-slate-400 flex items-center justify-center shadow-sm" title="Checklist Incompleto"><i class="fas fa-clipboard-list"></i></div>';
+                let checklistBadge;
+                if (app.status === 'Em andamento') {
+                    // Para "Em andamento", não mostra aviso de checklist incompleto
+                    checklistBadge = '<div class="h-8 w-8 rounded-md border border-purple-200 bg-purple-50 text-purple-600 flex items-center justify-center shadow-sm" title="Em andamento"><i class="fas fa-spinner"></i></div>';
+                } else {
+                    checklistBadge = isChecklistComplete 
+                        ? '<div class="h-8 w-8 rounded-md border border-blue-200 bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm" title="Checklist Completo"><i class="fas fa-clipboard-check"></i></div>' 
+                        : '<div class="h-8 w-8 rounded-md border border-slate-200 bg-slate-50 text-slate-400 flex items-center justify-center shadow-sm" title="Checklist Incompleto"><i class="fas fa-clipboard-list"></i></div>';
+                }
                 
                 return `
                 <div class="border rounded-xl p-4 ${bgClass} relative overflow-hidden">
@@ -1438,7 +1492,10 @@
                     <div class="pl-2 pt-3 border-t border-slate-200 mt-3 flex justify-between items-center">
                         <div class="flex flex-col">
                             <span class="text-[10px] font-bold text-slate-500">👤 ${formatAtendenteName(app.atendente)}</span>
-                            <span class="text-[10px] font-bold text-slate-500 mt-0.5">Pedido: ${app.pedido}</span>
+                            ${app.status === 'Em andamento' 
+                                ? '<span class="text-[10px] font-bold text-purple-600 mt-0.5">🔄 Em andamento</span>' 
+                                : `<span class="text-[10px] font-bold text-slate-500 mt-0.5">Pedido: ${app.pedido}</span>`
+                            }
                         </div>
                         <div class="flex gap-2 items-center">
                             <a href="https://wa.me/55${app.contato.replace(/\D/g, '')}" target="_blank" class="h-8 w-8 rounded-md border border-green-200 bg-white text-green-600 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all shadow-sm" title="WhatsApp"><i class="fab fa-whatsapp text-lg"></i></a>
