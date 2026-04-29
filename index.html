@@ -1039,37 +1039,36 @@
             const chkOr = document.getElementById('chk-orientacao-val').value === 'true';
             const chkAn = document.getElementById('chk-anexo-val').value === 'true';
             
+            // Se o status for "Em andamento", pula toda a validação de checklist e continua diretamente
+            if (statusVal === 'Em andamento') {
+                // Para "Em andamento", o checklist não é obrigatório
+                // Define os valores como false para garantir consistência
+                document.getElementById('chk-orientacao-val').value = 'false';
+                document.getElementById('chk-anexo-val').value = 'false';
+                proceedWithSave(id, atendenteInput, false, false, statusVal);
+                return;
+            }
+            
+            // Validação específica para status "Concluído"
             if (statusVal === 'Concluído' && (!chkOr || !chkAn)) {
                 showNotification("ERRO: Para marcar o status como Concluído, todo o checklist (Orientação e Anexo) deve estar ativado.", "error");
                 return;
             }
             
-            if (statusVal === 'Em andamento') {
-                // Para "Em andamento", o checklist não é obrigatório
-                // Se estiver preenchido, mantém os valores, senão define como false
-                const chkOrValue = chkOr ? 'true' : 'false';
-                const chkAnValue = chkAn ? 'true' : 'false';
-                document.getElementById('chk-orientacao-val').value = chkOrValue;
-                document.getElementById('chk-anexo-val').value = chkAnValue;
-            }
-            
-            // Aviso para checklist incompleto em agendamentos (exceto para "Em andamento")
+            // Aviso para checklist incompleto em outros status (exceto "Em andamento")
             if (!chkOr || !chkAn) {
-                // Não mostrar alerta para status "Em andamento"
-                if (statusVal !== 'Em andamento') {
-                    const checklistItems = [];
-                    if (!chkOr) checklistItems.push("Enviar orientação ao paciente");
-                    if (!chkAn) checklistItems.push("Anexar guia no sistema UniLab");
-                    
-                    // Salvar ação pendente e mostrar modal
-                    pendingChecklistAction = () => {
-                        // Continuar com o salvamento
-                        proceedWithSave(id, atendenteInput, chkOr, chkAn, statusVal);
-                    };
-                    
-                    showChecklistConfirmModal(checklistItems);
-                    return;
-                }
+                const checklistItems = [];
+                if (!chkOr) checklistItems.push("Enviar orientação ao paciente");
+                if (!chkAn) checklistItems.push("Anexar guia no sistema UniLab");
+                
+                // Salvar ação pendente e mostrar modal
+                pendingChecklistAction = () => {
+                    // Continuar com o salvamento
+                    proceedWithSave(id, atendenteInput, chkOr, chkAn, statusVal);
+                };
+                
+                showChecklistConfirmModal(checklistItems);
+                return;
             }
 
             // Se não houver problema com checklist, continuar com validação
