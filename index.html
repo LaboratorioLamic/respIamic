@@ -567,6 +567,59 @@
         </div>
     </div>
 
+    <!-- Modal de Alerta de Data Passada -->
+    <div id="modal-past-date" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[120] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/20 transform transition-all">
+            <div class="bg-gradient-to-r from-red-500 to-pink-600 p-6 text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+                
+                <div class="flex items-center gap-4 relative z-10">
+                    <div class="h-14 w-14 bg-white/20 rounded-xl flex items-center justify-center animate-pulse">
+                        <i class="fas fa-calendar-times text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-xl">Data Passada</h3>
+                        <p class="text-[10px] text-white/80 font-bold uppercase tracking-widest">Alerta de agendamento</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div class="mb-6">
+                    <div class="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-4">
+                        <div class="flex items-start gap-3">
+                            <div class="h-8 w-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <i class="fas fa-exclamation text-white text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-red-800 font-bold text-lg mb-2">⚠️ ATENÇÃO!</p>
+                                <p class="text-red-700 font-medium">Você está tentando marcar um exame em uma data que já passou.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                        <p class="text-slate-700 text-sm font-medium mb-2">
+                            <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                            Deseja continuar com o agendamento mesmo assim?
+                        </p>
+                        <p class="text-slate-600 text-xs">Esta ação irá criar um agendamento retroativo.</p>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button onclick="confirmPastDate()" class="flex-1 bg-gradient-to-r from-red-500 to-pink-600 text-white font-black py-3 rounded-xl hover:shadow-lg transition-all uppercase tracking-widest text-xs transform hover:scale-105">
+                        <i class="fas fa-check mr-2"></i>Sim, Continuar
+                    </button>
+                    <button onclick="cancelPastDate()" class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-arrow-left mr-2"></i>Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // CONFIGURAÇÃO DO FIREBASE
         const firebaseConfig = {
@@ -1069,6 +1122,14 @@
         // REGRAS DE NEGÓCIO
         function validateAppointment(dataObj) {
             const appDate = new Date(dataObj.data + 'T12:00:00');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Zerar horas para comparação apenas de datas
+            
+            // Verificar se a data é anterior a hoje
+            if (appDate < today) {
+                return "DATA_PASSADA";
+            }
+            
             const dayOfWeek = appDate.getDay();
             const startTime = dataObj.horaInicio;
             
@@ -1185,10 +1246,24 @@
             
             const error = validateAppointment(record);
             if (error) {
-                showNotification(error, "error");
-                return;
+                if (error === "DATA_PASSADA") {
+                    // Mostrar modal elegante de confirmação para data passada
+                    showPastDateModal(() => {
+                        // Usuário confirmou, continuar com o salvamento
+                        proceedWithSaveAfterValidation(record, id, chkOr, chkAn, statusVal);
+                    });
+                    return;
+                } else {
+                    showNotification(error, "error");
+                    return;
+                }
             }
             
+            // Se não houver erro, continuar com salvamento normal
+            proceedWithSaveAfterValidation(record, id, chkOr, chkAn, statusVal);
+        }
+
+        function proceedWithSaveAfterValidation(record, id, chkOr, chkAn, statusVal) {
             if(id) appointments = appointments.map(a => a.id == id ? record : a); else appointments.push(record);
             saveAppointmentsToFirebase();
             showNotification(id ? "Agendamento atualizado com sucesso!" : "Agendamento criado com sucesso!", "success");
@@ -1504,6 +1579,27 @@
         // MODAIS
         function closeModals() { 
             document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); 
+        }
+
+        // Funções para modal de data passada
+        let pendingPastDateAction = null;
+
+        function showPastDateModal(callback) {
+            pendingPastDateAction = callback;
+            document.getElementById('modal-past-date').classList.add('active');
+        }
+
+        function confirmPastDate() {
+            document.getElementById('modal-past-date').classList.remove('active');
+            if (pendingPastDateAction) {
+                pendingPastDateAction();
+                pendingPastDateAction = null;
+            }
+        }
+
+        function cancelPastDate() {
+            document.getElementById('modal-past-date').classList.remove('active');
+            pendingPastDateAction = null;
         }
         
         function openRecordModal() {
