@@ -931,6 +931,16 @@
                 
                 // Esconde checklist
                 if (checklistBox) checklistBox.classList.add('hidden');
+            } else if (status === 'Cancelado') {
+                campoPedido.required = false;
+                campoPedido.classList.remove('border-red-300');
+                campoPedido.classList.add('border-slate-200');
+                
+                // Mostra campo Nº do Pedido (mas não obrigatório)
+                if (campoPedidoContainer) campoPedidoContainer.classList.remove('hidden');
+                
+                // Mostra checklist (mas não obrigatório)
+                if (checklistBox) checklistBox.classList.remove('hidden');
             } else {
                 campoPedido.required = true;
                 // Mantém borda normal, sem vermelho
@@ -1183,9 +1193,9 @@
             const chkOr = document.getElementById('chk-orientacao-val').value === 'true';
             const chkAn = document.getElementById('chk-anexo-val').value === 'true';
             
-            // Se o status for "Em andamento", pula toda a validação de checklist e continua diretamente
-            if (statusVal === 'Em andamento') {
-                // Para "Em andamento", o checklist não é obrigatório
+            // Se o status for "Em andamento" ou "Cancelado", pula toda a validação de checklist e continua diretamente
+            if (statusVal === 'Em andamento' || statusVal === 'Cancelado') {
+                // Para "Em andamento" e "Cancelado", o checklist não é obrigatório
                 // Define os valores como false para garantir consistência
                 document.getElementById('chk-orientacao-val').value = 'false';
                 document.getElementById('chk-anexo-val').value = 'false';
