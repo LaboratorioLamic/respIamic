@@ -1167,7 +1167,6 @@
             
             const samePatient = appointments.filter(a => 
                 normalizeStr(a.paciente) === normalizeStr(dataObj.paciente) && 
-                parseInt(a.idade) === parseInt(dataObj.idade) && 
                 a.id !== dataObj.id && 
                 a.status !== 'Cancelado'
             );
