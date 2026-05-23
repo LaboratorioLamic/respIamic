@@ -499,6 +499,7 @@
 
                 <div class="col-span-1 md:col-span-4 mt-2 flex gap-4">
                     <button type="submit" class="flex-1 bg-navy-900 text-white font-black py-4 rounded-2xl hover:bg-blue-600 shadow-xl transition-all uppercase tracking-widest text-xs">Confirmar Salvar</button>
+                    <button type="button" onclick="duplicateRecord()" title="Duplicar agendamento mantendo paciente, idade, WhatsApp e Nº do Pedido" class="px-4 py-4 border-2 border-blue-200 bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white rounded-2xl font-black transition-all text-xs flex items-center gap-2 uppercase tracking-widest"><i class="fas fa-copy"></i> Duplicar</button>
                     <button type="button" onclick="closeModals()" class="px-8 py-4 border-2 border-slate-100 rounded-2xl font-black text-slate-400 hover:bg-slate-50 transition-all text-xs uppercase tracking-widest">Cancelar</button>
                 </div>
             </form>
@@ -1025,6 +1026,25 @@
                 document.getElementById('box-motivo-perda').classList.add('hidden');
                 document.getElementById('reg-motivo-perda').value = '';
             }
+        }
+
+        // DUPLICAR AGENDAMENTO
+        function duplicateRecord() {
+            const paciente = document.getElementById('reg-paciente').value;
+            const idade    = document.getElementById('reg-idade').value;
+            const contato  = document.getElementById('reg-contato').value;
+            const pedido   = document.getElementById('reg-pedido').value;
+
+            closeModals();
+
+            // Pequeno delay para garantir que o modal fechou antes de reabrir
+            setTimeout(() => {
+                openRecordModal();
+                document.getElementById('reg-paciente').value = paciente;
+                document.getElementById('reg-idade').value    = idade;
+                document.getElementById('reg-contato').value  = contato;
+                document.getElementById('reg-pedido').value   = pedido;
+            }, 150);
         }
 
         // MOTIVOS DE PERDA
