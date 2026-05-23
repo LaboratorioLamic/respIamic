@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Recurse -Force)",
+      "Bash(Select-Object FullName)",
+      "Bash(cd \"/c/Users/Lamic sistemas/Documents/GitHub/respIamic\" && find . -type f -name \"*.json\" -o -name \"*.js\" -o -name \"*.jsx\" -o -name \"*.html\" | head -40)",
+      "Read(//c/c/Users/Lamic sistemas/Documents/GitHub/**)"
+    ]
+  }
+}

@@ -484,6 +484,17 @@
                 <div id="box-motivo" class="col-span-1 md:col-span-4 bg-slate-50 p-5 rounded-2xl border border-slate-200 transition-all hidden">
                     <label id="lbl-comentario" class="block text-[10px] font-black text-slate-400 uppercase mb-2">Comentários Operacionais (Opcional)</label>
                     <textarea id="reg-comentarios" rows="2" class="w-full border border-slate-200 bg-white rounded-xl py-3 px-4 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" placeholder="Observações do exame ou motivo do cancelamento..."></textarea>
+                    <div id="box-motivo-perda" class="hidden mt-4">
+                        <label class="block text-[10px] font-black text-red-500 uppercase mb-2">Motivo de Perda *</label>
+                        <div class="flex gap-2">
+                            <select id="reg-motivo-perda" class="flex-1 border border-red-200 bg-white rounded-xl py-2.5 px-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-red-400 transition-all text-sm text-slate-700">
+                                <option value="">— Selecione um motivo —</option>
+                            </select>
+                            <button type="button" onclick="openMotivosPerdaModal()" title="Gerenciar motivos de perda" class="px-3 py-2.5 bg-red-100 hover:bg-red-500 text-red-600 hover:text-white border border-red-200 rounded-xl transition-all shadow-sm flex items-center justify-center">
+                                <i class="fas fa-plus text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="col-span-1 md:col-span-4 mt-2 flex gap-4">
@@ -530,6 +541,33 @@
                 <input type="hidden" id="obs-id">
                 <textarea id="obs-text" rows="6" class="w-full border-slate-200 rounded-2xl p-5 border focus:outline-none focus:ring-2 focus:ring-navy-800 text-sm shadow-inner bg-slate-50" placeholder="Insira observações médicas..."></textarea>
                 <button onclick="saveObservation()" class="w-full mt-6 bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-navy-900 transition-all uppercase tracking-widest text-xs">Salvar Anotação</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL MOTIVOS DE PERDA -->
+    <div id="modal-motivos-perda" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[150] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="bg-red-600 p-6 text-white flex justify-between items-center">
+                <div>
+                    <h3 class="font-black uppercase text-sm tracking-widest">Motivos de Perda</h3>
+                    <p class="text-[10px] text-red-200 font-bold uppercase tracking-widest mt-0.5">Gerenciar lista de motivos</p>
+                </div>
+                <button onclick="closeMotivosPerdaModal()"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6">
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="input-novo-motivo" placeholder="Novo motivo de perda..." class="flex-1 border border-slate-200 rounded-xl py-2.5 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 transition-all" onkeydown="if(event.key==='Enter'){event.preventDefault();addMotivoPerda();}">
+                    <button type="button" onclick="addMotivoPerda()" class="px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-sm flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Adicionar
+                    </button>
+                </div>
+                <div id="lista-motivos-perda" class="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
+                    <!-- motivos renderizados aqui -->
+                </div>
+            </div>
+            <div class="px-6 pb-6">
+                <button onclick="closeMotivosPerdaModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black py-3 rounded-2xl transition-all uppercase tracking-widest text-xs">Fechar</button>
             </div>
         </div>
     </div>
@@ -657,6 +695,7 @@
         });
 
         let atendentesList = [];
+        let motivosPerdaList = [];
         let currentDate = new Date();
         let tablePage = 1;
         const itemsPerPage = 20;
@@ -832,6 +871,7 @@
         window.onload = () => {
             loadAtendentes();
             loadAppointmentsFromFirebase();
+            loadMotivosPerdaFromFirebase();
             setupHolidaysRealtimeListener();
             
             // Verificar sincronização inicial após carregar
@@ -958,7 +998,7 @@
                 txtMotivo.required = true;
                 boxMotivo.classList.remove('hidden');
                 btnToggle.classList.add('hidden');
-                
+
                 boxMotivo.classList.add('bg-red-50', 'border-red-200');
                 boxMotivo.classList.remove('bg-slate-50', 'border-slate-200');
                 lblMotivo.innerText = "Motivo do Cancelamento *";
@@ -966,11 +1006,14 @@
                 lblMotivo.classList.remove('text-slate-400');
                 txtMotivo.classList.add('focus:ring-red-500');
                 txtMotivo.classList.remove('focus:ring-blue-500');
+
+                document.getElementById('box-motivo-perda').classList.remove('hidden');
+                updateMotivosPerdaSelect();
             } else {
                 txtMotivo.required = false;
                 boxMotivo.classList.add('hidden');
                 btnToggle.classList.remove('hidden');
-                
+
                 boxMotivo.classList.remove('bg-red-50', 'border-red-200');
                 boxMotivo.classList.add('bg-slate-50', 'border-slate-200');
                 lblMotivo.innerText = "Comentários Operacionais (Opcional)";
@@ -978,7 +1021,101 @@
                 lblMotivo.classList.add('text-slate-400');
                 txtMotivo.classList.remove('focus:ring-red-500');
                 txtMotivo.classList.add('focus:ring-blue-500');
+
+                document.getElementById('box-motivo-perda').classList.add('hidden');
+                document.getElementById('reg-motivo-perda').value = '';
             }
+        }
+
+        // MOTIVOS DE PERDA
+        function loadMotivosPerdaFromFirebase() {
+            return database.ref('motivosPerda').once('value').then(snapshot => {
+                const data = snapshot.val();
+                motivosPerdaList = data ? Object.values(data) : [];
+                updateMotivosPerdaSelect();
+            }).catch(() => {
+                motivosPerdaList = JSON.parse(localStorage.getItem('motivosPerda') || '[]');
+                updateMotivosPerdaSelect();
+            });
+        }
+
+        function saveMotivosPerdaToFirebase() {
+            const obj = {};
+            motivosPerdaList.forEach((m, i) => { obj[i] = m; });
+            database.ref('motivosPerda').set(obj).catch(() => {});
+            localStorage.setItem('motivosPerda', JSON.stringify(motivosPerdaList));
+            updateMotivosPerdaSelect();
+        }
+
+        function updateMotivosPerdaSelect() {
+            const sel = document.getElementById('reg-motivo-perda');
+            if (!sel) return;
+            const current = sel.value;
+            sel.innerHTML = '<option value="">— Selecione um motivo —</option>' +
+                motivosPerdaList.map(m => `<option value="${m}"${m === current ? ' selected' : ''}>${m}</option>`).join('');
+        }
+
+        function openMotivosPerdaModal() {
+            renderMotivosPerdaList();
+            document.getElementById('modal-motivos-perda').classList.add('active');
+        }
+
+        function closeMotivosPerdaModal() {
+            document.getElementById('modal-motivos-perda').classList.remove('active');
+            document.getElementById('input-novo-motivo').value = '';
+        }
+
+        function renderMotivosPerdaList() {
+            const container = document.getElementById('lista-motivos-perda');
+            if (motivosPerdaList.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 text-xs text-center py-4">Nenhum motivo cadastrado.</p>';
+                return;
+            }
+            container.innerHTML = motivosPerdaList.map((m, i) => `
+                <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                    <span id="motivo-text-${i}" class="flex-1 text-sm text-slate-700">${m}</span>
+                    <input id="motivo-input-${i}" type="text" value="${m}" class="flex-1 hidden border border-slate-200 rounded-lg py-1 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" onkeydown="if(event.key==='Enter'){saveEditMotivo(${i});}">
+                    <button onclick="startEditMotivo(${i})" id="btn-edit-motivo-${i}" class="text-slate-400 hover:text-blue-500 transition-colors px-1"><i class="fas fa-pen text-xs"></i></button>
+                    <button onclick="saveEditMotivo(${i})" id="btn-save-motivo-${i}" class="text-green-500 hover:text-green-700 transition-colors px-1 hidden"><i class="fas fa-check text-xs"></i></button>
+                    <button onclick="deleteMotivoPerda(${i})" class="text-slate-400 hover:text-red-500 transition-colors px-1"><i class="fas fa-trash text-xs"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function addMotivoPerda() {
+            const input = document.getElementById('input-novo-motivo');
+            const val = input.value.trim();
+            if (!val) return;
+            if (motivosPerdaList.includes(val)) {
+                showNotification('Este motivo já existe na lista.', 'warning', 3000);
+                return;
+            }
+            motivosPerdaList.push(val);
+            saveMotivosPerdaToFirebase();
+            input.value = '';
+            renderMotivosPerdaList();
+        }
+
+        function startEditMotivo(i) {
+            document.getElementById(`motivo-text-${i}`).classList.add('hidden');
+            document.getElementById(`motivo-input-${i}`).classList.remove('hidden');
+            document.getElementById(`btn-edit-motivo-${i}`).classList.add('hidden');
+            document.getElementById(`btn-save-motivo-${i}`).classList.remove('hidden');
+            document.getElementById(`motivo-input-${i}`).focus();
+        }
+
+        function saveEditMotivo(i) {
+            const val = document.getElementById(`motivo-input-${i}`).value.trim();
+            if (!val) return;
+            motivosPerdaList[i] = val;
+            saveMotivosPerdaToFirebase();
+            renderMotivosPerdaList();
+        }
+
+        function deleteMotivoPerda(i) {
+            motivosPerdaList.splice(i, 1);
+            saveMotivosPerdaToFirebase();
+            renderMotivosPerdaList();
         }
 
         // FETCH ATENDENTES
@@ -1262,7 +1399,8 @@
                 chkAnexo: chkAn,
                 chkConcluido: statusVal === 'Concluído', // legado/garantia
                 status: statusVal,
-                comentarios: document.getElementById('reg-comentarios').value
+                comentarios: document.getElementById('reg-comentarios').value,
+                motivoPerda: statusVal === 'Cancelado' ? document.getElementById('reg-motivo-perda').value : ''
             };
             
             // NOTA: O status "atrasado" é calculado dinamicamente nas funções de renderização
@@ -1948,11 +2086,17 @@
             // Restaura Status
             document.getElementById('reg-status').value = app.status;
             document.getElementById('reg-comentarios').value = app.comentarios || '';
-            
+
             // Trata exibição do campo comentário
             toggleCancelado();
             if (app.comentarios && app.status !== 'Cancelado') {
                 document.getElementById('box-motivo').classList.remove('hidden');
+            }
+
+            // Restaura Motivo de Perda
+            if (app.status === 'Cancelado' && app.motivoPerda) {
+                updateMotivosPerdaSelect();
+                document.getElementById('reg-motivo-perda').value = app.motivoPerda;
             }
             
             document.getElementById('modal-title').innerText = "Editar Agendamento";
