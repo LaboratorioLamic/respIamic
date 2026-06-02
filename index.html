@@ -2004,10 +2004,12 @@
 
         function getFilteredAuditLog() {
             let filtered = [...auditLog];
-            if (historyFilter.type === 'day') {
-                filtered = filtered.filter(e => e.data === historyFilter.date);
+            if (historyFilter.type === 'global') {
+                filtered = filtered.filter(e => !(e.action && e.action.startsWith('user_')));
+            } else if (historyFilter.type === 'day') {
+                filtered = filtered.filter(e => e.data === historyFilter.date && !(e.action && e.action.startsWith('user_')));
             } else if (historyFilter.type === 'appointment') {
-                filtered = filtered.filter(e => e.appointmentId === historyFilter.id);
+                filtered = filtered.filter(e => e.appointmentId === historyFilter.id && !(e.action && e.action.startsWith('user_')));
             } else if (historyFilter.type === 'users') {
                 filtered = filtered.filter(e => e.action && e.action.startsWith('user_'));
             }
