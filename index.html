@@ -97,7 +97,8 @@
                 <h2 class="text-navy-900 font-black text-xl uppercase tracking-tighter flex items-center gap-3">
                     <i class="fas fa-calendar-day text-blue-500"></i> Visão Geral de Agendamentos
                 </h2>
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <button onclick="openHistoryModal({type:'global'})" title="Rastreabilidade" class="h-10 w-10 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-lg flex items-center justify-center font-bold transition-all"><i class="fas fa-clock"></i></button>
                     <button onclick="changeMonth(-1)" class="h-10 w-10 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center font-bold transition-all"><i class="fas fa-chevron-left"></i></button>
                     <h3 id="current-month-label" class="font-black text-navy-900 uppercase tracking-widest text-sm w-40 text-center">Abril 2026</h3>
                     <button onclick="changeMonth(1)" class="h-10 w-10 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center font-bold transition-all"><i class="fas fa-chevron-right"></i></button>
@@ -154,6 +155,12 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Elementos ocultos para manter compatibilidade com renderTraceability() -->
+            <span id="trace-created" class="hidden"></span>
+            <span id="trace-edited" class="hidden"></span>
+            <span id="trace-deleted" class="hidden"></span>
+            <div id="traceability-list" class="hidden"></div>
         </section>
 
         <section id="tab-dados" class="tab-content container mx-auto">
@@ -380,9 +387,12 @@
                     <h3 id="modal-title" class="font-black uppercase tracking-tight text-xl">Novo Agendamento</h3>
                     <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Protocolo do paciente</p>
                 </div>
-                <button onclick="closeModals()" class="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-all"><i class="fas fa-times text-xl"></i></button>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="btn-record-history" onclick="openAppointmentHistory()" title="Histórico do agendamento" class="h-10 w-10 hidden items-center justify-center rounded-full hover:bg-white/10 transition-all"><i class="fas fa-clock text-xl"></i></button>
+                    <button type="button" onclick="closeModals()" class="h-10 w-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-all"><i class="fas fa-times text-xl"></i></button>
+                </div>
             </div>
-            
+
             <form id="record-form" onsubmit="saveRecord(event)" class="p-8 grid grid-cols-1 md:grid-cols-4 gap-6">
                 <input type="hidden" id="reg-id">
                 
@@ -520,7 +530,10 @@
                         </div>
                     </button>
                 </div>
-                <button onclick="closeModals()"><i class="fas fa-times text-xl"></i></button>
+                <div class="flex items-center gap-2">
+                    <button onclick="openDayHistory()" title="Histórico do dia" class="h-9 w-9 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all"><i class="fas fa-clock"></i></button>
+                    <button onclick="closeModals()" class="h-9 w-9 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all"><i class="fas fa-times text-xl"></i></button>
+                </div>
             </div>
             <div class="p-6">
                 <div id="day-appointments-list" class="flex flex-col gap-3">
@@ -667,6 +680,236 @@
         </div>
     </div>
 
+    <!-- Modal de Senha de Configurações -->
+    <div id="modal-config-password" class="modal fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-slate-100">
+            <div class="bg-gradient-to-br from-navy-900 to-blue-900 p-6 text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 pointer-events-none"></div>
+                <div class="flex items-center gap-4 relative z-10">
+                    <div class="h-12 w-12 bg-white/15 rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <i id="config-pwd-icon" class="fas fa-lock text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 id="config-pwd-title" class="font-black uppercase tracking-tight text-lg">Acesso Restrito</h3>
+                        <p id="config-pwd-subtitle" class="text-blue-300 text-[10px] font-bold uppercase tracking-widest mt-0.5">Configurações do sistema</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <p id="config-pwd-desc" class="text-slate-600 text-sm font-medium mb-5"></p>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Senha</label>
+                        <div class="relative">
+                            <input type="password" id="config-pwd-input" placeholder="••••••••" autocomplete="current-password"
+                                class="w-full border-2 border-slate-200 rounded-xl py-3 px-4 pr-10 font-bold text-slate-700 text-sm focus:outline-none focus:border-blue-400 transition-all"
+                                onkeydown="if(event.key==='Enter') submitConfigPassword()">
+                            <button type="button" onclick="togglePwdVisibility('config-pwd-input','config-pwd-eye')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                <i id="config-pwd-eye" class="fas fa-eye text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="config-pwd-confirm-box" class="hidden">
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Confirmar Senha</label>
+                        <div class="relative">
+                            <input type="password" id="config-pwd-confirm" placeholder="••••••••" autocomplete="new-password"
+                                class="w-full border-2 border-slate-200 rounded-xl py-3 px-4 pr-10 font-bold text-slate-700 text-sm focus:outline-none focus:border-blue-400 transition-all"
+                                onkeydown="if(event.key==='Enter') submitConfigPassword()">
+                            <button type="button" onclick="togglePwdVisibility('config-pwd-confirm','config-pwd-eye2')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                <i id="config-pwd-eye2" class="fas fa-eye text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p id="config-pwd-error" class="text-red-600 text-xs font-bold hidden"></p>
+                </div>
+
+                <div class="flex gap-3 mt-5">
+                    <button onclick="document.getElementById('modal-config-password').classList.remove('active')"
+                        class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        Cancelar
+                    </button>
+                    <button onclick="submitConfigPassword()"
+                        class="flex-1 bg-navy-900 hover:bg-blue-700 text-white font-black py-3 rounded-2xl transition-all uppercase tracking-widest text-xs shadow-lg">
+                        <i id="config-pwd-btn-icon" class="fas fa-unlock mr-2"></i><span id="config-pwd-btn-label">Entrar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Histórico de Alterações -->
+    <div id="modal-history" class="modal fixed inset-0 bg-black/70 backdrop-blur-sm z-[160] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden border border-slate-100">
+            <!-- Header -->
+            <div class="bg-navy-900 p-5 text-white">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-history text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-black uppercase tracking-tight text-base">Histórico de Alterações</h3>
+                            <p id="history-subtitle" class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-0.5">Rastreabilidade geral</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="toggleHistoryMonthPicker(event)" title="Filtrar por mês" id="btn-history-month-toggle" class="h-9 w-9 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all">
+                            <i class="fas fa-calendar-alt text-sm"></i>
+                        </button>
+                        <input type="hidden" id="history-month-filter" value="">
+                        <button id="btn-history-clear-all" onclick="confirmClearAllAuditLog()" title="Apagar toda rastreabilidade" class="h-9 w-9 bg-white/10 hover:bg-red-500 rounded-xl items-center justify-center transition-all hidden">
+                            <i class="fas fa-trash-alt text-sm"></i>
+                        </button>
+                        <button onclick="document.getElementById('modal-history').classList.remove('active')" class="h-9 w-9 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List -->
+            <div id="history-list" class="px-5 py-4 max-h-[55vh] overflow-y-auto divide-y divide-slate-50">
+                <p class="text-center text-slate-400 font-bold uppercase text-xs py-10">Nenhum registro encontrado</p>
+            </div>
+
+            <!-- Pagination -->
+            <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+                <span id="history-pagination-info" class="text-xs font-bold text-slate-500">0 de 0</span>
+                <div class="flex gap-2">
+                    <button onclick="changeHistoryPage(-1)" class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-white transition-all">
+                        <i class="fas fa-chevron-left mr-1"></i>Anterior
+                    </button>
+                    <button onclick="changeHistoryPage(1)" class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-white transition-all">
+                        Próximo<i class="fas fa-chevron-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmação Exclusão de Registro de Rastreabilidade -->
+    <div id="modal-audit-delete-confirm" class="modal fixed inset-0 bg-black/70 backdrop-blur-sm z-[250] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div class="bg-gradient-to-br from-red-600 to-red-800 p-5 text-white relative overflow-hidden">
+                <div class="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full pointer-events-none"></div>
+                <div class="flex items-center gap-3 relative z-10">
+                    <div class="h-11 w-11 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-history text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-base">Excluir Registro</h3>
+                        <p class="text-red-200 text-[10px] font-bold uppercase tracking-widest mt-0.5">Rastreabilidade</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5">
+                <div class="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-5 flex items-start gap-3">
+                    <div class="h-8 w-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i class="fas fa-exclamation text-white text-sm"></i>
+                    </div>
+                    <p class="text-red-700 text-sm font-medium">Este registro de auditoria será <strong>excluído permanentemente</strong> do histórico.</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="document.getElementById('modal-audit-delete-confirm').classList.remove('active')"
+                        class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-arrow-left mr-2"></i>Cancelar
+                    </button>
+                    <button onclick="confirmAuditDeleteEntry()"
+                        class="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white font-black py-3 rounded-2xl hover:from-red-700 hover:to-red-800 shadow-lg shadow-red-200 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-trash-alt mr-2"></i>Excluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Month Picker Dropdown (rastreabilidade) -->
+    <div id="history-month-picker" class="hidden fixed z-[300] w-60 rounded-2xl shadow-2xl overflow-hidden" style="top:0;left:0">
+        <div class="bg-navy-900 px-4 pt-4 pb-2">
+            <div class="flex items-center justify-between mb-4">
+                <button onclick="changePickerYear(-1)" class="h-8 w-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all">
+                    <i class="fas fa-chevron-left text-white text-xs"></i>
+                </button>
+                <span id="picker-year" class="font-black text-white text-lg tracking-wide">2026</span>
+                <button onclick="changePickerYear(1)" class="h-8 w-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all">
+                    <i class="fas fa-chevron-right text-white text-xs"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5 mb-3" id="picker-months"></div>
+        </div>
+        <div class="bg-navy-900 border-t border-white/10 px-4 pb-3">
+            <button onclick="clearHistoryMonthFilter()" class="w-full text-center text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all py-2 flex items-center justify-center gap-1.5">
+                <i class="fas fa-times-circle"></i> Limpar filtro
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação de Exclusão -->
+    <div id="modal-delete-confirm" class="modal fixed inset-0 bg-black/70 backdrop-blur-sm z-[150] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-red-100 transform transition-all">
+            <!-- Header vermelho -->
+            <div class="bg-gradient-to-br from-red-600 to-red-800 p-6 text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20 pointer-events-none"></div>
+                <div class="absolute bottom-0 left-0 w-28 h-28 bg-black/10 rounded-full -ml-14 -mb-14 pointer-events-none"></div>
+                <div class="flex items-center gap-4 relative z-10">
+                    <div class="h-14 w-14 bg-white/20 rounded-2xl flex items-center justify-center shadow-inner flex-shrink-0">
+                        <i class="fas fa-trash-alt text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-xl leading-tight">Excluir Agendamento</h3>
+                        <p class="text-red-200 text-[10px] font-bold uppercase tracking-widest mt-0.5">Ação irreversível</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <!-- Confirmação principal -->
+                <div class="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-4">
+                    <div class="flex items-start gap-3">
+                        <div class="h-8 w-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <i class="fas fa-exclamation text-white text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-red-800 font-black text-sm uppercase tracking-wide mb-1">Tem certeza?</p>
+                            <p class="text-red-700 text-sm font-medium">Este agendamento será <strong>excluído permanentemente</strong> e não poderá ser recuperado.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aviso de remarcação -->
+                <div class="bg-amber-50 border border-amber-300 rounded-2xl p-4 mb-6">
+                    <div class="flex items-start gap-3">
+                        <div class="h-8 w-8 bg-amber-400 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <i class="fas fa-lightbulb text-white text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-amber-800 font-black text-xs uppercase tracking-wide mb-1">Precisa remarcar?</p>
+                            <p class="text-amber-700 text-xs font-medium leading-relaxed">Se o objetivo for <strong>mudar a data</strong>, use a opção <strong>"Editar"</strong> e altere apenas a data — não exclua o agendamento.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campo de confirmação -->
+                <div class="mb-5">
+                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Digite <span class="text-red-600 font-black">SIM</span> para confirmar a exclusão</label>
+                    <input type="text" id="delete-confirm-input" oninput="onDeleteInputChange()" onpaste="return false" autocomplete="off" placeholder='Digite "SIM" aqui...' class="w-full border-2 border-slate-200 rounded-xl py-3 px-4 font-black text-slate-700 text-sm focus:outline-none focus:border-red-400 transition-all tracking-widest uppercase placeholder:normal-case placeholder:font-normal placeholder:tracking-normal">
+                </div>
+
+                <!-- Botões -->
+                <div class="flex gap-3">
+                    <button onclick="cancelDeleteRecord()" class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-2xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-arrow-left mr-2"></i>Cancelar
+                    </button>
+                    <button id="btn-confirm-delete" onclick="confirmDeleteRecord()" disabled class="flex-1 bg-gradient-to-r from-red-300 to-red-400 text-white font-black py-3 rounded-2xl cursor-not-allowed shadow-sm transition-all uppercase tracking-widest text-xs opacity-60">
+                        <i class="fas fa-trash-alt mr-2"></i>Excluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // CONFIGURAÇÃO DO FIREBASE
         const firebaseConfig = {
@@ -701,8 +944,524 @@
         let tablePage = 1;
         const itemsPerPage = 20;
 
+        // AUDIT LOG
+        let auditLog = [];
+        let historyFilter = { type: 'global' };
+        let historyPage = 1;
+        const historyItemsPerPage = 10;
+
+        // AUTENTICAÇÃO DE CONFIGURAÇÕES (session-only — resetado ao recarregar)
+        let configUnlocked = false;
+
         // Gráficos
         let charts = {};
+
+        // ============================================================
+        // AUTENTICAÇÃO — ABA DE CONFIGURAÇÕES
+        // ============================================================
+        async function hashPassword(password) {
+            const data = new TextEncoder().encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function togglePwdVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        async function openConfigPasswordModal() {
+            // Verifica se já existe senha cadastrada
+            const snapshot = await database.ref('config/adminPasswordHash').once('value');
+            const hasPassword = !!snapshot.val();
+
+            const title = document.getElementById('config-pwd-title');
+            const subtitle = document.getElementById('config-pwd-subtitle');
+            const desc = document.getElementById('config-pwd-desc');
+            const confirmBox = document.getElementById('config-pwd-confirm-box');
+            const btnLabel = document.getElementById('config-pwd-btn-label');
+            const btnIcon = document.getElementById('config-pwd-btn-icon');
+            const icon = document.getElementById('config-pwd-icon');
+            const error = document.getElementById('config-pwd-error');
+
+            document.getElementById('config-pwd-input').value = '';
+            document.getElementById('config-pwd-confirm').value = '';
+            error.classList.add('hidden');
+            error.innerText = '';
+
+            if (hasPassword) {
+                title.innerText = 'Acesso Restrito';
+                subtitle.innerText = 'Configurações do sistema';
+                desc.innerText = 'Digite a senha de administrador para acessar as configurações.';
+                confirmBox.classList.add('hidden');
+                btnLabel.innerText = 'Entrar';
+                btnIcon.className = 'fas fa-unlock mr-2';
+                icon.className = 'fas fa-lock text-white text-xl';
+            } else {
+                title.innerText = 'Criar Senha';
+                subtitle.innerText = 'Primeiro acesso';
+                desc.innerText = 'Nenhuma senha cadastrada. Crie uma senha para proteger as configurações.';
+                confirmBox.classList.remove('hidden');
+                btnLabel.innerText = 'Criar Senha';
+                btnIcon.className = 'fas fa-key mr-2';
+                icon.className = 'fas fa-key text-white text-xl';
+            }
+
+            document.getElementById('modal-config-password').classList.add('active');
+            setTimeout(() => document.getElementById('config-pwd-input').focus(), 100);
+        }
+
+        async function submitConfigPassword() {
+            const input = document.getElementById('config-pwd-input').value.trim();
+            const error = document.getElementById('config-pwd-error');
+            error.classList.add('hidden');
+
+            if (!input) {
+                error.innerText = 'Digite a senha.';
+                error.classList.remove('hidden');
+                return;
+            }
+
+            const snapshot = await database.ref('config/adminPasswordHash').once('value');
+            const storedHash = snapshot.val();
+
+            if (!storedHash) {
+                // Primeiro acesso — criar senha
+                const confirm = document.getElementById('config-pwd-confirm').value.trim();
+                if (input !== confirm) {
+                    error.innerText = 'As senhas não coincidem.';
+                    error.classList.remove('hidden');
+                    return;
+                }
+                if (input.length < 4) {
+                    error.innerText = 'A senha deve ter ao menos 4 caracteres.';
+                    error.classList.remove('hidden');
+                    return;
+                }
+                const hash = await hashPassword(input);
+                await database.ref('config/adminPasswordHash').set(hash);
+                configUnlocked = true;
+                document.getElementById('modal-config-password').classList.remove('active');
+                switchTabDirect('config');
+                showNotification('Senha criada com sucesso!', 'success');
+            } else {
+                // Login
+                const hash = await hashPassword(input);
+                if (hash === storedHash) {
+                    configUnlocked = true;
+                    document.getElementById('modal-config-password').classList.remove('active');
+                    switchTabDirect('config');
+                    renderHistoryList();
+                } else {
+                    error.innerText = 'Senha incorreta. Tente novamente.';
+                    error.classList.remove('hidden');
+                    document.getElementById('config-pwd-input').value = '';
+                    document.getElementById('config-pwd-input').focus();
+                }
+            }
+        }
+
+        let _pendingAuditDeleteId = null;
+
+        function deleteAuditLogEntry(id) {
+            if (!configUnlocked) return;
+            _pendingAuditDeleteId = id;
+            document.getElementById('modal-audit-delete-confirm').classList.add('active');
+        }
+
+        function confirmAuditDeleteEntry() {
+            const id = _pendingAuditDeleteId;
+            _pendingAuditDeleteId = null;
+            document.getElementById('modal-audit-delete-confirm').classList.remove('active');
+            if (!id) return;
+            auditLog = auditLog.filter(e => e.id !== id);
+            database.ref(`auditLog/${id}`).remove().catch(console.error);
+            renderHistoryList();
+            renderTraceability();
+        }
+        // ============================================================
+
+        // ============================================================
+        // SISTEMA DE AUDITORIA / HISTÓRICO
+        // ============================================================
+        const _auditFields = [
+            { key: 'data',       label: 'Data',        fmt: v => v ? v.split('-').reverse().join('/') : '—' },
+            { key: 'horaInicio', label: 'Hora início',  fmt: v => v || '—' },
+            { key: 'horaFim',    label: 'Hora fim',     fmt: v => v || '—' },
+            { key: 'paciente',   label: 'Paciente',     fmt: v => v || '—' },
+            { key: 'exame',      label: 'Exame',        fmt: v => v || '—' },
+            { key: 'substrato',  label: 'Substrato',    fmt: v => v || '—' },
+            { key: 'metano',     label: 'Metano',       fmt: v => v || '—' },
+            { key: 'status',     label: 'Status',       fmt: v => v || '—' },
+            { key: 'atendente',  label: 'Atendente',    fmt: v => v || '—' },
+            { key: 'pedido',     label: 'Pedido',       fmt: v => v || '—' },
+            { key: 'idade',      label: 'Idade',        fmt: v => v != null ? String(v) : '—' },
+        ];
+
+        function addAuditLog(action, record, oldRecord) {
+            const changes = [];
+            if (action === 'edit' && oldRecord) {
+                for (const f of _auditFields) {
+                    const oldVal = String(oldRecord[f.key] ?? '');
+                    const newVal = String(record[f.key] ?? '');
+                    if (oldVal !== newVal) {
+                        changes.push({ label: f.label, oldVal: f.fmt(oldRecord[f.key]), newVal: f.fmt(record[f.key]) });
+                    }
+                }
+            }
+            // Não registrar edição se nenhum campo rastreado mudou
+            if (action === 'edit' && changes.length === 0) return;
+
+            const entry = {
+                id: Date.now(),
+                timestamp: new Date().toISOString(),
+                action,
+                appointmentId: record.id,
+                paciente: record.paciente || '—',
+                data: record.data || '',
+                atendente: record.atendente || '',
+                details: `${record.exame || ''} | ${record.substrato || ''} | ${record.horaInicio || ''}–${record.horaFim || ''}`,
+                changes
+            };
+            auditLog.unshift(entry);
+            database.ref(`auditLog/${entry.id}`).set(entry).catch(console.error);
+        }
+
+        function addMotivoAuditLog(action, newVal, oldVal) {
+            const changes = (action === 'motivo_edit' && oldVal)
+                ? [{ label: 'Motivo', oldVal, newVal }]
+                : [];
+            const entry = {
+                id: Date.now(),
+                timestamp: new Date().toISOString(),
+                action,
+                appointmentId: null,
+                paciente: null,
+                data: '',
+                atendente: '',
+                details: action === 'motivo_delete' ? oldVal : newVal,
+                changes
+            };
+            auditLog.unshift(entry);
+            database.ref(`auditLog/${entry.id}`).set(entry).catch(console.error);
+            _refreshHistoryIfOpen();
+        }
+
+        function _refreshHistoryIfOpen() {
+            if (document.getElementById('modal-history').classList.contains('active')) {
+                renderHistoryList();
+            }
+        }
+
+        function loadAuditLogsFromFirebase() {
+            database.ref('auditLog').orderByChild('timestamp').once('value').then(snapshot => {
+                const data = snapshot.val();
+                if (data) {
+                    auditLog = Object.values(data).sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+                } else {
+                    auditLog = [];
+                }
+                renderTraceability();
+            }).catch(console.error);
+        }
+
+        function setupAuditLogRealtimeListener() {
+            database.ref('auditLog').on('value', (snapshot) => {
+                const data = snapshot.val();
+                auditLog = data ? Object.values(data).sort((a, b) => b.timestamp.localeCompare(a.timestamp)) : [];
+                renderTraceability();
+                _refreshHistoryIfOpen();
+            });
+        }
+
+        function _openHistoryCommon() {
+            historyPage = 1;
+            _pickerSelectedMonth = '';
+            document.getElementById('history-month-filter').value = '';
+            const btn = document.getElementById('btn-history-month-toggle');
+            btn.classList.remove('bg-blue-500');
+            btn.classList.add('bg-white/10');
+            // Mostrar lixeira global apenas quando autenticado
+            const trashBtn = document.getElementById('btn-history-clear-all');
+            if (configUnlocked) {
+                trashBtn.classList.remove('hidden');
+                trashBtn.classList.add('flex');
+            } else {
+                trashBtn.classList.add('hidden');
+                trashBtn.classList.remove('flex');
+            }
+            renderHistoryList();
+            document.getElementById('modal-history').classList.add('active');
+        }
+
+        function openDayHistory() {
+            const dateText = document.getElementById('day-details-date').innerText;
+            const parts = dateText.split('/');
+            const isoDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            historyFilter = { type: 'day', date: isoDate };
+            _openHistoryCommon();
+        }
+
+        function openAppointmentHistory() {
+            const id = parseInt(document.getElementById('reg-id').value);
+            if (!id) return;
+            historyFilter = { type: 'appointment', id };
+            _openHistoryCommon();
+        }
+
+        function openHistoryModal(filter) {
+            historyFilter = filter;
+            _openHistoryCommon();
+        }
+
+        function getFilteredAuditLog() {
+            let filtered = [...auditLog];
+            if (historyFilter.type === 'day') {
+                filtered = filtered.filter(e => e.data === historyFilter.date);
+            } else if (historyFilter.type === 'appointment') {
+                filtered = filtered.filter(e => e.appointmentId === historyFilter.id);
+            }
+            const monthInput = document.getElementById('history-month-filter');
+            if (monthInput && monthInput.value) {
+                filtered = filtered.filter(e => e.timestamp && e.timestamp.startsWith(monthInput.value));
+            }
+            return filtered;
+        }
+
+        function renderHistoryList() {
+            const filtered = getFilteredAuditLog();
+            const total = filtered.length;
+            const totalPages = Math.max(1, Math.ceil(total / historyItemsPerPage));
+            if (historyPage > totalPages) historyPage = totalPages;
+            const start = (historyPage - 1) * historyItemsPerPage;
+            const pageItems = filtered.slice(start, start + historyItemsPerPage);
+
+            const subtitles = {
+                global: 'Rastreabilidade geral',
+                day: `Alterações do dia ${historyFilter.date ? historyFilter.date.split('-').reverse().join('/') : ''}`,
+                appointment: 'Histórico do agendamento'
+            };
+            document.getElementById('history-subtitle').innerText = subtitles[historyFilter.type] || '';
+
+            const actionCfg = {
+                create:        { label: 'Criado',            color: 'text-emerald-700 bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500', icon: 'fa-plus-circle' },
+                edit:          { label: 'Editado',           color: 'text-blue-700 bg-blue-50 border-blue-200',          dot: 'bg-blue-500',    icon: 'fa-edit' },
+                delete:        { label: 'Excluído',          color: 'text-red-700 bg-red-50 border-red-200',             dot: 'bg-red-500',     icon: 'fa-trash-alt' },
+                motivo_add:    { label: 'Motivo Adicionado', color: 'text-emerald-700 bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500', icon: 'fa-tag' },
+                motivo_edit:   { label: 'Motivo Editado',    color: 'text-blue-700 bg-blue-50 border-blue-200',          dot: 'bg-blue-500',    icon: 'fa-tag' },
+                motivo_delete: { label: 'Motivo Removido',   color: 'text-red-700 bg-red-50 border-red-200',             dot: 'bg-red-500',     icon: 'fa-tag' }
+            };
+
+            const listEl = document.getElementById('history-list');
+            if (pageItems.length === 0) {
+                listEl.innerHTML = '<p class="text-center text-slate-400 font-bold uppercase text-xs py-10">Nenhum registro encontrado</p>';
+            } else {
+                listEl.innerHTML = pageItems.map(entry => {
+                    const cfg = actionCfg[entry.action] || actionCfg.edit;
+                    const dt = new Date(entry.timestamp);
+                    const dateStr = dt.toLocaleDateString('pt-BR');
+                    const timeStr = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    const aptDate = entry.data ? entry.data.split('-').reverse().join('/') : '—';
+
+                    // Diff block para edições
+                    let diffHtml = '';
+                    const isMotivoAction = entry.action && entry.action.startsWith('motivo_');
+                    if (!isMotivoAction && entry.action === 'edit' && Array.isArray(entry.changes) && entry.changes.length > 0) {
+                        const rows = entry.changes.map(c => `
+                            <div class="flex items-center gap-1.5 flex-wrap py-0.5">
+                                <span class="text-[10px] font-black text-slate-400 uppercase w-20 flex-shrink-0">${c.label}</span>
+                                <span class="text-[11px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded line-through">${c.oldVal}</span>
+                                <i class="fas fa-arrow-right text-slate-300 text-[10px]"></i>
+                                <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">${c.newVal}</span>
+                            </div>`).join('');
+                        diffHtml = `<div class="mt-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 space-y-0.5">${rows}</div>`;
+                    }
+                    if (isMotivoAction && Array.isArray(entry.changes) && entry.changes.length > 0) {
+                        const rows = entry.changes.map(c => `
+                            <div class="flex items-center gap-1.5 flex-wrap py-0.5">
+                                <span class="text-[10px] font-black text-slate-400 uppercase w-20 flex-shrink-0">${c.label}</span>
+                                <span class="text-[11px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded line-through">${c.oldVal}</span>
+                                <i class="fas fa-arrow-right text-slate-300 text-[10px]"></i>
+                                <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">${c.newVal}</span>
+                            </div>`).join('');
+                        diffHtml = `<div class="mt-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 space-y-0.5">${rows}</div>`;
+                    }
+
+                    const titleLine = isMotivoAction
+                        ? `<p class="text-sm font-black text-navy-900">${entry.details || '—'}</p>
+                           <p class="text-xs text-slate-400 font-medium">Motivo de perda</p>`
+                        : `<p class="text-sm font-black text-navy-900">${entry.paciente}</p>
+                           <p class="text-xs text-slate-500 font-medium">${entry.details} &bull; Data: ${aptDate}</p>
+                           ${entry.atendente ? `<p class="text-[10px] text-slate-400 font-bold mt-0.5">Atendente: ${entry.atendente}</p>` : ''}`;
+
+                    return `
+                    <div class="flex gap-3 py-3 border-b border-slate-100 last:border-0">
+                        <div class="flex flex-col items-center pt-1">
+                            <div class="h-8 w-8 rounded-full ${cfg.dot} flex items-center justify-center flex-shrink-0">
+                                <i class="fas ${cfg.icon} text-white text-xs"></i>
+                            </div>
+                            <div class="w-0.5 flex-1 bg-slate-100 mt-1 min-h-[8px]"></div>
+                        </div>
+                        <div class="flex-1 pb-1">
+                            <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase border ${cfg.color}">${cfg.label}</span>
+                                <span class="text-[10px] text-slate-400 font-bold">${dateStr} às ${timeStr}</span>
+                            </div>
+                            ${titleLine}
+                            ${diffHtml}
+                            ${configUnlocked ? `<button onclick="deleteAuditLogEntry(${entry.id})" class="mt-2 text-[9px] font-black uppercase text-red-400 hover:text-red-600 transition-all flex items-center gap-1"><i class="fas fa-trash-alt"></i> Excluir registro</button>` : ''}
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+
+            const showing = total === 0 ? '0' : `${start + 1}–${Math.min(start + historyItemsPerPage, total)}`;
+            document.getElementById('history-pagination-info').innerText = `${showing} de ${total}`;
+        }
+
+        function changeHistoryPage(dir) {
+            const filtered = getFilteredAuditLog();
+            const totalPages = Math.max(1, Math.ceil(filtered.length / historyItemsPerPage));
+            historyPage = Math.max(1, Math.min(totalPages, historyPage + dir));
+            renderHistoryList();
+        }
+
+        // Mantido por compatibilidade com chamadas que resetam o filtro
+        function toggleHistoryMonthFilter() {
+            clearHistoryMonthFilter();
+        }
+
+        // ---- Month Picker customizado ----
+        let _pickerYear = new Date().getFullYear();
+        let _pickerSelectedMonth = '';
+
+        function _closePicker(e) {
+            const picker = document.getElementById('history-month-picker');
+            if (!picker.contains(e.target)) {
+                _hideMonthPicker();
+            }
+        }
+
+        function _hideMonthPicker() {
+            document.getElementById('history-month-picker').classList.add('hidden');
+            document.removeEventListener('click', _closePicker);
+        }
+
+        function toggleHistoryMonthPicker(event) {
+            event.stopPropagation();
+            const picker = document.getElementById('history-month-picker');
+            if (!picker.classList.contains('hidden')) {
+                _hideMonthPicker();
+                return;
+            }
+            const btn = event.currentTarget;
+            const rect = btn.getBoundingClientRect();
+            picker.style.top   = (rect.bottom + 6) + 'px';
+            picker.style.left  = 'auto';
+            picker.style.right = (window.innerWidth - rect.right) + 'px';
+            _pickerYear = _pickerSelectedMonth ? parseInt(_pickerSelectedMonth.split('-')[0]) : new Date().getFullYear();
+            document.getElementById('picker-year').innerText = _pickerYear;
+            renderPickerMonths();
+            picker.classList.remove('hidden');
+            document.addEventListener('click', _closePicker);
+        }
+
+        function changePickerYear(dir) {
+            _pickerYear += dir;
+            document.getElementById('picker-year').innerText = _pickerYear;
+            renderPickerMonths();
+        }
+
+        function renderPickerMonths() {
+            const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+            document.getElementById('picker-months').innerHTML = months.map((m, i) => {
+                const val = `${_pickerYear}-${String(i + 1).padStart(2, '0')}`;
+                const sel = val === _pickerSelectedMonth;
+                return `<button onclick="selectHistoryMonth('${val}')" class="py-2 rounded-xl text-xs font-black uppercase tracking-wide transition-all ${sel ? 'bg-blue-500 text-white' : 'text-slate-300 hover:bg-white/10 hover:text-white'}">${m}</button>`;
+            }).join('');
+        }
+
+        function selectHistoryMonth(val) {
+            if (_pickerSelectedMonth === val) {
+                clearHistoryMonthFilter();
+                return;
+            }
+            _pickerSelectedMonth = val;
+            document.getElementById('history-month-filter').value = val;
+            historyPage = 1;
+            renderHistoryList();
+            _hideMonthPicker();
+            const btn = document.getElementById('btn-history-month-toggle');
+            btn.classList.add('bg-blue-500');
+            btn.classList.remove('bg-white/10');
+        }
+
+        function clearHistoryMonthFilter() {
+            _pickerSelectedMonth = '';
+            document.getElementById('history-month-filter').value = '';
+            historyPage = 1;
+            renderHistoryList();
+            _hideMonthPicker();
+            const btn = document.getElementById('btn-history-month-toggle');
+            btn.classList.remove('bg-blue-500');
+            btn.classList.add('bg-white/10');
+        }
+
+        function confirmClearAllAuditLog() {
+            if (!configUnlocked) return;
+            if (!confirm('Tem certeza que deseja apagar TODA a rastreabilidade? Esta ação não pode ser desfeita.')) return;
+            auditLog = [];
+            database.ref('auditLog').remove().catch(console.error);
+            renderHistoryList();
+            renderTraceability();
+        }
+
+        function renderTraceability() {
+            const el = document.getElementById('traceability-list');
+            if (!el) return;
+            const now = new Date();
+            const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const monthLogs = auditLog.filter(e => e.timestamp && e.timestamp.startsWith(monthPrefix));
+            document.getElementById('trace-created').innerText = monthLogs.filter(e => e.action === 'create').length;
+            document.getElementById('trace-edited').innerText  = monthLogs.filter(e => e.action === 'edit').length;
+            document.getElementById('trace-deleted').innerText = monthLogs.filter(e => e.action === 'delete').length;
+
+            const recent = auditLog.slice(0, 5);
+            const cfgMap = {
+                create: { label: 'Criado',  dot: 'bg-emerald-500', icon: 'fa-plus-circle',  text: 'text-emerald-700' },
+                edit:   { label: 'Editado', dot: 'bg-blue-500',    icon: 'fa-edit',          text: 'text-blue-700' },
+                delete: { label: 'Excluído',dot: 'bg-red-500',     icon: 'fa-trash-alt',     text: 'text-red-700' }
+            };
+            if (recent.length === 0) {
+                el.innerHTML = '<p class="text-center text-slate-400 font-bold uppercase text-[10px] py-4">Sem atividades recentes</p>';
+                return;
+            }
+            el.innerHTML = recent.map(entry => {
+                const cfg = cfgMap[entry.action] || cfgMap.edit;
+                const dt = new Date(entry.timestamp);
+                const dateStr = dt.toLocaleDateString('pt-BR');
+                const timeStr = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                return `
+                <div class="flex items-center gap-3 py-2 border-b border-slate-50 last:border-0">
+                    <div class="h-7 w-7 rounded-full ${cfg.dot} flex items-center justify-center flex-shrink-0">
+                        <i class="fas ${cfg.icon} text-white text-[10px]"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-black text-navy-900 truncate">${entry.paciente}</p>
+                        <p class="text-[10px] text-slate-400">${dateStr} às ${timeStr}</p>
+                    </div>
+                    <span class="text-[9px] font-black uppercase ${cfg.text} flex-shrink-0">${cfg.label}</span>
+                </div>`;
+            }).join('');
+        }
+        // ============================================================
 
         // SISTEMA DE NOTIFICAÇÕES
         function showNotification(message, type = 'info', duration = 10000) {
@@ -874,6 +1633,7 @@
             loadAppointmentsFromFirebase();
             loadMotivosPerdaFromFirebase();
             setupHolidaysRealtimeListener();
+            setupAuditLogRealtimeListener();
             
             // Verificar sincronização inicial após carregar
             setTimeout(() => {
@@ -1114,6 +1874,7 @@
             saveMotivosPerdaToFirebase();
             input.value = '';
             renderMotivosPerdaList();
+            addMotivoAuditLog('motivo_add', val, null);
         }
 
         function startEditMotivo(i) {
@@ -1127,15 +1888,20 @@
         function saveEditMotivo(i) {
             const val = document.getElementById(`motivo-input-${i}`).value.trim();
             if (!val) return;
+            const oldVal = motivosPerdaList[i];
+            if (val === oldVal) { renderMotivosPerdaList(); return; }
             motivosPerdaList[i] = val;
             saveMotivosPerdaToFirebase();
             renderMotivosPerdaList();
+            addMotivoAuditLog('motivo_edit', val, oldVal);
         }
 
         function deleteMotivoPerda(i) {
+            const removed = motivosPerdaList[i];
             motivosPerdaList.splice(i, 1);
             saveMotivosPerdaToFirebase();
             renderMotivosPerdaList();
+            addMotivoAuditLog('motivo_delete', null, removed);
         }
 
         // FETCH ATENDENTES
@@ -1447,8 +2213,11 @@
         }
 
         function proceedWithSaveAfterValidation(record, id, chkOr, chkAn, statusVal) {
+            const isNew = !id;
+            const oldRecord = isNew ? null : appointments.find(a => a.id == id) || null;
             if(id) appointments = appointments.map(a => a.id == id ? record : a); else appointments.push(record);
             saveAppointmentsToFirebase();
+            addAuditLog(isNew ? 'create' : 'edit', record, oldRecord);
             showNotification(id ? "Agendamento atualizado com sucesso!" : "Agendamento criado com sucesso!", "success");
             closeModals(); renderTable(); renderCalendar(); updateDatalists(); updateFilterDropdowns();
         }
@@ -1821,6 +2590,9 @@
         function openRecordModal() {
             document.getElementById('record-form').reset();
             document.getElementById('reg-id').value = '';
+            const histBtnNew = document.getElementById('btn-record-history');
+            histBtnNew.classList.add('hidden');
+            histBtnNew.classList.remove('flex');
             
             // Reseta Checklist
             document.getElementById('chk-orientacao-val').value = 'false';
@@ -2120,33 +2892,71 @@
             }
             
             document.getElementById('modal-title').innerText = "Editar Agendamento";
+            const histBtn = document.getElementById('btn-record-history');
+            histBtn.classList.remove('hidden');
+            histBtn.classList.add('flex');
             document.getElementById('modal-record').classList.add('active');
         }
 
+        let _pendingDeleteId = null;
+
         function deleteRecord(id) {
-            const confirmacao = prompt('Para excluir a marcação permanentemente, digite "SIM":');
-            if (confirmacao === "SIM") {
-                // Remover localmente primeiro para feedback imediato
-                appointments = appointments.filter(a => a.id !== id);
-                
-                // Salvar no Firebase com tratamento de erro melhorado
-                saveAppointmentsToFirebase()
-                    .then(() => {
-                        console.log("Agendamento excluído e sincronizado com sucesso");
-                        // Forçar atualização da UI após sincronização
-                        renderTable(); 
-                        renderCalendar(); 
-                        closeModals();
-                    })
-                    .catch(error => {
-                        console.error("Erro ao excluir agendamento:", error);
-                        showNotification("Erro ao excluir o agendamento. Tente novamente.", "error");
-                        // Reverter alteração local se falhou
-                        loadAppointmentsFromFirebase();
-                    });
-            } else if (confirmacao !== null) {
-                showNotification("Ação cancelada. A exclusão não foi concluída porque a confirmação falhou.", "warning");
+            _pendingDeleteId = id;
+            const input = document.getElementById('delete-confirm-input');
+            input.value = '';
+            const btn = document.getElementById('btn-confirm-delete');
+            btn.disabled = true;
+            btn.classList.add('opacity-60', 'cursor-not-allowed', 'from-red-300', 'to-red-400');
+            btn.classList.remove('from-red-600', 'to-red-700', 'hover:from-red-700', 'hover:to-red-800', 'shadow-red-200', 'cursor-pointer');
+            document.getElementById('modal-delete-confirm').classList.add('active');
+        }
+
+        function onDeleteInputChange() {
+            const input = document.getElementById('delete-confirm-input');
+            const btn = document.getElementById('btn-confirm-delete');
+            const isValid = input.value.trim().toUpperCase() === 'SIM';
+            btn.disabled = !isValid;
+            if (isValid) {
+                btn.classList.remove('opacity-60', 'cursor-not-allowed', 'from-red-300', 'to-red-400');
+                btn.classList.add('from-red-600', 'to-red-700', 'hover:from-red-700', 'hover:to-red-800', 'shadow-red-200', 'cursor-pointer');
+            } else {
+                btn.classList.add('opacity-60', 'cursor-not-allowed', 'from-red-300', 'to-red-400');
+                btn.classList.remove('from-red-600', 'to-red-700', 'hover:from-red-700', 'hover:to-red-800', 'shadow-red-200', 'cursor-pointer');
             }
+        }
+
+        function cancelDeleteRecord() {
+            _pendingDeleteId = null;
+            document.getElementById('delete-confirm-input').value = '';
+            document.getElementById('modal-delete-confirm').classList.remove('active');
+        }
+
+        function confirmDeleteRecord() {
+            const input = document.getElementById('delete-confirm-input');
+            if (input.value.trim().toUpperCase() !== 'SIM') return;
+            const id = _pendingDeleteId;
+            _pendingDeleteId = null;
+            input.value = '';
+            document.getElementById('modal-delete-confirm').classList.remove('active');
+
+            if (!id) return;
+
+            const deleted = appointments.find(a => a.id === id);
+            appointments = appointments.filter(a => a.id !== id);
+            if (deleted) addAuditLog('delete', deleted);
+
+            saveAppointmentsToFirebase()
+                .then(() => {
+                    renderTable();
+                    renderCalendar();
+                    closeModals();
+                    showNotification("Agendamento excluído com sucesso.", "success");
+                })
+                .catch(error => {
+                    console.error("Erro ao excluir agendamento:", error);
+                    showNotification("Erro ao excluir o agendamento. Tente novamente.", "error");
+                    loadAppointmentsFromFirebase();
+                });
         }
 
         function openObsModal(id) {
@@ -2254,11 +3064,20 @@
         
         // Atualizar status quando abrir aba de config
         const originalSwitchTab = switchTab;
-        switchTab = function(tab) {
+
+        // Navega diretamente sem verificar senha (uso interno após autenticação)
+        function switchTabDirect(tab) {
             originalSwitchTab(tab);
-            if (tab === 'config') {
-                updateConfigStatus();
+            if (tab === 'config') updateConfigStatus();
+        }
+
+        switchTab = function(tab) {
+            if (tab === 'config' && !configUnlocked) {
+                openConfigPasswordModal();
+                return;
             }
+            originalSwitchTab(tab);
+            if (tab === 'config') updateConfigStatus();
         };
     </script>
 </body>
