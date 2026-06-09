@@ -778,9 +778,6 @@
                             <i class="fas fa-calendar-alt text-sm"></i>
                         </button>
                         <input type="hidden" id="history-month-filter" value="">
-                        <button id="btn-history-clear-all" onclick="confirmClearAllAuditLog()" title="Apagar toda rastreabilidade" class="h-9 w-9 bg-white/10 hover:bg-red-500 rounded-xl items-center justify-center transition-all hidden">
-                            <i class="fas fa-trash-alt text-sm"></i>
-                        </button>
                         <button onclick="document.getElementById('modal-history').classList.remove('active')" class="h-9 w-9 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all">
                             <i class="fas fa-times"></i>
                         </button>
@@ -1969,14 +1966,16 @@
             const btn = document.getElementById('btn-history-month-toggle');
             btn.classList.remove('bg-blue-500');
             btn.classList.add('bg-white/10');
-            // Mostrar lixeira global apenas para admins
+            // Mostrar lixeira global apenas para admins (verifica se o botão existe)
             const trashBtn = document.getElementById('btn-history-clear-all');
-            if (isAdmin()) {
-                trashBtn.classList.remove('hidden');
-                trashBtn.classList.add('flex');
-            } else {
-                trashBtn.classList.add('hidden');
-                trashBtn.classList.remove('flex');
+            if (trashBtn) {
+                if (isAdmin()) {
+                    trashBtn.classList.remove('hidden');
+                    trashBtn.classList.add('flex');
+                } else {
+                    trashBtn.classList.add('hidden');
+                    trashBtn.classList.remove('flex');
+                }
             }
             renderHistoryList();
             document.getElementById('modal-history').classList.add('active');
