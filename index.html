@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RespiratórioLAMIC | Agenda de Testes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -12,118 +15,136 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { navy: { 700: '#1e40af', 800: '#1e3a8a', 900: '#172554' } }
-                }
-            }
-        }
-    </script>
-    <style>
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .modal { display: none; }
-        .modal.active { display: flex; animation: fadeIn 0.2s ease-in-out; }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #172554; border-radius: 10px; }
-        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1rem; }
-        @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .animate-spin-slow { animation: spin-slow 8s linear infinite; }
-        
-        /* Login Overlay */
-        #login-overlay { z-index: 10000; }
-        .login-eye-btn {
-            position: absolute;
-            right: 0.75rem;
-            top: 50%;
-            transform: translateY(-50%);
-        }
+    <!-- Configuração de bibliotecas externas -->
+    <script src="js/tailwind-config.js"></script>
+    <script src="js/chart-defaults.js"></script>
 
-        /* Estilos das Notificações */
-        .notification {
-            pointer-events: auto;
-            transform: translateX(100%);
-            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            animation: slideIn 0.4s ease-out forwards, slideOut 0.3s ease-in 9.7s forwards;
-        }
-        
-        @keyframes slideIn {
-            0% { transform: translateX(100%); opacity: 0; }
-            100% { transform: translateX(0); opacity: 1; }
-        }
-        
-        @keyframes slideOut {
-            0% { transform: translateX(0); opacity: 1; }
-            100% { transform: translateX(100%); opacity: 0; }
-        }
-        
-        .notification-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
-        .notification-error { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
-        .notification-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
-        .notification-info { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
-    </style>
+    <!-- Estilos da aplicação -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/calendar.css">
+    <link rel="stylesheet" href="css/header.css">
+    <link rel="stylesheet" href="css/drawer.css">
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/notifications.css">
 </head>
-<body class="bg-[#f8fafc] font-sans text-slate-800 h-screen flex flex-col overflow-hidden">
+<body class="font-sans text-slate-800 antialiased h-screen flex flex-col overflow-hidden">
     
     <!-- Container de Notificações -->
-    <div id="notification-container" class="fixed top-[60px] right-4 z-[9999] space-y-2 pointer-events-none"></div>
+    <div id="notification-container" class="fixed top-[84px] right-4 z-[9999] space-y-2 pointer-events-none w-[min(22rem,90vw)]"></div>
     
-    <header class="bg-navy-900 text-white shadow-2xl shrink-0 z-50 border-b border-navy-700">
-        <div class="container mx-auto px-6 py-2 flex justify-between items-center">
-            <div class="flex items-center gap-6">
-                <div class="h-14 flex items-center">
-                    <img src="https://i.imgur.com/vXM6l52.png" alt="RespiratórioLAMIC Logo" class="h-full w-auto object-contain">
+    <header class="app-header relative text-white shrink-0 z-50">
+        <div class="w-full px-4 sm:px-5 h-[68px] flex items-center gap-4">
+
+            <!-- Menu (hambúrguer) + identidade -->
+            <div class="flex items-center gap-4 min-w-0">
+                <button id="burger-btn" type="button" onclick="toggleDrawer()" aria-label="Abrir menu" aria-expanded="false" aria-controls="side-drawer"
+                    class="burger bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 shrink-0">
+                    <span class="burger-box">
+                        <span class="burger-bar"></span>
+                        <span class="burger-bar"></span>
+                        <span class="burger-bar"></span>
+                    </span>
+                </button>
+                <div class="h-9 w-px bg-white/12 hidden sm:block"></div>
+                <div class="h-11 flex items-center shrink-0">
+                    <img src="https://i.imgur.com/vXM6l52.png" alt="RespiratórioLAMIC" class="h-full w-auto object-contain">
                 </div>
-                <div class="h-8 w-[1px] bg-navy-700 hidden md:block"></div>
-                <span class="text-lg font-light tracking-[0.2em] uppercase hidden md:block">Respiratório<span class="font-black text-blue-400">LAMIC</span></span>
-            </div>
-            <nav class="flex bg-navy-800/50 rounded-xl p-1.5 border border-navy-700">
-                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="px-6 py-2.5 rounded-lg bg-blue-600 transition-all font-bold text-xs tracking-widest shadow-lg">
-                    <i class="fas fa-calendar-alt mr-2"></i>AGENDA
-                </button>
-                <button onclick="switchTab('dados')" id="btn-dados" class="px-6 py-2.5 rounded-lg hover:bg-navy-700 transition-all font-bold text-xs tracking-widest ml-1">
-                    <i class="fas fa-table-list mr-2"></i>TABELA
-                </button>
-                <button onclick="switchTab('indicadores')" id="btn-indicadores" class="px-6 py-2.5 rounded-lg hover:bg-navy-700 transition-all font-bold text-xs tracking-widest ml-1">
-                    <i class="fas fa-chart-line mr-2"></i>INDICADORES
-                </button>
-                <button onclick="switchTab('config')" id="btn-config" class="w-10 h-10 rounded-lg hover:bg-navy-700 transition-all font-bold text-xs tracking-widest ml-1 flex items-center justify-center">
-                    <i class="fas fa-cog text-lg"></i>
-                </button>
-            </nav>
-            <div id="user-badge" class="hidden items-center gap-2 ml-4">
-                <button onclick="openMyAccountModal()" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 rounded-xl px-3 py-2 transition-all" title="Minha conta">
-                    <div id="user-initials" class="h-7 w-7 bg-blue-800 rounded-lg flex items-center justify-center text-white font-black text-xs"></div>
-                    <span id="user-display-name" class="text-white font-bold text-xs hidden md:block"></span>
-                </button>
-                <button onclick="logoutUser()" class="px-3 py-2 bg-navy-800 hover:bg-red-600 text-white rounded-xl font-bold text-xs tracking-widest transition-all border border-navy-700">
-                    <i class="fas fa-sign-out-alt mr-1"></i><span class="hidden md:inline">Sair</span>
-                </button>
+                <div class="h-9 w-px bg-white/12 hidden md:block"></div>
+                <div class="hidden md:block leading-none">
+                    <span class="block text-[15px] font-light tracking-[0.22em] uppercase">Respiratório<span class="font-black text-blue-400">LAMIC</span></span>
+                    <span class="block mt-1 text-[9px] font-bold uppercase tracking-[0.3em] text-navy-300">Agenda de Testes</span>
+                </div>
             </div>
         </div>
     </header>
 
-    <main class="flex-1 overflow-auto p-6">
-        
-        <section id="tab-dashboard" class="tab-content active container mx-auto">
-            <div class="glass-card p-6 rounded-2xl shadow-sm border border-slate-200 mb-8 flex justify-between items-center">
-                <h2 class="text-navy-900 font-black text-xl uppercase tracking-tighter flex items-center gap-3">
-                    <i class="fas fa-calendar-day text-blue-500"></i> Visão Geral de Agendamentos
-                </h2>
-                <div class="flex items-center gap-3">
-                    <button onclick="openHistoryModal({type:'global'})" title="Rastreabilidade" class="h-10 w-10 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-lg flex items-center justify-center font-bold transition-all"><i class="fas fa-clock"></i></button>
-                    <button onclick="changeMonth(-1)" class="h-10 w-10 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center font-bold transition-all"><i class="fas fa-chevron-left"></i></button>
-                    <h3 id="current-month-label" class="font-black text-navy-900 uppercase tracking-widest text-sm w-40 text-center">Abril 2026</h3>
-                    <button onclick="changeMonth(1)" class="h-10 w-10 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center font-bold transition-all"><i class="fas fa-chevron-right"></i></button>
+    <!-- ══ MENU SUSPENSO LATERAL ESQUERDO ══ -->
+    <div id="drawer-backdrop" onclick="closeDrawer()"></div>
+
+    <aside id="side-drawer" role="dialog" aria-modal="true" aria-label="Menu de navegação">
+        <!-- Cabeçalho do drawer -->
+        <div class="px-5 pt-5 pb-4 border-b border-white/10">
+            <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                    <p class="drawer-section-title">Menu</p>
+                    <p class="mt-1.5 text-white font-black text-sm tracking-tight">Painel de Controle</p>
+                </div>
+                <button onclick="closeDrawer()" aria-label="Fechar menu"
+                    class="h-9 w-9 shrink-0 rounded-xl bg-white/[0.06] hover:bg-white/[0.14] border border-white/10 text-white/80 hover:text-white flex items-center justify-center">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+
+            <div id="drawer-user" class="hidden mt-4 items-center gap-3 p-3 rounded-2xl bg-white/[0.05] border border-white/10">
+                <div id="drawer-user-initials" class="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-black text-xs shadow-lg"></div>
+                <div class="min-w-0 flex-1">
+                    <p id="drawer-user-name" class="text-white font-bold text-xs truncate"></p>
+                    <p id="drawer-user-role" class="text-[10px] font-bold uppercase tracking-widest text-blue-300 mt-0.5"></p>
+                </div>
+                <button onclick="closeDrawer(); openMyAccountModal();" title="Minha conta"
+                    class="h-8 w-8 rounded-lg bg-white/[0.07] hover:bg-blue-600 text-white/80 hover:text-white flex items-center justify-center">
+                    <i class="fas fa-user-cog text-xs"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Navegação -->
+        <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+            <p class="drawer-section-title px-2 mb-2">Navegação</p>
+            <button onclick="drawerNavigate('dashboard')" data-drawer-tab="dashboard" class="drawer-item is-active">
+                <span class="drawer-ico"><i class="fas fa-calendar-alt"></i></span>
+                <span class="drawer-label">Agenda</span>
+            </button>
+            <button onclick="drawerNavigate('dados')" data-drawer-tab="dados" class="drawer-item">
+                <span class="drawer-ico"><i class="fas fa-table-list"></i></span>
+                <span class="drawer-label">Tabela</span>
+            </button>
+            <button onclick="drawerNavigate('indicadores')" data-drawer-tab="indicadores" class="drawer-item">
+                <span class="drawer-ico"><i class="fas fa-chart-line"></i></span>
+                <span class="drawer-label">Indicadores</span>
+            </button>
+            <button onclick="drawerNavigate('config')" data-drawer-tab="config" id="drawer-btn-config" class="drawer-item hidden">
+                <span class="drawer-ico"><i class="fas fa-sliders-h"></i></span>
+                <span class="drawer-label">Configurações</span>
+            </button>
+        </nav>
+
+        <!-- Rodapé -->
+        <div class="px-4 py-4 border-t border-white/10 space-y-3">
+            <button onclick="closeDrawer(); logoutUser();"
+                class="w-full h-11 rounded-2xl bg-white/[0.06] hover:bg-red-600 border border-white/10 hover:border-red-500 text-white font-black text-[11px] uppercase tracking-[0.18em] flex items-center justify-center gap-2">
+                <i class="fas fa-sign-out-alt"></i>Sair do Sistema
+            </button>
+            <p class="text-center text-[9px] font-bold uppercase tracking-[0.26em] text-navy-400">Respiratório<span class="text-blue-400">LAMIC</span></p>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+
+        <section id="tab-dashboard" class="tab-content active w-full max-w-[1500px] mx-auto">
+            <div class="glass-card p-5 sm:p-6 rounded-3xl border border-slate-200/80 mb-6 flex flex-col lg:flex-row gap-4 lg:gap-6 justify-between lg:items-center">
+                <div class="flex items-center gap-4">
+                    <div class="h-11 w-11 rounded-2xl bg-navy-900 text-blue-400 flex items-center justify-center shadow-lg shrink-0">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-navy-900 font-black text-lg sm:text-xl tracking-tight leading-none">Visão Geral de Agendamentos</h2>
+                        <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400 mt-1.5">Calendário operacional</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button onclick="openHistoryModal({type:'global'})" title="Rastreabilidade" class="h-10 w-10 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-xl flex items-center justify-center"><i class="fas fa-clock-rotate-left text-sm"></i></button>
+                    <div class="h-10 flex items-center gap-1 rounded-xl bg-slate-100 p-1">
+                        <button onclick="changeMonth(-1)" title="Mês anterior" class="h-8 w-8 rounded-lg bg-white hover:bg-navy-900 hover:text-white text-navy-900 shadow-sm flex items-center justify-center"><i class="fas fa-chevron-left text-xs"></i></button>
+                        <h3 id="current-month-label" class="font-black text-navy-900 uppercase tracking-[0.14em] text-xs w-36 sm:w-40 text-center">Abril 2026</h3>
+                        <button onclick="changeMonth(1)" title="Próximo mês" class="h-8 w-8 rounded-lg bg-white hover:bg-navy-900 hover:text-white text-navy-900 shadow-sm flex items-center justify-center"><i class="fas fa-chevron-right text-xs"></i></button>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <div class="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200/80">
                 <div class="calendar-grid mb-4">
                     <div class="text-center text-[10px] font-black uppercase text-red-500 tracking-widest">Dom</div>
                     <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Seg</div>
@@ -136,8 +157,8 @@
                 <div id="calendar-body" class="calendar-grid"></div>
                 
                 <!-- Legenda dos exames -->
-                <div class="mt-4 flex justify-center">
-                    <div class="flex items-center gap-4 text-xs text-slate-500 flex-wrap">
+                <div class="mt-5 pt-4 border-t border-slate-100 flex justify-center">
+                    <div class="flex items-center justify-center gap-x-4 gap-y-2 text-[11px] font-semibold text-slate-500 flex-wrap">
                         <div class="flex items-center gap-1">
                             <div class="h-2 w-2 rounded-full bg-blue-500"></div>
                             <span>TRESP</span>
@@ -181,31 +202,36 @@
             <div id="traceability-list" class="hidden"></div>
         </section>
 
-        <section id="tab-dados" class="tab-content container mx-auto">
-            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-                <div class="p-6 bg-slate-50 border-b border-slate-200">
-                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-6">
-                        <div>
-                            <h2 class="text-2xl font-black text-navy-900 tracking-tighter uppercase">Relação de Testes</h2>
-                            <p class="text-xs text-slate-400 font-bold">GERENCIAMENTO DE PACIENTES RESPIRATÓRIOS</p>
+        <section id="tab-dados" class="tab-content w-full max-w-[1500px] mx-auto">
+            <div class="bg-white rounded-3xl border border-slate-200/80 overflow-hidden">
+                <div class="p-5 sm:p-6 bg-gradient-to-b from-slate-50 to-white border-b border-slate-200">
+                    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5 mb-6">
+                        <div class="flex items-center gap-4">
+                            <div class="h-11 w-11 rounded-2xl bg-navy-900 text-blue-400 flex items-center justify-center shadow-lg shrink-0">
+                                <i class="fas fa-table-list"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-black text-navy-900 tracking-tight leading-none">Relação de Testes</h2>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.22em] mt-1.5">Gerenciamento de pacientes respiratórios</p>
+                            </div>
                         </div>
-                        <button onclick="openRecordModal()" class="w-full lg:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-black text-[11px] tracking-widest shadow-lg transition-all">
+                        <button onclick="openRecordModal()" class="w-full lg:w-auto px-6 py-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 font-black text-[11px] tracking-[0.16em] shadow-lg shadow-blue-600/25">
                             <i class="fas fa-plus mr-2"></i>NOVO AGENDAMENTO
                         </button>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
                         <div class="relative">
-                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                            <input type="text" id="filter-search" onkeyup="updateTableFilters()" placeholder="Buscar Paciente ou Pedido..." class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input type="text" id="filter-search" onkeyup="updateTableFilters()" placeholder="Buscar Paciente ou Pedido..." class="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none">
                         </div>
-                        <select id="filter-atendente" onchange="updateTableFilters()" class="border border-slate-200 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <select id="filter-atendente" onchange="updateTableFilters()" class="border border-slate-200 rounded-xl text-sm py-2.5 px-3.5 bg-white font-medium text-slate-600 focus:outline-none">
                             <option value="">Filtrar por Atendente</option>
                         </select>
-                        <select id="filter-substrato" onchange="updateTableFilters()" class="border border-slate-200 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <select id="filter-substrato" onchange="updateTableFilters()" class="border border-slate-200 rounded-xl text-sm py-2.5 px-3.5 bg-white font-medium text-slate-600 focus:outline-none">
                             <option value="">Filtrar por Substrato</option>
                         </select>
-                        <select id="filter-status" onchange="updateTableFilters()" class="border border-slate-200 rounded-lg text-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <select id="filter-status" onchange="updateTableFilters()" class="border border-slate-200 rounded-xl text-sm py-2.5 px-3.5 bg-white font-medium text-slate-600 focus:outline-none">
                             <option value="">Filtrar por Status</option>
                         </select>
                     </div>
@@ -213,15 +239,15 @@
 
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-navy-900 text-white text-[10px] uppercase tracking-[0.2em] font-black">
+                        <thead class="bg-navy-900 text-white/85 text-[9px] uppercase tracking-[0.22em] font-black">
                             <tr>
-                                <th class="p-5 border-b border-navy-800">Data/Hora</th>
-                                <th class="p-5 border-b border-navy-800">Paciente (Idade)</th>
-                                <th class="p-5 border-b border-navy-800">Exame / Substrato</th>
-                                <th class="p-5 border-b border-navy-800">Nº Pedido / Atendente</th>
-                                <th class="p-5 border-b border-navy-800 text-center">Checklist</th>
-                                <th class="p-5 border-b border-navy-800 text-center">Status</th>
-                                <th class="p-5 border-b border-navy-800 text-center">Ações</th>
+                                <th class="px-5 py-4">Data/Hora</th>
+                                <th class="px-5 py-4">Paciente (Idade)</th>
+                                <th class="px-5 py-4">Exame / Substrato</th>
+                                <th class="px-5 py-4">Nº Pedido / Atendente</th>
+                                <th class="px-5 py-4 text-center">Checklist</th>
+                                <th class="px-5 py-4 text-center">Status</th>
+                                <th class="px-5 py-4 text-center">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="table-body" class="text-sm divide-y divide-slate-100">
@@ -229,24 +255,30 @@
                     </table>
                 </div>
 
-                <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs font-bold text-slate-500">
-                    <span id="pagination-info">Mostrando 0 de 0</span>
+                <div class="px-5 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row gap-3 justify-between items-center text-[11px] font-bold text-slate-500">
+                    <span id="pagination-info" class="uppercase tracking-wider">Mostrando 0 de 0</span>
                     <div class="flex gap-2">
-                        <button onclick="changePage(-1)" class="px-3 py-1 border border-slate-300 rounded hover:bg-white transition-all disabled:opacity-50">Anterior</button>
-                        <button onclick="changePage(1)" class="px-3 py-1 border border-slate-300 rounded hover:bg-white transition-all disabled:opacity-50">Próximo</button>
+                        <button onclick="changePage(-1)" class="px-4 py-2 bg-white border border-slate-200 rounded-xl hover:border-navy-900 hover:text-navy-900 shadow-sm disabled:opacity-50"><i class="fas fa-chevron-left mr-1.5 text-[9px]"></i>Anterior</button>
+                        <button onclick="changePage(1)" class="px-4 py-2 bg-white border border-slate-200 rounded-xl hover:border-navy-900 hover:text-navy-900 shadow-sm disabled:opacity-50">Próximo<i class="fas fa-chevron-right ml-1.5 text-[9px]"></i></button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="tab-indicadores" class="tab-content container mx-auto">
+        <section id="tab-indicadores" class="tab-content w-full max-w-[1500px] mx-auto">
             
-            <div class="glass-card p-6 rounded-2xl shadow-sm border border-slate-200 mb-8">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-navy-900 font-black text-sm uppercase tracking-tighter flex items-center gap-2">
-                        <i class="fas fa-filter text-blue-500"></i> Filtro de Período para Análise
-                    </h3>
-                    <select id="ind-filter-type" onchange="toggleIndFilters(); renderIndicadores()" class="text-xs font-bold border-slate-200 rounded-lg bg-slate-50 py-2 px-3 focus:outline-none">
+            <div class="glass-card p-5 sm:p-6 rounded-3xl border border-slate-200/80 mb-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+                    <div class="flex items-center gap-4">
+                        <div class="h-11 w-11 rounded-2xl bg-navy-900 text-blue-400 flex items-center justify-center shadow-lg shrink-0">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-navy-900 font-black text-lg tracking-tight leading-none">Indicadores de Desempenho</h3>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400 mt-1.5">Filtro de período para análise</p>
+                        </div>
+                    </div>
+                    <select id="ind-filter-type" onchange="toggleIndFilters(); renderIndicadores()" class="text-xs font-bold border border-slate-200 rounded-xl bg-white text-slate-600 py-2.5 px-3.5 focus:outline-none">
                         <option value="all">Geral (Todo o período)</option>
                         <option value="year" selected>Ano Inteiro</option>
                         <option value="month">Mês Específico</option>
@@ -257,82 +289,100 @@
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                     <div id="ind-box-year">
                         <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Ano Base</label>
-                        <input type="number" id="ind-year" value="2026" onchange="renderIndicadores()" class="w-full border border-slate-200 rounded-lg text-sm py-2 px-3">
+                        <input type="number" id="ind-year" value="2026" onchange="renderIndicadores()" class="w-full border border-slate-200 rounded-xl text-sm py-2.5 px-3.5 font-semibold text-slate-600 bg-white">
                     </div>
                     <div id="ind-box-month" class="hidden">
                         <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Mês Referência</label>
-                        <input type="month" id="ind-month" onchange="renderIndicadores()" class="w-full border border-slate-200 rounded-lg text-sm py-2 px-3">
+                        <input type="month" id="ind-month" onchange="renderIndicadores()" class="w-full border border-slate-200 rounded-xl text-sm py-2.5 px-3.5 font-semibold text-slate-600 bg-white">
                     </div>
                     <div id="ind-box-start" class="hidden">
                         <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Data Início</label>
-                        <input type="date" id="ind-start" onchange="renderIndicadores()" class="w-full border border-slate-200 rounded-lg text-sm py-2 px-3">
+                        <input type="date" id="ind-start" onchange="renderIndicadores()" class="w-full border border-slate-200 rounded-xl text-sm py-2.5 px-3.5 font-semibold text-slate-600 bg-white">
                     </div>
                     <div id="ind-box-end" class="hidden">
                         <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase">Data Fim</label>
-                        <input type="date" id="ind-end" onchange="renderIndicadores()" class="w-full border border-slate-200 rounded-lg text-sm py-2 px-3">
+                        <input type="date" id="ind-end" onchange="renderIndicadores()" class="w-full border border-slate-200 rounded-xl text-sm py-2.5 px-3.5 font-semibold text-slate-600 bg-white">
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 xl:grid-cols-7 gap-3 mb-8">
-                <div class="bg-white p-3 rounded-2xl shadow-sm border-l-4 border-blue-600">
-                    <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest">Total de Exames</p>
-                    <p id="kpi-total" class="text-xl font-black text-navy-900 mt-1">0</p>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden">
+                    <span class="absolute inset-y-0 left-0 w-1 bg-navy-900"></span>
+                    <p class="text-slate-400 text-[9px] font-black uppercase tracking-[0.16em] leading-tight">Total de Exames</p>
+                    <p id="kpi-total" class="text-2xl font-black text-navy-900 mt-1.5 tracking-tight">0</p>
                 </div>
-                <div class="bg-white p-3 rounded-2xl shadow-sm border-l-4 border-emerald-500">
-                    <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest">Total TRESP</p>
-                    <p id="kpi-tresp" class="text-xl font-black text-emerald-600 mt-1">0</p>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden">
+                    <span class="absolute inset-y-0 left-0 w-1 bg-blue-600"></span>
+                    <p class="text-slate-400 text-[9px] font-black uppercase tracking-[0.16em] leading-tight">Total TRESP</p>
+                    <p id="kpi-tresp" class="text-2xl font-black text-blue-600 mt-1.5 tracking-tight">0</p>
                 </div>
-                <div class="bg-white p-3 rounded-2xl shadow-sm border-l-4 border-indigo-500">
-                    <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest">Total TSBAC</p>
-                    <p id="kpi-tsbac" class="text-xl font-black text-indigo-600 mt-1">0</p>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden">
+                    <span class="absolute inset-y-0 left-0 w-1 bg-emerald-500"></span>
+                    <p class="text-slate-400 text-[9px] font-black uppercase tracking-[0.16em] leading-tight">Total TSBAC</p>
+                    <p id="kpi-tsbac" class="text-2xl font-black text-emerald-600 mt-1.5 tracking-tight">0</p>
                 </div>
-                <div class="bg-white p-3 rounded-2xl shadow-sm border-l-4 border-green-400">
-                    <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest">Concluídos</p>
-                    <p id="kpi-concluidos" class="text-xl font-black text-green-600 mt-1">0</p>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden">
+                    <span class="absolute inset-y-0 left-0 w-1 bg-green-500"></span>
+                    <p class="text-slate-400 text-[9px] font-black uppercase tracking-[0.16em] leading-tight">Concluídos</p>
+                    <p id="kpi-concluidos" class="text-2xl font-black text-green-600 mt-1.5 tracking-tight">0</p>
                 </div>
-                <div class="bg-white p-3 rounded-2xl shadow-sm border-l-4 border-purple-500">
-                    <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest">Em andamento</p>
-                    <p id="kpi-andamento" class="text-xl font-black text-purple-600 mt-1">0</p>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden">
+                    <span class="absolute inset-y-0 left-0 w-1 bg-purple-500"></span>
+                    <p class="text-slate-400 text-[9px] font-black uppercase tracking-[0.16em] leading-tight">Em andamento</p>
+                    <p id="kpi-andamento" class="text-2xl font-black text-purple-600 mt-1.5 tracking-tight">0</p>
                 </div>
-                <div class="bg-white p-3 rounded-2xl shadow-sm border-l-4 border-yellow-400">
-                    <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest">Pendentes</p>
-                    <p id="kpi-pendentes" class="text-xl font-black text-yellow-600 mt-1">0</p>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden">
+                    <span class="absolute inset-y-0 left-0 w-1 bg-amber-400"></span>
+                    <p class="text-slate-400 text-[9px] font-black uppercase tracking-[0.16em] leading-tight">Pendentes</p>
+                    <p id="kpi-pendentes" class="text-2xl font-black text-amber-500 mt-1.5 tracking-tight">0</p>
                 </div>
-                <div class="bg-white p-3 rounded-2xl shadow-sm border-l-4 border-red-500">
-                    <p class="text-slate-400 text-[9px] font-bold uppercase tracking-widest">Cancelados</p>
-                    <p id="kpi-cancelados" class="text-xl font-black text-red-600 mt-1">0</p>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden">
+                    <span class="absolute inset-y-0 left-0 w-1 bg-red-500"></span>
+                    <p class="text-slate-400 text-[9px] font-black uppercase tracking-[0.16em] leading-tight">Cancelados</p>
+                    <p id="kpi-cancelados" class="text-2xl font-black text-red-600 mt-1.5 tracking-tight">0</p>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <h3 class="text-xs font-black text-navy-900 uppercase mb-6 tracking-widest">Volume Mensal de Exames</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80">
+                    <h3 class="text-[11px] font-black text-navy-900 uppercase mb-5 tracking-[0.18em] flex items-center gap-2"><i class="fas fa-chart-column text-blue-500"></i>Volume Mensal de Exames</h3>
                     <canvas id="chart-bar-monthly"></canvas>
                 </div>
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <h3 class="text-xs font-black text-navy-900 uppercase mb-6 tracking-widest">Volume de Exames</h3>
+                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80">
+                    <h3 class="text-[11px] font-black text-navy-900 uppercase mb-5 tracking-[0.18em] flex items-center gap-2"><i class="fas fa-arrow-trend-up text-blue-500"></i>Volume de Exames</h3>
                     <canvas id="chart-line-trend"></canvas>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <h3 class="text-xs font-black text-navy-900 uppercase mb-6 tracking-widest">Distribuição por Tipo de Exame</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80">
+                    <h3 class="text-[11px] font-black text-navy-900 uppercase mb-5 tracking-[0.18em] flex items-center gap-2"><i class="fas fa-chart-pie text-blue-500"></i>Distribuição por Tipo de Exame</h3>
                     <canvas id="chart-donut-exame" style="max-height: 300px;"></canvas>
                 </div>
-                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                    <h3 class="text-xs font-black text-navy-900 uppercase mb-6 tracking-widest">Substratos Mais Utilizados</h3>
+                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80">
+                    <h3 class="text-[11px] font-black text-navy-900 uppercase mb-5 tracking-[0.18em] flex items-center gap-2"><i class="fas fa-flask text-blue-500"></i>Substratos Mais Utilizados</h3>
                     <canvas id="chart-donut-substrato" style="max-height: 300px;"></canvas>
                 </div>
             </div>
         </section>
 
-        <section id="tab-config" class="tab-content container mx-auto">
+        <section id="tab-config" class="tab-content w-full max-w-[1500px] mx-auto">
             <div class="max-w-5xl mx-auto">
 
+                <!-- Cabeçalho da seção -->
+                <div class="flex items-center gap-4 mb-5">
+                    <div class="h-11 w-11 rounded-2xl bg-navy-900 text-blue-400 flex items-center justify-center shadow-lg shrink-0">
+                        <i class="fas fa-sliders-h"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-navy-900 font-black text-lg tracking-tight leading-none">Configurações</h2>
+                        <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400 mt-1.5">Administração do sistema</p>
+                    </div>
+                </div>
+
                 <!-- Sub-abas de Configurações -->
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-2 flex gap-2 mb-6">
+                <div class="bg-white rounded-2xl border border-slate-200/80 p-1.5 flex gap-1.5 mb-5">
                     <button onclick="switchConfigTab('usuarios')" id="cfg-btn-usuarios"
                         class="flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 bg-navy-900 text-white shadow-md">
                         <i class="fas fa-users"></i>Usuários
@@ -927,12 +977,13 @@
     </div>
 
     <!-- LOGIN OVERLAY -->
-    <div id="login-overlay" class="fixed inset-0 bg-navy-900 flex items-center justify-center p-4" style="z-index:10000">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
-            <div class="bg-gradient-to-br from-navy-900 to-blue-900 p-8 flex flex-col items-center">
+    <div id="login-overlay" class="fixed inset-0 flex items-center justify-center p-4" style="z-index:10000; background:radial-gradient(900px 500px at 50% -10%, rgba(61,124,240,.20), transparent 60%), linear-gradient(160deg,#0b1221 0%,#0e1628 55%,#16203a 100%)">
+        <div class="bg-white rounded-[28px] shadow-2xl w-full max-w-sm overflow-hidden ring-1 ring-white/10">
+            <div class="relative p-8 flex flex-col items-center" style="background:linear-gradient(160deg,#111a2e 0%,#0e1628 60%,#0b1221 100%)">
+                <span class="absolute bottom-0 left-0 right-0 h-[2px]" style="background:linear-gradient(90deg,transparent,rgba(61,124,240,.9),transparent)"></span>
                 <img src="https://i.imgur.com/vXM6l52.png" alt="Logo" class="h-16 w-auto object-contain mb-4">
-                <h1 class="text-white font-black text-lg uppercase tracking-widest">Respiratório<span class="text-blue-400">LAMIC</span></h1>
-                <p class="text-blue-300 text-xs mt-1">Agenda de Testes</p>
+                <h1 class="text-white font-black text-lg uppercase tracking-[0.18em]">Respiratório<span class="text-blue-400">LAMIC</span></h1>
+                <p class="text-navy-300 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Agenda de Testes</p>
             </div>
 
             <!-- Formulário de Login -->
@@ -1312,2598 +1363,31 @@
         </div>
     </div>
 
-    <script>
-        // CONFIGURAÇÃO DO FIREBASE
-        const firebaseConfig = {
-            apiKey: "AIzaSyAykEcKqLPOi0WfDuoxZC-tPKko7k27Wh4",
-            authDomain: "agendaresp.firebaseapp.com",
-            databaseURL: "https://agendaresp-default-rtdb.firebaseio.com",
-            projectId: "agendaresp",
-            storageBucket: "agendaresp.firebasestorage.app",
-            messagingSenderId: "812520906432",
-            appId: "1:812520906432:web:03fa5edf2b2e42cb3cd725"
-        };
-
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
-        // ESTADO DA APLICAÇÃO
-        let appointments = [];
-        let pendingChecklistAction = null;
-        
-        // MIGRAR DADOS ANTIGOS PARA NOVA ESTRUTURA DE STATUS
-        appointments = appointments.map(app => {
-            if(!app.status) {
-                app.status = app.chkConcluido ? 'Concluído' : 'Agendado';
-            }
-            return app;
-        });
-
-        let atendentesList = [];
-        let motivosPerdaList = [];
-        let currentDate = new Date();
-        let tablePage = 1;
-        const itemsPerPage = 20;
-
-        // AUDIT LOG
-        let auditLog = [];
-        let historyFilter = { type: 'global' };
-        let historyPage = 1;
-        const historyItemsPerPage = 10;
-
-        // AUTENTICAÇÃO DE USUÁRIOS (session-only — resetado ao recarregar)
-        let currentUser = null;
-
-        function isAdmin() { return currentUser?.role === 'admin'; }
-
-        // Gráficos
-        let charts = {};
-
-        // ============================================================
-        // AUTENTICAÇÃO — LOGIN / USUÁRIOS
-        // ============================================================
-        async function hashPassword(password) {
-            const data = new TextEncoder().encode(password);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-
-        function togglePwdVisibility(inputId, iconId) {
-            const input = document.getElementById(inputId);
-            const icon = document.getElementById(iconId);
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.replace('fa-eye', 'fa-eye-slash');
-            } else {
-                input.type = 'password';
-                icon.classList.replace('fa-eye-slash', 'fa-eye');
-            }
-        }
-
-        function formatCpfInput(input) {
-            let v = input.value.replace(/\D/g, '').slice(0, 11);
-            if (v.length > 9) v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
-            else if (v.length > 6) v = v.replace(/^(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3');
-            else if (v.length > 3) v = v.replace(/^(\d{3})(\d{0,3})/, '$1.$2');
-            input.value = v;
-        }
-
-        function maskCpf(cpf) {
-            const d = (cpf || '').replace(/\D/g, '');
-            if (d.length !== 11) return cpf || '—';
-            return `${d.slice(0,3)}.***.***-${d.slice(9)}`;
-        }
-
-        function getInitials(fullName) {
-            if (!fullName) return '?';
-            const parts = fullName.trim().split(/\s+/);
-            if (parts.length === 1) return parts[0][0].toUpperCase();
-            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-        }
-
-        async function initLoginOverlay() {
-            // Sempre mostra o login primeiro; "Criar Conta" aparece conforme config
-            const snapshot = await database.ref('users').once('value');
-            const usersData = snapshot.val();
-            const hasUsers = usersData && Object.keys(usersData).length > 0;
-
-            const btn = document.getElementById('btn-criar-conta');
-            if (!hasUsers) {
-                // Nenhum usuário: libera criação de conta (primeiro usuário = admin)
-                btn.classList.remove('hidden');
-                btn.classList.add('flex');
-            } else {
-                const allowSnap = await database.ref('config/allowRegistration').once('value');
-                const allow = !!allowSnap.val();
-                if (allow) { btn.classList.remove('hidden'); btn.classList.add('flex'); }
-                else        { btn.classList.add('hidden');   btn.classList.remove('flex'); }
-            }
-            showLoginForm();
-        }
-
-        function showLoginForm() {
-            document.getElementById('login-form-box').classList.remove('hidden');
-            document.getElementById('register-form-box').classList.add('hidden');
-            document.getElementById('login-error').classList.add('hidden');
-            setTimeout(() => document.getElementById('login-username').focus(), 100);
-        }
-
-        function showRegisterForm() {
-            document.getElementById('login-form-box').classList.add('hidden');
-            document.getElementById('register-form-box').classList.remove('hidden');
-            document.getElementById('register-error').classList.add('hidden');
-            populateRegAttendentesList();
-            setTimeout(() => document.getElementById('reg-fullname').focus(), 100);
-        }
-
-        function populateRegAttendentesList() {
-            const dl1 = document.getElementById('reg-atendentes-list');
-            const dl2 = document.getElementById('modal-reg-atendentes-list');
-            const opts = atendentesList.map(n => `<option value="${n}">`).join('');
-            if (dl1) dl1.innerHTML = opts;
-            if (dl2) dl2.innerHTML = opts;
-        }
-
-        async function submitLogin() {
-            const username = document.getElementById('login-username').value.trim();
-            const password = document.getElementById('login-password').value;
-            const errorEl = document.getElementById('login-error');
-            errorEl.classList.add('hidden');
-
-            if (!username || !password) {
-                errorEl.innerText = 'Preencha usuário e senha.';
-                errorEl.classList.remove('hidden');
-                return;
-            }
-
-            const snap = await database.ref(`users/${username}`).once('value');
-            const user = snap.val();
-
-            if (!user || !user.active) {
-                errorEl.innerText = 'Usuário não encontrado ou inativo.';
-                errorEl.classList.remove('hidden');
-                return;
-            }
-
-            const hash = await hashPassword(password);
-            if (hash !== user.passwordHash) {
-                errorEl.innerText = 'Senha incorreta.';
-                errorEl.classList.remove('hidden');
-                document.getElementById('login-password').value = '';
-                return;
-            }
-
-            currentUser = user;
-            document.getElementById('login-overlay').style.display = 'none';
-            updateUserBadge();
-            updateConfigSectionVisibility();
-            showNotification(`Bem-vindo, ${user.fullName.split(' ')[0]}!`, 'success');
-        }
-
-        async function submitRegister(fromModal) {
-            const prefix = fromModal ? 'modal-reg' : 'reg';
-            const fullName = document.getElementById(`${prefix}-fullname`).value.trim();
-            const username = document.getElementById(`${prefix}-username`).value.trim();
-            const cpf = document.getElementById(`${prefix}-cpf`).value.trim();
-            const pwd = document.getElementById(`${prefix}-pwd`).value;
-            const pwdConfirm = document.getElementById(`${prefix}-pwd-confirm`).value;
-            const errorEl = document.getElementById(fromModal ? 'modal-register-error' : 'register-error');
-            errorEl.classList.add('hidden');
-
-            if (!fullName || !username || !cpf || !pwd || !pwdConfirm) {
-                errorEl.innerText = 'Preencha todos os campos obrigatórios.';
-                errorEl.classList.remove('hidden');
-                return;
-            }
-            if (atendentesList.length > 0 && !atendentesList.includes(fullName)) {
-                errorEl.innerText = 'O nome deve corresponder a um atendente da lista.';
-                errorEl.classList.remove('hidden');
-                return;
-            }
-            if (cpf.replace(/\D/g, '').length !== 11) {
-                errorEl.innerText = 'CPF inválido.';
-                errorEl.classList.remove('hidden');
-                return;
-            }
-            if (pwd.length < 4) {
-                errorEl.innerText = 'A senha deve ter ao menos 4 caracteres.';
-                errorEl.classList.remove('hidden');
-                return;
-            }
-            if (pwd !== pwdConfirm) {
-                errorEl.innerText = 'As senhas não coincidem.';
-                errorEl.classList.remove('hidden');
-                return;
-            }
-
-            const existing = await database.ref(`users/${username}`).once('value');
-            if (existing.val()) {
-                errorEl.innerText = 'Este nome de usuário já existe.';
-                errorEl.classList.remove('hidden');
-                return;
-            }
-
-            const allSnap = await database.ref('users').once('value');
-            const allUsers = allSnap.val();
-            const isFirstUser = !allUsers || Object.keys(allUsers).length === 0;
-
-            const passwordHash = await hashPassword(pwd);
-            const newUser = {
-                username,
-                fullName,
-                cpf: cpf.replace(/\D/g, ''),
-                passwordHash,
-                role: isFirstUser ? 'admin' : 'user',
-                active: true,
-                createdAt: new Date().toISOString()
-            };
-
-            await database.ref(`users/${username}`).set(newUser);
-
-            if (fromModal) {
-                document.getElementById('modal-create-user').classList.remove('active');
-                clearCreateUserForm();
-                showNotification('Usuário criado com sucesso!', 'success');
-                addUserAuditLog('user_create', newUser);
-                renderUsersTable();
-            } else {
-                currentUser = newUser;
-                document.getElementById('login-overlay').style.display = 'none';
-                updateUserBadge();
-                updateConfigSectionVisibility();
-                showNotification(`Conta criada! Bem-vindo, ${newUser.fullName.split(' ')[0]}!`, 'success');
-            }
-        }
-
-        function clearCreateUserForm() {
-            ['modal-reg-fullname','modal-reg-username','modal-reg-cpf','modal-reg-pwd','modal-reg-pwd-confirm'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = '';
-            });
-            document.getElementById('modal-register-error').classList.add('hidden');
-        }
-
-        function logoutUser() {
-            currentUser = null;
-            document.getElementById('user-badge').classList.remove('flex');
-            document.getElementById('user-badge').classList.add('hidden');
-            document.getElementById('login-overlay').style.display = 'flex';
-            document.getElementById('login-username').value = '';
-            document.getElementById('login-password').value = '';
-            document.getElementById('login-error').classList.add('hidden');
-            initLoginOverlay();
-            switchTabDirect('dashboard');
-        }
-
-        function updateUserBadge() {
-            if (!currentUser) return;
-            const badge = document.getElementById('user-badge');
-            badge.classList.remove('hidden');
-            badge.classList.add('flex');
-            document.getElementById('user-initials').innerText = getInitials(currentUser.fullName);
-            document.getElementById('user-display-name').innerText = formatAtendenteName(currentUser.fullName);
-        }
-
-        function updateConfigSectionVisibility() {
-            if (isAdmin()) {
-                renderUsersTable();
-                loadAllowRegistrationToggle();
-            }
-            switchConfigTab('usuarios');
-        }
-
-        async function loadAllowRegistrationToggle() {
-            const snap = await database.ref('config/allowRegistration').once('value');
-            const val = !!snap.val();
-            const checkbox = document.getElementById('toggle-allow-registration');
-            const track = document.getElementById('toggle-allow-reg-track');
-            const thumb = document.getElementById('toggle-allow-reg-thumb');
-            checkbox.checked = val;
-            if (val) {
-                track.classList.replace('bg-slate-600', 'bg-blue-500');
-                thumb.style.transform = 'translateX(20px)';
-            } else {
-                track.classList.replace('bg-blue-500', 'bg-slate-600');
-                thumb.style.transform = 'translateX(0)';
-            }
-        }
-
-        async function saveAllowRegistration(val) {
-            await database.ref('config/allowRegistration').set(val);
-            const track = document.getElementById('toggle-allow-reg-track');
-            const thumb = document.getElementById('toggle-allow-reg-thumb');
-            if (val) {
-                track.classList.replace('bg-slate-600', 'bg-blue-500');
-                thumb.style.transform = 'translateX(20px)';
-            } else {
-                track.classList.replace('bg-blue-500', 'bg-slate-600');
-                thumb.style.transform = 'translateX(0)';
-            }
-        }
-
-        function openCreateUserModal() {
-            clearCreateUserForm();
-            populateRegAttendentesList();
-            document.getElementById('modal-create-user').classList.add('active');
-        }
-
-        async function renderUsersTable() {
-            const snap = await database.ref('users').once('value');
-            const data = snap.val() || {};
-            let users = Object.values(data).sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''));
-            if (_usersFilter === 'active')   users = users.filter(u => u.active !== false);
-            if (_usersFilter === 'inactive') users = users.filter(u => u.active === false);
-            const tbody = document.getElementById('users-table-body');
-            if (!tbody) return;
-            tbody.innerHTML = users.map(u => `
-                <tr class="hover:bg-slate-50">
-                    <td class="px-4 py-3 font-bold text-slate-700">${u.fullName}</td>
-                    <td class="px-4 py-3 text-slate-500 font-mono">${u.username}</td>
-                    <td class="px-4 py-3 text-slate-400">${maskCpf(u.cpf)}</td>
-                    <td class="px-4 py-3">
-                        <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${u.role === 'admin' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}">${u.role === 'admin' ? 'Admin' : 'Usuário'}</span>
-                    </td>
-                    <td class="px-4 py-3">
-                        <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${u.active ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-600 border border-red-200'}">${u.active ? 'Ativo' : 'Inativo'}</span>
-                    </td>
-                    <td class="px-4 py-3">
-                        <div class="flex justify-center gap-1">
-                            <button onclick="openEditUserModal('${u.username}')" title="Editar" class="h-7 w-7 rounded-lg flex items-center justify-center text-xs bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition-all">
-                                <i class="fas fa-pen"></i>
-                            </button>
-                            <button onclick="toggleUserActive('${u.username}', ${!u.active})" title="${u.active ? 'Inativar' : 'Ativar'}" class="h-7 w-7 rounded-lg flex items-center justify-center text-xs ${u.active ? 'bg-yellow-50 text-yellow-600 border border-yellow-200 hover:bg-yellow-500 hover:text-white' : 'bg-green-50 text-green-600 border border-green-200 hover:bg-green-500 hover:text-white'} transition-all">
-                                <i class="fas ${u.active ? 'fa-user-slash' : 'fa-user-check'}"></i>
-                            </button>
-                            <button onclick="toggleUserRole('${u.username}', '${u.role}')" title="${u.role === 'admin' ? 'Rebaixar para Usuário' : 'Promover para Admin'}" class="h-7 w-7 rounded-lg flex items-center justify-center text-xs ${u.role === 'admin' ? 'bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-500 hover:text-white' : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-blue-500 hover:text-white'} transition-all">
-                                <i class="fas ${u.role === 'admin' ? 'fa-user-minus' : 'fa-user-shield'}"></i>
-                            </button>
-                            <button onclick="deleteUser('${u.username}')" title="Excluir" class="h-7 w-7 rounded-lg flex items-center justify-center text-xs bg-red-50 text-red-500 border border-red-200 hover:bg-red-500 hover:text-white transition-all">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        async function toggleUserActive(username, newActive) {
-            await database.ref(`users/${username}/active`).set(newActive);
-            renderUsersTable();
-        }
-
-        async function toggleUserRole(username, currentRole) {
-            const newRole = currentRole === 'admin' ? 'user' : 'admin';
-            await database.ref(`users/${username}/role`).set(newRole);
-            renderUsersTable();
-        }
-
-        // Filtro de status na tabela de usuários
-        let _usersFilter = 'all';
-        function setUsersFilter(filter) {
-            _usersFilter = filter;
-            ['all','active','inactive'].forEach(f => {
-                const btn = document.getElementById(`filter-users-${f}`);
-                const isActive = f === filter;
-                btn.classList.toggle('bg-navy-900',    isActive);
-                btn.classList.toggle('text-white',     isActive);
-                btn.classList.toggle('shadow',         isActive);
-                btn.classList.toggle('border-2',       !isActive);
-                if (!isActive) {
-                    if (f === 'active')   { btn.classList.add('border-green-500','text-green-700'); btn.classList.remove('border-red-400','text-red-600'); }
-                    if (f === 'inactive') { btn.classList.add('border-red-400','text-red-600');     btn.classList.remove('border-green-500','text-green-700'); }
-                }
-            });
-            renderUsersTable();
-        }
-
-        // Exclusão com modal de confirmação
-        let _pendingDeleteUsername = null;
-        function deleteUser(username) {
-            _pendingDeleteUsername = username;
-            document.getElementById('delete-user-subtitle').innerText = '@' + username;
-            document.getElementById('modal-delete-user-confirm').classList.add('active');
-        }
-        async function confirmDeleteUser() {
-            const username = _pendingDeleteUsername;
-            _pendingDeleteUsername = null;
-            document.getElementById('modal-delete-user-confirm').classList.remove('active');
-            if (!username) return;
-            const snap = await database.ref(`users/${username}`).once('value');
-            const deletedUser = snap.val() || { username };
-            await database.ref(`users/${username}`).remove();
-            addUserAuditLog('user_delete', deletedUser);
-            renderUsersTable();
-            showNotification('Usuário excluído.', 'success');
-        }
-
-        // Modal Minha Conta
-        function openMyAccountModal() {
-            if (!currentUser) return;
-            document.getElementById('myaccount-fullname').innerText = currentUser.fullName || '—';
-            document.getElementById('myaccount-username').innerText = '@' + currentUser.username;
-            document.getElementById('myaccount-cpf').innerText     = maskCpf(currentUser.cpf);
-            document.getElementById('myaccount-role').innerText    = currentUser.role === 'admin' ? 'Administrador' : 'Usuário';
-            document.getElementById('myaccount-old-pwd').value     = '';
-            document.getElementById('myaccount-new-pwd').value     = '';
-            document.getElementById('myaccount-confirm-pwd').value = '';
-            document.getElementById('myaccount-error').classList.add('hidden');
-            document.getElementById('modal-my-account').classList.add('active');
-        }
-        async function saveMyAccountPassword() {
-            const oldPwd    = document.getElementById('myaccount-old-pwd').value;
-            const newPwd    = document.getElementById('myaccount-new-pwd').value;
-            const confirmPwd= document.getElementById('myaccount-confirm-pwd').value;
-            const errorEl   = document.getElementById('myaccount-error');
-            errorEl.classList.add('hidden');
-            if (!oldPwd || !newPwd || !confirmPwd) { errorEl.innerText='Preencha todos os campos de senha.'; errorEl.classList.remove('hidden'); return; }
-            if (newPwd !== confirmPwd) { errorEl.innerText='As novas senhas não coincidem.'; errorEl.classList.remove('hidden'); return; }
-            if (newPwd.length < 4)    { errorEl.innerText='A nova senha deve ter ao menos 4 caracteres.'; errorEl.classList.remove('hidden'); return; }
-            const oldHash = await hashPassword(oldPwd);
-            const snap    = await database.ref(`users/${currentUser.username}/passwordHash`).once('value');
-            if (oldHash !== snap.val()) { errorEl.innerText='Senha atual incorreta.'; errorEl.classList.remove('hidden'); return; }
-            const newHash = await hashPassword(newPwd);
-            await database.ref(`users/${currentUser.username}/passwordHash`).set(newHash);
-            document.getElementById('modal-my-account').classList.remove('active');
-            showNotification('Senha alterada com sucesso!', 'success');
-        }
-
-        async function openEditUserModal(username) {
-            const snap = await database.ref(`users/${username}`).once('value');
-            const u = snap.val();
-            if (!u) return;
-            document.getElementById('edit-user-username').value = u.username;
-            document.getElementById('edit-user-subtitle').innerText = '@' + u.username;
-            document.getElementById('edit-user-fullname').value = u.fullName || '';
-            document.getElementById('edit-user-cpf').value = u.cpf ? u.cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4') : '';
-            document.getElementById('edit-user-role').value = u.role || 'user';
-            document.getElementById('edit-user-active').value = String(u.active !== false);
-            document.getElementById('edit-user-pwd').value = '';
-            document.getElementById('edit-user-pwd-confirm').value = '';
-            document.getElementById('edit-user-error').classList.add('hidden');
-            // populate datalist
-            const dl = document.getElementById('edit-user-atendentes-list');
-            dl.innerHTML = atendentesList.map(a => `<option value="${a}">`).join('');
-            document.getElementById('modal-edit-user').classList.add('active');
-        }
-
-        async function saveEditUser() {
-            const username = document.getElementById('edit-user-username').value;
-            const fullName = document.getElementById('edit-user-fullname').value.trim();
-            const cpfRaw = document.getElementById('edit-user-cpf').value.replace(/\D/g, '');
-            const role = document.getElementById('edit-user-role').value;
-            const active = document.getElementById('edit-user-active').value === 'true';
-            const pwd = document.getElementById('edit-user-pwd').value;
-            const pwdConfirm = document.getElementById('edit-user-pwd-confirm').value;
-            const errorEl = document.getElementById('edit-user-error');
-            errorEl.classList.add('hidden');
-
-            if (!fullName) { errorEl.innerText = 'Nome completo é obrigatório.'; errorEl.classList.remove('hidden'); return; }
-            if (atendentesList.length > 0 && !atendentesList.some(a => a.toUpperCase() === fullName.toUpperCase())) {
-                errorEl.innerText = 'Nome deve corresponder a um colaborador da lista.'; errorEl.classList.remove('hidden'); return;
-            }
-            if (pwd && pwd !== pwdConfirm) { errorEl.innerText = 'As senhas não coincidem.'; errorEl.classList.remove('hidden'); return; }
-            if (pwd && pwd.length < 4) { errorEl.innerText = 'A senha deve ter ao menos 4 caracteres.'; errorEl.classList.remove('hidden'); return; }
-
-            // Buscar nome atual antes de atualizar para propagar mudança nos agendamentos
-            const snapOld = await database.ref(`users/${username}`).once('value');
-            const oldData = snapOld.val() || {};
-            const oldFullName = oldData.fullName || '';
-
-            const updates = { fullName, cpf: cpfRaw, role, active };
-            if (pwd) updates.passwordHash = await hashPassword(pwd);
-
-            await database.ref(`users/${username}`).update(updates);
-
-            // Propagar mudança de nome em todos os agendamentos onde era atendente
-            if (oldFullName && fullName && oldFullName.toUpperCase() !== fullName.toUpperCase()) {
-                appointments = appointments.map(a =>
-                    a.atendente && a.atendente.toUpperCase() === oldFullName.toUpperCase()
-                        ? { ...a, atendente: fullName.toUpperCase() }
-                        : a
-                );
-                saveAppointmentsToFirebase();
-                // Atualizar badge se for o próprio usuário logado
-                if (currentUser && currentUser.username === username) {
-                    currentUser.fullName = fullName;
-                    updateUserBadge();
-                }
-            }
-
-            // Calcular campos alterados para o diff
-            const userChanges = [];
-            if (oldData.fullName !== fullName) userChanges.push({ label: 'Nome', oldVal: oldData.fullName || '—', newVal: fullName });
-            if (oldData.role !== role) userChanges.push({ label: 'Papel', oldVal: oldData.role === 'admin' ? 'Admin' : 'Usuário', newVal: role === 'admin' ? 'Admin' : 'Usuário' });
-            if (String(oldData.active) !== String(active)) userChanges.push({ label: 'Status', oldVal: oldData.active !== false ? 'Ativo' : 'Inativo', newVal: active ? 'Ativo' : 'Inativo' });
-            if (pwd) userChanges.push({ label: 'Senha', oldVal: '••••••••', newVal: '(nova senha)' });
-            if (userChanges.length > 0) addUserAuditLog('user_edit', { username, fullName }, userChanges);
-
-            document.getElementById('modal-edit-user').classList.remove('active');
-            renderUsersTable();
-            showNotification('Usuário atualizado com sucesso.', 'success');
-        }
-
-        let _pendingAuditDeleteId = null;
-
-        function deleteAuditLogEntry(id) {
-            if (!isAdmin()) return;
-            _pendingAuditDeleteId = id;
-            document.getElementById('modal-audit-delete-confirm').classList.add('active');
-        }
-
-        function confirmAuditDeleteEntry() {
-            const id = _pendingAuditDeleteId;
-            _pendingAuditDeleteId = null;
-            document.getElementById('modal-audit-delete-confirm').classList.remove('active');
-            if (!id) return;
-            auditLog = auditLog.filter(e => e.id !== id);
-            database.ref(`auditLog/${id}`).remove().catch(console.error);
-            renderHistoryList();
-            renderTraceability();
-        }
-        // ============================================================
-
-        // ============================================================
-        // SISTEMA DE AUDITORIA / HISTÓRICO
-        // ============================================================
-        const _auditFields = [
-            { key: 'data',       label: 'Data',        fmt: v => v ? v.split('-').reverse().join('/') : '—' },
-            { key: 'horaInicio', label: 'Hora início',  fmt: v => v || '—' },
-            { key: 'horaFim',    label: 'Hora fim',     fmt: v => v || '—' },
-            { key: 'paciente',   label: 'Paciente',     fmt: v => v || '—' },
-            { key: 'exame',      label: 'Exame',        fmt: v => v || '—' },
-            { key: 'substrato',  label: 'Substrato',    fmt: v => v || '—' },
-            { key: 'metano',     label: 'Metano',       fmt: v => v || '—' },
-            { key: 'status',     label: 'Status',       fmt: v => v || '—' },
-            { key: 'atendente',  label: 'Atendente',    fmt: v => v || '—' },
-            { key: 'pedido',     label: 'Pedido',       fmt: v => v || '—' },
-            { key: 'idade',      label: 'Idade',        fmt: v => v != null ? String(v) : '—' },
-        ];
-
-        function addAuditLog(action, record, oldRecord) {
-            const changes = [];
-            if (action === 'edit' && oldRecord) {
-                for (const f of _auditFields) {
-                    const oldVal = String(oldRecord[f.key] ?? '');
-                    const newVal = String(record[f.key] ?? '');
-                    if (oldVal !== newVal) {
-                        changes.push({ label: f.label, oldVal: f.fmt(oldRecord[f.key]), newVal: f.fmt(record[f.key]) });
-                    }
-                }
-            }
-            // Não registrar edição se nenhum campo rastreado mudou
-            if (action === 'edit' && changes.length === 0) return;
-
-            const entry = {
-                id: Date.now(),
-                timestamp: new Date().toISOString(),
-                action,
-                appointmentId: record.id,
-                paciente: record.paciente || '—',
-                data: record.data || '',
-                atendente: record.atendente || '',
-                user: currentUser?.username || 'sistema',
-                userFullName: currentUser?.fullName || '',
-                details: `${record.exame || ''} | ${record.substrato || ''} | ${record.horaInicio || ''}–${record.horaFim || ''}`,
-                changes
-            };
-            auditLog.unshift(entry);
-            database.ref(`auditLog/${entry.id}`).set(entry).catch(console.error);
-        }
-
-        function addUserAuditLog(action, targetUser, changes) {
-            const entry = {
-                id: Date.now(),
-                timestamp: new Date().toISOString(),
-                action,
-                appointmentId: null,
-                paciente: targetUser.fullName || targetUser.username,
-                data: '',
-                atendente: '',
-                user: currentUser?.username || 'sistema',
-                userFullName: currentUser?.fullName || '',
-                details: `@${targetUser.username}`,
-                changes: changes || []
-            };
-            auditLog.unshift(entry);
-            database.ref(`auditLog/${entry.id}`).set(entry).catch(console.error);
-            _refreshHistoryIfOpen();
-        }
-
-        function addMotivoAuditLog(action, newVal, oldVal) {
-            const changes = (action === 'motivo_edit' && oldVal)
-                ? [{ label: 'Motivo', oldVal, newVal }]
-                : [];
-            const entry = {
-                id: Date.now(),
-                timestamp: new Date().toISOString(),
-                action,
-                appointmentId: null,
-                paciente: null,
-                data: '',
-                atendente: '',
-                user: currentUser?.username || 'sistema',
-                userFullName: currentUser?.fullName || '',
-                details: action === 'motivo_delete' ? oldVal : newVal,
-                changes
-            };
-            auditLog.unshift(entry);
-            database.ref(`auditLog/${entry.id}`).set(entry).catch(console.error);
-            _refreshHistoryIfOpen();
-        }
-
-        function _refreshHistoryIfOpen() {
-            if (document.getElementById('modal-history').classList.contains('active')) {
-                renderHistoryList();
-            }
-        }
-
-        function loadAuditLogsFromFirebase() {
-            database.ref('auditLog').orderByChild('timestamp').once('value').then(snapshot => {
-                const data = snapshot.val();
-                if (data) {
-                    auditLog = Object.values(data).sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-                } else {
-                    auditLog = [];
-                }
-                renderTraceability();
-            }).catch(console.error);
-        }
-
-        function setupAuditLogRealtimeListener() {
-            database.ref('auditLog').on('value', (snapshot) => {
-                const data = snapshot.val();
-                auditLog = data ? Object.values(data).sort((a, b) => b.timestamp.localeCompare(a.timestamp)) : [];
-                renderTraceability();
-                _refreshHistoryIfOpen();
-            });
-        }
-
-        function _openHistoryCommon() {
-            historyPage = 1;
-            _pickerSelectedMonth = '';
-            document.getElementById('history-month-filter').value = '';
-            const btn = document.getElementById('btn-history-month-toggle');
-            btn.classList.remove('bg-blue-500');
-            btn.classList.add('bg-white/10');
-            // Mostrar lixeira global apenas para admins (verifica se o botão existe)
-            const trashBtn = document.getElementById('btn-history-clear-all');
-            if (trashBtn) {
-                if (isAdmin()) {
-                    trashBtn.classList.remove('hidden');
-                    trashBtn.classList.add('flex');
-                } else {
-                    trashBtn.classList.add('hidden');
-                    trashBtn.classList.remove('flex');
-                }
-            }
-            renderHistoryList();
-            document.getElementById('modal-history').classList.add('active');
-        }
-
-        function openDayHistory() {
-            const dateText = document.getElementById('day-details-date').innerText;
-            const parts = dateText.split('/');
-            const isoDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-            historyFilter = { type: 'day', date: isoDate };
-            _openHistoryCommon();
-        }
-
-        function openAppointmentHistory() {
-            const id = parseInt(document.getElementById('reg-id').value);
-            if (!id) return;
-            historyFilter = { type: 'appointment', id };
-            _openHistoryCommon();
-        }
-
-        function openHistoryModal(filter) {
-            historyFilter = filter;
-            _openHistoryCommon();
-        }
-
-        function getFilteredAuditLog() {
-            let filtered = [...auditLog];
-            if (historyFilter.type === 'global') {
-                filtered = filtered.filter(e => !(e.action && e.action.startsWith('user_')));
-            } else if (historyFilter.type === 'day') {
-                filtered = filtered.filter(e => e.data === historyFilter.date && !(e.action && e.action.startsWith('user_')));
-            } else if (historyFilter.type === 'appointment') {
-                filtered = filtered.filter(e => e.appointmentId === historyFilter.id && !(e.action && e.action.startsWith('user_')));
-            } else if (historyFilter.type === 'users') {
-                filtered = filtered.filter(e => e.action && e.action.startsWith('user_'));
-            }
-            const monthInput = document.getElementById('history-month-filter');
-            if (monthInput && monthInput.value) {
-                filtered = filtered.filter(e => e.timestamp && e.timestamp.startsWith(monthInput.value));
-            }
-            return filtered;
-        }
-
-        function renderHistoryList() {
-            const filtered = getFilteredAuditLog();
-            const total = filtered.length;
-            const totalPages = Math.max(1, Math.ceil(total / historyItemsPerPage));
-            if (historyPage > totalPages) historyPage = totalPages;
-            const start = (historyPage - 1) * historyItemsPerPage;
-            const pageItems = filtered.slice(start, start + historyItemsPerPage);
-
-            const subtitles = {
-                global:      'Rastreabilidade geral',
-                day:         `Alterações do dia ${historyFilter.date ? historyFilter.date.split('-').reverse().join('/') : ''}`,
-                appointment: 'Histórico do agendamento',
-                users:       'Criação · Edição · Exclusão de usuários'
-            };
-            document.getElementById('history-subtitle').innerText = subtitles[historyFilter.type] || '';
-
-            const actionCfg = {
-                create:        { label: 'Criado',            color: 'text-emerald-700 bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500', icon: 'fa-plus-circle' },
-                edit:          { label: 'Editado',           color: 'text-blue-700 bg-blue-50 border-blue-200',          dot: 'bg-blue-500',    icon: 'fa-edit' },
-                delete:        { label: 'Excluído',          color: 'text-red-700 bg-red-50 border-red-200',             dot: 'bg-red-500',     icon: 'fa-trash-alt' },
-                motivo_add:    { label: 'Motivo Adicionado', color: 'text-emerald-700 bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500', icon: 'fa-tag' },
-                motivo_edit:   { label: 'Motivo Editado',    color: 'text-blue-700 bg-blue-50 border-blue-200',          dot: 'bg-blue-500',    icon: 'fa-tag' },
-                motivo_delete: { label: 'Motivo Removido',   color: 'text-red-700 bg-red-50 border-red-200',             dot: 'bg-red-500',     icon: 'fa-tag' },
-                user_create:   { label: 'Usuário Criado',   color: 'text-emerald-700 bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500', icon: 'fa-user-plus' },
-                user_edit:     { label: 'Usuário Editado',  color: 'text-blue-700 bg-blue-50 border-blue-200',          dot: 'bg-blue-500',    icon: 'fa-user-edit' },
-                user_delete:   { label: 'Usuário Excluído', color: 'text-red-700 bg-red-50 border-red-200',             dot: 'bg-red-500',     icon: 'fa-user-times' }
-            };
-
-            const listEl = document.getElementById('history-list');
-            if (pageItems.length === 0) {
-                listEl.innerHTML = '<p class="text-center text-slate-400 font-bold uppercase text-xs py-10">Nenhum registro encontrado</p>';
-            } else {
-                listEl.innerHTML = pageItems.map(entry => {
-                    const cfg = actionCfg[entry.action] || actionCfg.edit;
-                    const dt = new Date(entry.timestamp);
-                    const dateStr = dt.toLocaleDateString('pt-BR');
-                    const timeStr = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                    const aptDate = entry.data ? entry.data.split('-').reverse().join('/') : '—';
-
-                    // Diff block para edições
-                    let diffHtml = '';
-                    const isMotivoAction = entry.action && entry.action.startsWith('motivo_');
-                    const isUserAction   = entry.action && entry.action.startsWith('user_');
-                    if (!isMotivoAction && entry.action === 'edit' && Array.isArray(entry.changes) && entry.changes.length > 0) {
-                        const rows = entry.changes.map(c => `
-                            <div class="flex items-center gap-1.5 flex-wrap py-0.5">
-                                <span class="text-[10px] font-black text-slate-400 uppercase w-20 flex-shrink-0">${c.label}</span>
-                                <span class="text-[11px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded line-through">${c.oldVal}</span>
-                                <i class="fas fa-arrow-right text-slate-300 text-[10px]"></i>
-                                <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">${c.newVal}</span>
-                            </div>`).join('');
-                        diffHtml = `<div class="mt-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 space-y-0.5">${rows}</div>`;
-                    }
-                    if ((isMotivoAction || isUserAction) && Array.isArray(entry.changes) && entry.changes.length > 0) {
-                        const rows = entry.changes.map(c => `
-                            <div class="flex items-center gap-1.5 flex-wrap py-0.5">
-                                <span class="text-[10px] font-black text-slate-400 uppercase w-20 flex-shrink-0">${c.label}</span>
-                                <span class="text-[11px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded line-through">${c.oldVal}</span>
-                                <i class="fas fa-arrow-right text-slate-300 text-[10px]"></i>
-                                <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">${c.newVal}</span>
-                            </div>`).join('');
-                        diffHtml = `<div class="mt-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 space-y-0.5">${rows}</div>`;
-                    }
-
-                    const titleLine = isMotivoAction
-                        ? `<p class="text-sm font-black text-navy-900">${entry.details || '—'}</p>
-                           <p class="text-xs text-slate-400 font-medium">Motivo de perda</p>`
-                        : isUserAction
-                        ? `<p class="text-sm font-black text-navy-900">${entry.paciente || '—'}</p>
-                           <p class="text-xs text-slate-400 font-medium font-mono">${entry.details || ''}</p>`
-                        : `<p class="text-sm font-black text-navy-900">${entry.paciente}</p>
-                           <p class="text-xs text-slate-500 font-medium">${entry.details} &bull; Data: ${aptDate}</p>
-                           ${entry.atendente ? `<p class="text-[10px] text-slate-400 font-bold mt-0.5">Atendente: ${entry.atendente}</p>` : ''}`;
-
-                    const userDisplayName = entry.userFullName
-                        ? formatAtendenteName(entry.userFullName)
-                        : (entry.user || 'sistema');
-
-                    return `
-                    <div class="flex gap-3 py-3 border-b border-slate-100 last:border-0">
-                        <div class="flex flex-col items-center pt-1">
-                            <div class="h-8 w-8 rounded-full ${cfg.dot} flex items-center justify-center flex-shrink-0">
-                                <i class="fas ${cfg.icon} text-white text-xs"></i>
-                            </div>
-                            <div class="w-0.5 flex-1 bg-slate-100 mt-1 min-h-[8px]"></div>
-                        </div>
-                        <div class="flex-1 pb-1">
-                            <p class="text-[11px] font-black text-navy-900 uppercase tracking-wide mb-0.5">
-                                <i class="fas fa-user-circle text-blue-400 mr-1"></i>${userDisplayName}
-                            </p>
-                            <div class="flex items-center gap-2 mb-1 flex-wrap">
-                                <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase border ${cfg.color}">${cfg.label}</span>
-                                <span class="text-[10px] text-slate-400 font-bold">${dateStr} às ${timeStr}</span>
-                            </div>
-                            ${titleLine}
-                            ${diffHtml}
-                            ${isAdmin() ? `<button onclick="deleteAuditLogEntry(${entry.id})" class="mt-2 text-[9px] font-black uppercase text-red-400 hover:text-red-600 transition-all flex items-center gap-1"><i class="fas fa-trash-alt"></i> Excluir registro</button>` : ''}
-                        </div>
-                    </div>`;
-                }).join('');
-            }
-
-            const showing = total === 0 ? '0' : `${start + 1}–${Math.min(start + historyItemsPerPage, total)}`;
-            document.getElementById('history-pagination-info').innerText = `${showing} de ${total}`;
-        }
-
-        function changeHistoryPage(dir) {
-            const filtered = getFilteredAuditLog();
-            const totalPages = Math.max(1, Math.ceil(filtered.length / historyItemsPerPage));
-            historyPage = Math.max(1, Math.min(totalPages, historyPage + dir));
-            renderHistoryList();
-        }
-
-        // Mantido por compatibilidade com chamadas que resetam o filtro
-        function toggleHistoryMonthFilter() {
-            clearHistoryMonthFilter();
-        }
-
-        // ---- Month Picker customizado ----
-        let _pickerYear = new Date().getFullYear();
-        let _pickerSelectedMonth = '';
-
-        function _closePicker(e) {
-            const picker = document.getElementById('history-month-picker');
-            if (!picker.contains(e.target)) {
-                _hideMonthPicker();
-            }
-        }
-
-        function _hideMonthPicker() {
-            document.getElementById('history-month-picker').classList.add('hidden');
-            document.removeEventListener('click', _closePicker);
-        }
-
-        function toggleHistoryMonthPicker(event) {
-            event.stopPropagation();
-            const picker = document.getElementById('history-month-picker');
-            if (!picker.classList.contains('hidden')) {
-                _hideMonthPicker();
-                return;
-            }
-            const btn = event.currentTarget;
-            const rect = btn.getBoundingClientRect();
-            picker.style.top   = (rect.bottom + 6) + 'px';
-            picker.style.left  = 'auto';
-            picker.style.right = (window.innerWidth - rect.right) + 'px';
-            _pickerYear = _pickerSelectedMonth ? parseInt(_pickerSelectedMonth.split('-')[0]) : new Date().getFullYear();
-            document.getElementById('picker-year').innerText = _pickerYear;
-            renderPickerMonths();
-            picker.classList.remove('hidden');
-            document.addEventListener('click', _closePicker);
-        }
-
-        function changePickerYear(dir) {
-            _pickerYear += dir;
-            document.getElementById('picker-year').innerText = _pickerYear;
-            renderPickerMonths();
-        }
-
-        function renderPickerMonths() {
-            const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-            document.getElementById('picker-months').innerHTML = months.map((m, i) => {
-                const val = `${_pickerYear}-${String(i + 1).padStart(2, '0')}`;
-                const sel = val === _pickerSelectedMonth;
-                return `<button onclick="selectHistoryMonth('${val}')" class="py-2 rounded-xl text-xs font-black uppercase tracking-wide transition-all ${sel ? 'bg-blue-500 text-white' : 'text-slate-300 hover:bg-white/10 hover:text-white'}">${m}</button>`;
-            }).join('');
-        }
-
-        function selectHistoryMonth(val) {
-            if (_pickerSelectedMonth === val) {
-                clearHistoryMonthFilter();
-                return;
-            }
-            _pickerSelectedMonth = val;
-            document.getElementById('history-month-filter').value = val;
-            historyPage = 1;
-            renderHistoryList();
-            _hideMonthPicker();
-            const btn = document.getElementById('btn-history-month-toggle');
-            btn.classList.add('bg-blue-500');
-            btn.classList.remove('bg-white/10');
-        }
-
-        function clearHistoryMonthFilter() {
-            _pickerSelectedMonth = '';
-            document.getElementById('history-month-filter').value = '';
-            historyPage = 1;
-            renderHistoryList();
-            _hideMonthPicker();
-            const btn = document.getElementById('btn-history-month-toggle');
-            btn.classList.remove('bg-blue-500');
-            btn.classList.add('bg-white/10');
-        }
-
-        function confirmClearAllAuditLog() {
-            if (!isAdmin()) return;
-            document.getElementById('modal-clear-audit-confirm').classList.add('active');
-        }
-
-        function executeClearAllAuditLog() {
-            document.getElementById('modal-clear-audit-confirm').classList.remove('active');
-            auditLog = [];
-            database.ref('auditLog').remove().catch(console.error);
-            renderHistoryList();
-            renderTraceability();
-            showNotification('Rastreabilidade apagada com sucesso.', 'success');
-        }
-
-        function renderTraceability() {
-            const el = document.getElementById('traceability-list');
-            if (!el) return;
-            const now = new Date();
-            const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            const monthLogs = auditLog.filter(e => e.timestamp && e.timestamp.startsWith(monthPrefix));
-            document.getElementById('trace-created').innerText = monthLogs.filter(e => e.action === 'create').length;
-            document.getElementById('trace-edited').innerText  = monthLogs.filter(e => e.action === 'edit').length;
-            document.getElementById('trace-deleted').innerText = monthLogs.filter(e => e.action === 'delete').length;
-
-            const recent = auditLog.slice(0, 5);
-            const cfgMap = {
-                create: { label: 'Criado',  dot: 'bg-emerald-500', icon: 'fa-plus-circle',  text: 'text-emerald-700' },
-                edit:   { label: 'Editado', dot: 'bg-blue-500',    icon: 'fa-edit',          text: 'text-blue-700' },
-                delete: { label: 'Excluído',dot: 'bg-red-500',     icon: 'fa-trash-alt',     text: 'text-red-700' }
-            };
-            if (recent.length === 0) {
-                el.innerHTML = '<p class="text-center text-slate-400 font-bold uppercase text-[10px] py-4">Sem atividades recentes</p>';
-                return;
-            }
-            el.innerHTML = recent.map(entry => {
-                const cfg = cfgMap[entry.action] || cfgMap.edit;
-                const dt = new Date(entry.timestamp);
-                const dateStr = dt.toLocaleDateString('pt-BR');
-                const timeStr = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                return `
-                <div class="flex items-center gap-3 py-2 border-b border-slate-50 last:border-0">
-                    <div class="h-7 w-7 rounded-full ${cfg.dot} flex items-center justify-center flex-shrink-0">
-                        <i class="fas ${cfg.icon} text-white text-[10px]"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-xs font-black text-navy-900 truncate">${entry.paciente}</p>
-                        <p class="text-[10px] text-slate-400">${dateStr} às ${timeStr}</p>
-                    </div>
-                    <span class="text-[9px] font-black uppercase ${cfg.text} flex-shrink-0">${cfg.label}</span>
-                </div>`;
-            }).join('');
-        }
-        // ============================================================
-
-        // SISTEMA DE NOTIFICAÇÕES
-        function showNotification(message, type = 'info', duration = 10000) {
-            const container = document.getElementById('notification-container');
-            const notification = document.createElement('div');
-            
-            const icons = {
-                success: 'fa-check-circle',
-                error: 'fa-exclamation-circle',
-                warning: 'fa-exclamation-triangle',
-                info: 'fa-info-circle'
-            };
-            
-            notification.className = `notification notification-${type} rounded-xl shadow-2xl p-4 min-w-[320px] max-w-[400px] flex items-start gap-3`;
-            notification.innerHTML = `
-                <div class="flex-shrink-0">
-                    <i class="fas ${icons[type]} text-xl"></i>
-                </div>
-                <div class="flex-1">
-                    <p class="font-bold text-sm uppercase tracking-wider">${message}</p>
-                </div>
-                <button onclick="this.parentElement.remove()" class="flex-shrink-0 hover:opacity-70 transition-opacity">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            
-            container.appendChild(notification);
-            
-            // Remover automaticamente após o tempo definido
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.remove();
-                }
-            }, duration);
-        }
-
-        // FUNÇÕES DO FIREBASE
-        function loadAppointmentsFromFirebase() {
-            return database.ref('appointments').once('value')
-                .then(snapshot => {
-                    const data = snapshot.val();
-                    let firebaseAppointments = [];
-                    
-                    if (data) {
-                        // Verificar se data é array (estrutura antiga) ou objeto (nova estrutura)
-                        if (Array.isArray(data)) {
-                            // Estrutura antiga
-                            firebaseAppointments = data;
-                        } else {
-                            // Nova estrutura - objeto com IDs como chaves
-                            firebaseAppointments = Object.values(data);
-                        }
-                    }
-                    
-                    // Migrar dados antigos para nova estrutura de status
-                    firebaseAppointments = firebaseAppointments.map(app => {
-                        if(!app.status) {
-                            app.status = app.chkConcluido ? 'Concluído' : 'Agendado';
-                        }
-                        return app;
-                    });
-                    
-                    // SEMPRE priorizar Firebase sobre localStorage
-                    appointments = firebaseAppointments;
-                    
-                    // Atualizar localStorage com dados do Firebase (backup)
-                    localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
-                    
-                    console.log("Dados carregados do Firebase. LocalStorage atualizado como backup.");
-                    
-                    return loadHolidaysFromFirebase().then(() => {
-                        renderTable();
-                        renderCalendar();
-                        updateDatalists();
-                        updateFilterDropdowns();
-                    });
-                })
-                .catch(error => {
-                    console.error("Erro ao carregar do Firebase:", error);
-                    // Apenas usar localStorage como último recurso, mas não salvar nele
-                    const localData = localStorage.getItem('respiroLamicData');
-                    if (localData) {
-                        appointments = JSON.parse(localData);
-                        appointments = appointments.map(app => {
-                            if(!app.status) {
-                                app.status = app.chkConcluido ? 'Concluído' : 'Agendado';
-                            }
-                            return app;
-                        });
-                        
-                        // Tentar sincronizar dados locais com Firebase quando possível
-                        setTimeout(() => {
-                            saveAppointmentsToFirebase();
-                        }, 1000);
-                        
-                        return loadHolidaysFromFirebase().then(() => {
-                            renderTable();
-                            renderCalendar();
-                            updateDatalists();
-                            updateFilterDropdowns();
-                        });
-                        
-                        console.warn("Usando dados locais temporariamente. Tentando sincronizar com Firebase...");
-                    } else {
-                        console.error("Nenhum dado encontrado localmente.");
-                    }
-                });
-        }
-
-        function saveAppointmentsToFirebase() {
-            // Converter array para objeto com IDs como chaves para melhor sincronização
-            const appointmentsObject = {};
-            appointments.forEach(app => {
-                appointmentsObject[app.id] = app;
-            });
-            
-            return database.ref('appointments').set(appointmentsObject)
-                .then(() => {
-                    console.log("Agendamentos salvos com sucesso no Firebase");
-                    // Atualizar localStorage APENAS como backup dos dados do Firebase
-                    localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
-                })
-                .catch(error => {
-                    console.error("Erro ao salvar no Firebase:", error);
-                    // NÃO salvar no localStorage automaticamente para evitar conflitos
-                    // Apenas salvar se for fallback crítico
-                    if (!navigator.onLine) {
-                        localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
-                        console.warn("Offline: Dados salvos temporariamente no localStorage.");
-                    } else {
-                        showNotification("Erro ao sincronizar com Firebase. Verifique sua conexão.", "error");
-                    }
-                    throw error; // Propagar erro para tratamento acima
-                });
-        }
-
-        // Função para forçar sincronização do localStorage com Firebase
-        function syncLocalStorageToFirebase() {
-            const localData = localStorage.getItem('respiroLamicData');
-            if (localData) {
-                try {
-                    const localAppointments = JSON.parse(localData);
-                    database.ref('appointments').once('value')
-                        .then(snapshot => {
-                            const firebaseData = snapshot.val();
-                            const firebaseAppointments = firebaseData ? Object.values(firebaseData) : [];
-                            
-                            // Se Firebase está vazio, usar dados locais
-                            if (firebaseAppointments.length === 0 && localAppointments.length > 0) {
-                                appointments = localAppointments;
-                                return saveAppointmentsToFirebase();
-                            }
-                            // Se Firebase tem dados, manter como prioridade
-                            else if (firebaseAppointments.length > 0) {
-                                appointments = firebaseAppointments;
-                                localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
-                                console.log("Firebase tem prioridade. Dados locais ignorados.");
-                            }
-                        });
-                } catch (error) {
-                    console.error("Erro ao sincronizar localStorage com Firebase:", error);
-                }
-            }
-        }
-
-        // INICIALIZAÇÃO
-        window.onload = () => {
-            loadAtendentes();
-            initLoginOverlay();
-            loadAppointmentsFromFirebase();
-            loadMotivosPerdaFromFirebase();
-            setupHolidaysRealtimeListener();
-            setupAuditLogRealtimeListener();
-            
-            // Verificar sincronização inicial após carregar
-            setTimeout(() => {
-                syncLocalStorageToFirebase();
-            }, 2000);
-            
-            // Listener para atualizações em tempo real com prioridade do Firebase
-            database.ref('appointments').on('value', (snapshot) => {
-                const data = snapshot.val();
-                let firebaseAppointments = [];
-                
-                if (data) {
-                    // Verificar se data é array (estrutura antiga) ou objeto (nova estrutura)
-                    if (Array.isArray(data)) {
-                        // Estrutura antiga - converter para nova
-                        firebaseAppointments = data;
-                        // Migrar para nova estrutura em background
-                        setTimeout(() => {
-                            const appointmentsObject = {};
-                            firebaseAppointments.forEach(app => {
-                                appointmentsObject[app.id] = app;
-                            });
-                            database.ref('appointments').set(appointmentsObject);
-                        }, 1000);
-                    } else {
-                        // Nova estrutura - objeto com IDs como chaves
-                        firebaseAppointments = Object.values(data);
-                    }
-                }
-                
-                // Migrar dados antigos para nova estrutura de status
-                const processedAppointments = firebaseAppointments.map(app => {
-                    if(!app.status) {
-                        app.status = app.chkConcluido ? 'Concluído' : 'Agendado';
-                    }
-                    return app;
-                });
-                
-                // SEMPRE priorizar Firebase - ignorar comparação para forçar sincronização
-                appointments = processedAppointments;
-                
-                // Atualizar localStorage com dados do Firebase (sempre como backup)
-                localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
-                
-                renderTable();
-                renderCalendar();
-                updateDatalists();
-                updateFilterDropdowns();
-                
-                console.log("Dados sincronizados do Firebase. LocalStorage atualizado como backup.");
-            });
-        };
-
-        // UI CHECKLIST E COMENTARIOS
-        function toggleComentario() {
-            const box = document.getElementById('box-motivo');
-            box.classList.toggle('hidden');
-        }
-
-        function toggleCheck(type) {
-            const input = document.getElementById(`chk-${type}-val`);
-            const isChecked = input.value === 'true';
-            input.value = !isChecked ? 'true' : 'false';
-            updateCheckUI(type, !isChecked);
-        }
-
-        function updateCheckUI(type, isChecked) {
-            const btn = document.getElementById(`btn-chk-${type}`);
-            if (isChecked) {
-                btn.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-600');
-                btn.classList.remove('border-slate-200', 'bg-white', 'text-slate-400');
-            } else {
-                btn.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-600');
-                btn.classList.add('border-slate-200', 'bg-white', 'text-slate-400');
-            }
-        }
-
-        function toggleCancelado() {
-            const status = document.getElementById('reg-status').value;
-            const boxMotivo = document.getElementById('box-motivo');
-            const txtMotivo = document.getElementById('reg-comentarios');
-            const lblMotivo = document.getElementById('lbl-comentario');
-            const btnToggle = document.getElementById('btn-toggle-comentario');
-            const campoPedido = document.getElementById('reg-pedido');
-            const campoPedidoContainer = document.getElementById('campo-pedido-container');
-            const checklistBox = document.querySelector('.bg-slate-50.p-5.rounded-2xl.border.border-slate-200');
-            
-            // Ajusta campos obrigatórios baseado no status
-            if (status === 'Em andamento') {
-                campoPedido.required = false;
-                campoPedido.classList.remove('border-red-300');
-                campoPedido.classList.add('border-slate-200');
-                
-                // Oculta campo Nº do Pedido completamente
-                if (campoPedidoContainer) campoPedidoContainer.classList.add('hidden');
-                
-                // Esconde checklist
-                if (checklistBox) checklistBox.classList.add('hidden');
-            } else if (status === 'Cancelado') {
-                campoPedido.required = false;
-                campoPedido.classList.remove('border-red-300');
-                campoPedido.classList.add('border-slate-200');
-                
-                // Mostra campo Nº do Pedido (mas não obrigatório)
-                if (campoPedidoContainer) campoPedidoContainer.classList.remove('hidden');
-                
-                // Mostra checklist (mas não obrigatório)
-                if (checklistBox) checklistBox.classList.remove('hidden');
-            } else {
-                campoPedido.required = true;
-                // Mantém borda normal, sem vermelho
-                campoPedido.classList.remove('border-red-300');
-                campoPedido.classList.add('border-slate-200');
-                
-                // Mostra campo Nº do Pedido
-                if (campoPedidoContainer) campoPedidoContainer.classList.remove('hidden');
-                
-                // Mostra checklist
-                if (checklistBox) checklistBox.classList.remove('hidden');
-            }
-            
-            if (status === 'Cancelado') {
-                txtMotivo.required = true;
-                boxMotivo.classList.remove('hidden');
-                btnToggle.classList.add('hidden');
-
-                boxMotivo.classList.add('bg-red-50', 'border-red-200');
-                boxMotivo.classList.remove('bg-slate-50', 'border-slate-200');
-                lblMotivo.innerText = "Motivo do Cancelamento *";
-                lblMotivo.classList.add('text-red-600');
-                lblMotivo.classList.remove('text-slate-400');
-                txtMotivo.classList.add('focus:ring-red-500');
-                txtMotivo.classList.remove('focus:ring-blue-500');
-
-                document.getElementById('box-motivo-perda').classList.remove('hidden');
-                updateMotivosPerdaSelect();
-            } else {
-                txtMotivo.required = false;
-                boxMotivo.classList.add('hidden');
-                btnToggle.classList.remove('hidden');
-
-                boxMotivo.classList.remove('bg-red-50', 'border-red-200');
-                boxMotivo.classList.add('bg-slate-50', 'border-slate-200');
-                lblMotivo.innerText = "Comentários Operacionais (Opcional)";
-                lblMotivo.classList.remove('text-red-600');
-                lblMotivo.classList.add('text-slate-400');
-                txtMotivo.classList.remove('focus:ring-red-500');
-                txtMotivo.classList.add('focus:ring-blue-500');
-
-                document.getElementById('box-motivo-perda').classList.add('hidden');
-                document.getElementById('reg-motivo-perda').value = '';
-            }
-        }
-
-        // DUPLICAR AGENDAMENTO
-        function duplicateRecord() {
-            const paciente = document.getElementById('reg-paciente').value;
-            const idade    = document.getElementById('reg-idade').value;
-            const contato  = document.getElementById('reg-contato').value;
-            const pedido   = document.getElementById('reg-pedido').value;
-
-            closeModals();
-
-            // Pequeno delay para garantir que o modal fechou antes de reabrir
-            setTimeout(() => {
-                openRecordModal();
-                document.getElementById('reg-paciente').value = paciente;
-                document.getElementById('reg-idade').value    = idade;
-                document.getElementById('reg-contato').value  = contato;
-                document.getElementById('reg-pedido').value   = pedido;
-            }, 150);
-        }
-
-        // MOTIVOS DE PERDA
-        function loadMotivosPerdaFromFirebase() {
-            return database.ref('motivosPerda').once('value').then(snapshot => {
-                const data = snapshot.val();
-                motivosPerdaList = data ? Object.values(data) : [];
-                updateMotivosPerdaSelect();
-            }).catch(() => {
-                motivosPerdaList = JSON.parse(localStorage.getItem('motivosPerda') || '[]');
-                updateMotivosPerdaSelect();
-            });
-        }
-
-        function saveMotivosPerdaToFirebase() {
-            const obj = {};
-            motivosPerdaList.forEach((m, i) => { obj[i] = m; });
-            database.ref('motivosPerda').set(obj).catch(() => {});
-            localStorage.setItem('motivosPerda', JSON.stringify(motivosPerdaList));
-            updateMotivosPerdaSelect();
-        }
-
-        function updateMotivosPerdaSelect() {
-            const sel = document.getElementById('reg-motivo-perda');
-            if (!sel) return;
-            const current = sel.value;
-            sel.innerHTML = '<option value="">— Selecione um motivo —</option>' +
-                motivosPerdaList.map(m => `<option value="${m}"${m === current ? ' selected' : ''}>${m}</option>`).join('');
-        }
-
-        function openMotivosPerdaModal() {
-            renderMotivosPerdaList();
-            document.getElementById('modal-motivos-perda').classList.add('active');
-        }
-
-        function closeMotivosPerdaModal() {
-            document.getElementById('modal-motivos-perda').classList.remove('active');
-            document.getElementById('input-novo-motivo').value = '';
-        }
-
-        function renderMotivosPerdaList() {
-            const container = document.getElementById('lista-motivos-perda');
-            if (motivosPerdaList.length === 0) {
-                container.innerHTML = '<p class="text-slate-400 text-xs text-center py-4">Nenhum motivo cadastrado.</p>';
-                return;
-            }
-            container.innerHTML = motivosPerdaList.map((m, i) => `
-                <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                    <span id="motivo-text-${i}" class="flex-1 text-sm text-slate-700">${m}</span>
-                    <input id="motivo-input-${i}" type="text" value="${m}" class="flex-1 hidden border border-slate-200 rounded-lg py-1 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" onkeydown="if(event.key==='Enter'){saveEditMotivo(${i});}">
-                    <button onclick="startEditMotivo(${i})" id="btn-edit-motivo-${i}" class="text-slate-400 hover:text-blue-500 transition-colors px-1"><i class="fas fa-pen text-xs"></i></button>
-                    <button onclick="saveEditMotivo(${i})" id="btn-save-motivo-${i}" class="text-green-500 hover:text-green-700 transition-colors px-1 hidden"><i class="fas fa-check text-xs"></i></button>
-                    <button onclick="deleteMotivoPerda(${i})" class="text-slate-400 hover:text-red-500 transition-colors px-1"><i class="fas fa-trash text-xs"></i></button>
-                </div>
-            `).join('');
-        }
-
-        function addMotivoPerda() {
-            const input = document.getElementById('input-novo-motivo');
-            const val = input.value.trim();
-            if (!val) return;
-            if (motivosPerdaList.includes(val)) {
-                showNotification('Este motivo já existe na lista.', 'warning', 3000);
-                return;
-            }
-            motivosPerdaList.push(val);
-            saveMotivosPerdaToFirebase();
-            input.value = '';
-            renderMotivosPerdaList();
-            addMotivoAuditLog('motivo_add', val, null);
-        }
-
-        function startEditMotivo(i) {
-            document.getElementById(`motivo-text-${i}`).classList.add('hidden');
-            document.getElementById(`motivo-input-${i}`).classList.remove('hidden');
-            document.getElementById(`btn-edit-motivo-${i}`).classList.add('hidden');
-            document.getElementById(`btn-save-motivo-${i}`).classList.remove('hidden');
-            document.getElementById(`motivo-input-${i}`).focus();
-        }
-
-        function saveEditMotivo(i) {
-            const val = document.getElementById(`motivo-input-${i}`).value.trim();
-            if (!val) return;
-            const oldVal = motivosPerdaList[i];
-            if (val === oldVal) { renderMotivosPerdaList(); return; }
-            motivosPerdaList[i] = val;
-            saveMotivosPerdaToFirebase();
-            renderMotivosPerdaList();
-            addMotivoAuditLog('motivo_edit', val, oldVal);
-        }
-
-        function deleteMotivoPerda(i) {
-            const removed = motivosPerdaList[i];
-            motivosPerdaList.splice(i, 1);
-            saveMotivosPerdaToFirebase();
-            renderMotivosPerdaList();
-            addMotivoAuditLog('motivo_delete', null, removed);
-        }
-
-        // FETCH ATENDENTES
-        async function loadAtendentes() {
-            try {
-                const response = await fetch("https://script.google.com/macros/s/AKfycbzUd6efhfzkCmYd88_eIIL6dGIQxIINsw-6Y_qM3PRemUbZ06obtF9xKY1S8WRfvXyq9Q/exec");
-                atendentesList = await response.json();
-                const list = document.getElementById('atendentes-list');
-                list.innerHTML = atendentesList.map(name => `<option value="${name}">`).join('');
-                updateFilterDropdowns();
-                populateRegAttendentesList();
-            } catch (e) { console.error("Erro ao carregar atendentes", e); }
-        }
-
-        function updateDatalists() {
-            const list = document.getElementById('pacientes-list');
-            const uniquePatients = [...new Set(appointments.map(a => a.paciente))];
-            list.innerHTML = uniquePatients.map(name => `<option value="${name}">`).join('');
-        }
-
-        function updateFilterDropdowns() {
-            const search = normalizeStr(document.getElementById('filter-search').value);
-            const atendente = document.getElementById('filter-atendente').value;
-            const substrato = document.getElementById('filter-substrato').value;
-            const status = document.getElementById('filter-status').value;
-            
-            // Para cada filtro, calcular os dados base sem considerar o filtro atual
-            // Filtro de atendente: considerar busca, substrato e status
-            let filteredForAtendente = appointments.filter(a => {
-                const matchSearch = !search || normalizeStr(a.paciente).includes(search) || normalizeStr(a.pedido).includes(search);
-                const matchSubstrato = !substrato || a.substrato === substrato;
-                const matchStatus = !status || a.status === status;
-                return matchSearch && matchSubstrato && matchStatus;
-            });
-            
-            // Filtro de substrato: considerar busca, atendente e status
-            let filteredForSubstrato = appointments.filter(a => {
-                const matchSearch = !search || normalizeStr(a.paciente).includes(search) || normalizeStr(a.pedido).includes(search);
-                const matchAtendente = !atendente || a.atendente === atendente;
-                const matchStatus = !status || a.status === status;
-                return matchSearch && matchAtendente && matchStatus;
-            });
-            
-            // Filtro de status: considerar busca, atendente e substrato
-            let filteredForStatus = appointments.filter(a => {
-                const matchSearch = !search || normalizeStr(a.paciente).includes(search) || normalizeStr(a.pedido).includes(search);
-                const matchAtendente = !atendente || a.atendente === atendente;
-                const matchSubstrato = !substrato || a.substrato === substrato;
-                return matchSearch && matchAtendente && matchSubstrato;
-            });
-            
-            // Atualizar filtro de atendente
-            const atendenteFilter = document.getElementById('filter-atendente');
-            const uniqueAtendentes = [...new Set(filteredForAtendente.map(a => a.atendente))];
-            atendenteFilter.innerHTML = '<option value="">Filtrar por Atendente</option>' + 
-                uniqueAtendentes.map(name => `<option value="${name}">${name}</option>`).join('');
-            
-            if (atendente && !uniqueAtendentes.includes(atendente)) {
-                atendenteFilter.value = '';
-            } else {
-                atendenteFilter.value = atendente;
-            }
-
-            // Atualizar filtro de substrato
-            const substratoFilter = document.getElementById('filter-substrato');
-            const uniqueSubstratos = [...new Set(filteredForSubstrato.map(a => a.substrato))];
-            substratoFilter.innerHTML = '<option value="">Filtrar por Substrato</option>' + 
-                uniqueSubstratos.map(sub => `<option value="${sub}">${sub}</option>`).join('');
-            
-            if (substrato && !uniqueSubstratos.includes(substrato)) {
-                substratoFilter.value = '';
-            } else {
-                substratoFilter.value = substrato;
-            }
-
-            // Atualizar filtro de status
-            const statusFilter = document.getElementById('filter-status');
-            const uniqueStatuses = [...new Set(filteredForStatus.map(a => a.status))];
-            statusFilter.innerHTML = '<option value="">Filtrar por Status</option>' + 
-                uniqueStatuses.map(status => `<option value="${status}">${status}</option>`).join('');
-            
-            if (status && !uniqueStatuses.includes(status)) {
-                statusFilter.value = '';
-            } else {
-                statusFilter.value = status;
-            }
-        }
-
-        // SUB-ABAS DE CONFIGURAÇÕES
-        function switchConfigTab(tab) {
-            document.querySelectorAll('.cfg-tab').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`cfg-tab-${tab}`).classList.remove('hidden');
-            ['usuarios', 'backup'].forEach(t => {
-                const btn = document.getElementById(`cfg-btn-${t}`);
-                if (t === tab) {
-                    btn.classList.add('bg-navy-900', 'text-white', 'shadow-md');
-                    btn.classList.remove('text-slate-500', 'hover:bg-slate-100');
-                } else {
-                    btn.classList.remove('bg-navy-900', 'text-white', 'shadow-md');
-                    btn.classList.add('text-slate-500', 'hover:bg-slate-100');
-                }
-            });
-        }
-
-        // NAVEGAÇÃO DE ABAS
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(`tab-${tab}`).classList.add('active');
-            
-            document.querySelectorAll('nav button').forEach(b => b.className = "px-6 py-2.5 rounded-lg hover:bg-navy-700 transition-all font-bold text-xs tracking-widest ml-1");
-            document.getElementById(`btn-${tab}`).className = "px-6 py-2.5 rounded-lg bg-blue-600 transition-all font-bold text-xs tracking-widest shadow-lg";
-            
-            if(tab === 'dashboard') renderCalendar();
-            if(tab === 'indicadores') renderIndicadores();
-        }
-
-        // FUNÇÕES DE NORMALIZAÇÃO
-        function normalizeStr(str) {
-            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-        }
-
-        function formatAtendenteName(fullName) {
-            const connectors = ['da', 'de', 'do', 'dos', 'das', 'e'];
-            if (!fullName) return '';
-            const parts = fullName.trim().split(/\s+/);
-            if (parts.length <= 2) return fullName.trim();
-            if (connectors.includes(parts[1].toLowerCase()) && parts.length >= 3) {
-                return `${parts[0]} ${parts[1]} ${parts[2]}`;
-            }
-            return `${parts[0]} ${parts[1]}`;
-        }
-
-        // CÁLCULOS DE HORÁRIO
-        function calculateTimes() {
-            const exame = document.getElementById('reg-exame').value;
-            const inicio = document.getElementById('reg-hora-inicio').value;
-            const duracaoField = document.getElementById('reg-duracao');
-            const fimField = document.getElementById('reg-hora-fim');
-            let addHours = 0;
-            if (exame === 'TRESP') { duracaoField.value = '3 Horas'; addHours = 3; }
-            else if (exame === 'TSBAC') { duracaoField.value = '2 Horas'; addHours = 2; }
-            else { duracaoField.value = ''; fimField.value = ''; return; }
-            if (inicio) {
-                let [h, m] = inicio.split(':').map(Number);
-                h = (h + addHours) % 24;
-                fimField.value = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-            }
-        }
-
-        function updateSubstratos() {
-            const exame = document.getElementById('reg-exame').value;
-            const subSelect = document.getElementById('reg-substrato');
-            const metanoDiv = document.getElementById('reg-metano').closest('.col-span-1');
-            
-            subSelect.innerHTML = '';
-            
-            if (exame === 'TRESP') {
-                ['Lactose', 'Frutose', 'Sorbitol', 'Sacarose', 'D-Xilose', 'Frutano'].forEach(o => subSelect.innerHTML += `<option value="${o}">${o}</option>`);
-                // Ocultar campo metano para TRESP
-                metanoDiv.classList.add('hidden');
-                document.getElementById('reg-metano').required = false;
-                document.getElementById('reg-metano').value = 'Não';
-            } else if (exame === 'TSBAC') {
-                ['Lactulose', 'Glicose'].forEach(o => subSelect.innerHTML += `<option value="${o}">${o}</option>`);
-                // Mostrar campo metano para TSBAC
-                metanoDiv.classList.remove('hidden');
-                document.getElementById('reg-metano').required = true;
-            } else {
-                // Se nenhum exame selecionado, ocultar metano
-                metanoDiv.classList.add('hidden');
-                document.getElementById('reg-metano').required = false;
-                document.getElementById('reg-metano').value = 'Não';
-            }
-        }
-
-        // REGRAS DE NEGÓCIO
-        function validateAppointment(dataObj) {
-            const appDate = new Date(dataObj.data + 'T12:00:00');
-            const today = new Date();
-            today.setHours(0, 0, 0, 0); // Zerar horas para comparação apenas de datas
-            
-            // Verificar se a data é anterior a hoje
-            if (appDate < today) {
-                return "DATA_PASSADA";
-            }
-            
-            const dayOfWeek = appDate.getDay();
-            const startTime = dataObj.horaInicio;
-            
-            // Validação de horários permitidos
-            if (dayOfWeek === 6) { // Sábado
-                if (startTime < '07:00' || startTime > '08:00') {
-                    return "Aos sábados, o horário permitido para agendamento é entre 07:00 e 08:00.";
-                }
-            } else if (dayOfWeek >= 1 && dayOfWeek <= 5) { // Segunda a Sexta
-                if (startTime < '07:00' || startTime > '09:00') {
-                    return "De segunda a sexta, o horário permitido para agendamento é entre 07:00 e 09:00.";
-                }
-            }
-            
-            if (appDate.getDay() === 0) return "Não é permitido marcar exames aos domingos.";
-            if (appointments.filter(a => a.data === dataObj.data && a.id !== dataObj.id && a.status !== 'Cancelado').length >= 3 && dataObj.status !== 'Cancelado') return "Limite diário alcançado (Máx 3 ativos).";
-            
-            const samePatient = appointments.filter(a => 
-                normalizeStr(a.paciente) === normalizeStr(dataObj.paciente) && 
-                a.id !== dataObj.id && 
-                a.status !== 'Cancelado'
-            );
-            
-            for (let app of samePatient) {
-                const existingDate = new Date(app.data + 'T12:00:00');
-                const diffDays = Math.ceil(Math.abs(appDate - existingDate) / (1000 * 60 * 60 * 24));
-                if (diffDays < 2 && dataObj.status !== 'Cancelado') {
-                    return "Intervalo insuficiente. Só é permitido marcar após 48 Horas da última marcação do paciente.";
-                }
-            }
-            return null;
-        }
-
-        // SALVAR
-        function saveRecord(e) {
-            e.preventDefault();
-            const id = document.getElementById('reg-id').value;
-            const atendenteInput = document.getElementById('reg-atendente').value.trim();
-            
-            // Validação Checklist & Status
-            const statusVal = document.getElementById('reg-status').value;
-            const chkOr = document.getElementById('chk-orientacao-val').value === 'true';
-            const chkAn = document.getElementById('chk-anexo-val').value === 'true';
-            
-            // Se o status for "Em andamento" ou "Cancelado", pula toda a validação de checklist e continua diretamente
-            if (statusVal === 'Em andamento' || statusVal === 'Cancelado') {
-                // Para "Em andamento" e "Cancelado", o checklist não é obrigatório
-                // Define os valores como false para garantir consistência
-                document.getElementById('chk-orientacao-val').value = 'false';
-                document.getElementById('chk-anexo-val').value = 'false';
-                proceedWithSave(id, atendenteInput, false, false, statusVal);
-                return;
-            }
-            
-            // Validação específica para status "Concluído"
-            if (statusVal === 'Concluído' && (!chkOr || !chkAn)) {
-                showNotification("ERRO: Para marcar o status como Concluído, todo o checklist (Orientação e Anexo) deve estar ativado.", "error");
-                return;
-            }
-            
-            // Aviso para checklist incompleto em outros status (exceto "Em andamento")
-            if (!chkOr || !chkAn) {
-                const checklistItems = [];
-                if (!chkOr) checklistItems.push("Enviar orientação ao paciente");
-                if (!chkAn) checklistItems.push("Anexar guia no sistema UniLab");
-                
-                // Salvar ação pendente e mostrar modal
-                pendingChecklistAction = () => {
-                    // Continuar com o salvamento
-                    proceedWithSave(id, atendenteInput, chkOr, chkAn, statusVal);
-                };
-                
-                showChecklistConfirmModal(checklistItems);
-                return;
-            }
-
-            // Se não houver problema com checklist, continuar com validação
-            proceedWithSave(id, atendenteInput, chkOr, chkAn, statusVal);
-        }
-
-        function proceedWithSave(id, atendenteInput, chkOr, chkAn, statusVal) {
-            // Forçar nome do paciente para maiúsculas
-            const pacienteInput = document.getElementById('reg-paciente').value.trim();
-            document.getElementById('reg-paciente').value = pacienteInput.toUpperCase();
-            
-            // Validação rigorosa do Atendente se a lista existir
-            if (atendentesList.length > 0 && !atendentesList.includes(atendenteInput.toUpperCase())) {
-                const caseSensitiveMatch = atendentesList.find(a => a.toUpperCase() === atendenteInput.toUpperCase());
-                if (caseSensitiveMatch) {
-                    document.getElementById('reg-atendente').value = caseSensitiveMatch; 
-                } else {
-                    showNotification("ATENDENTE INVÁLIDO. O nome inserido não corresponde a nenhum atendente da lista obrigatória.", "error");
-                    return;
-                }
-            }
-
-            const record = {
-                id: id ? parseInt(id) : Date.now(),
-                data: document.getElementById('reg-data').value,
-                horaInicio: document.getElementById('reg-hora-inicio').value,
-                horaFim: document.getElementById('reg-hora-fim').value,
-                duracao: document.getElementById('reg-duracao').value,
-                paciente: document.getElementById('reg-paciente').value,
-                idade: parseInt(document.getElementById('reg-idade').value),
-                contato: document.getElementById('reg-contato').value,
-                exame: document.getElementById('reg-exame').value,
-                metano: document.getElementById('reg-metano').value,
-                substrato: document.getElementById('reg-substrato').value,
-                pedido: document.getElementById('reg-pedido').value,
-                atendente: document.getElementById('reg-atendente').value,
-                chkOrientacao: chkOr,
-                chkAnexo: chkAn,
-                chkConcluido: statusVal === 'Concluído', // legado/garantia
-                status: statusVal,
-                comentarios: document.getElementById('reg-comentarios').value,
-                motivoPerda: statusVal === 'Cancelado' ? document.getElementById('reg-motivo-perda').value : ''
-            };
-            
-            // NOTA: O status "atrasado" é calculado dinamicamente nas funções de renderização
-            // (renderCalendar, openDayDetails, renderTable) com base na data atual vs data do agendamento
-            // Ao alterar a data para hoje ou futuro, a visualização será atualizada automaticamente
-            
-            const error = validateAppointment(record);
-            if (error) {
-                if (error === "DATA_PASSADA") {
-                    // Mostrar modal elegante de confirmação para data passada
-                    showPastDateModal(() => {
-                        // Usuário confirmou, continuar com o salvamento
-                        proceedWithSaveAfterValidation(record, id, chkOr, chkAn, statusVal);
-                    });
-                    return;
-                } else {
-                    showNotification(error, "error");
-                    return;
-                }
-            }
-            
-            // Se não houver erro, continuar com salvamento normal
-            proceedWithSaveAfterValidation(record, id, chkOr, chkAn, statusVal);
-        }
-
-        function proceedWithSaveAfterValidation(record, id, chkOr, chkAn, statusVal) {
-            const isNew = !id;
-            const oldRecord = isNew ? null : appointments.find(a => a.id == id) || null;
-            if(id) appointments = appointments.map(a => a.id == id ? record : a); else appointments.push(record);
-            saveAppointmentsToFirebase();
-            addAuditLog(isNew ? 'create' : 'edit', record, oldRecord);
-            showNotification(id ? "Agendamento atualizado com sucesso!" : "Agendamento criado com sucesso!", "success");
-            closeModals(); renderTable(); renderCalendar(); updateDatalists(); updateFilterDropdowns();
-        }
-
-        // FUNÇÕES DA MODAL DE CHECKLIST
-        function showChecklistConfirmModal(checklistItems) {
-            const itemsContainer = document.getElementById('checklist-missing-items');
-            itemsContainer.innerHTML = checklistItems.map(item => `
-                <div class="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <div class="h-6 w-6 bg-red-500 rounded-full flex items-center justify-center">
-                        <i class="fas fa-times text-white text-xs"></i>
-                    </div>
-                    <span class="text-red-800 font-medium text-sm">${item}</span>
-                </div>
-            `).join('');
-            
-            document.getElementById('modal-checklist-confirm').classList.add('active');
-        }
-
-        function confirmChecklistIncomplete() {
-            document.getElementById('modal-checklist-confirm').classList.remove('active');
-            if (pendingChecklistAction) {
-                pendingChecklistAction();
-                pendingChecklistAction = null;
-            }
-        }
-
-        function cancelChecklistConfirm() {
-            document.getElementById('modal-checklist-confirm').classList.remove('active');
-            pendingChecklistAction = null;
-        }
-
-        // FILTROS E PAGINAÇÃO (TABELA)
-        function updateTableFilters() {
-            tablePage = 1;
-            renderTable();
-        }
-
-        function changePage(dir) {
-            tablePage += dir;
-            renderTable();
-        }
-
-        function renderTable() {
-            const body = document.getElementById('table-body');
-            const search = normalizeStr(document.getElementById('filter-search').value);
-            const atendente = document.getElementById('filter-atendente').value;
-            const substrato = document.getElementById('filter-substrato').value;
-            const status = document.getElementById('filter-status').value;
-
-            let filtered = appointments.filter(a => {
-                const matchSearch = !search || normalizeStr(a.paciente).includes(search) || normalizeStr(a.pedido).includes(search);
-                const matchAtendente = !atendente || a.atendente === atendente;
-                const matchSubstrato = !substrato || a.substrato === substrato;
-                const matchStatus = !status || a.status === status;
-                return matchSearch && matchAtendente && matchSubstrato && matchStatus;
-            });
-
-            filtered.sort((a,b) => b.id - a.id);
-
-            const total = filtered.length;
-            const totalPages = Math.ceil(total / itemsPerPage);
-            const start = (tablePage - 1) * itemsPerPage;
-            const pageData = filtered.slice(start, start + itemsPerPage);
-
-            body.innerHTML = '';
-            pageData.forEach(app => {
-                const isInfantil = app.idade < 12;
-                const isCanceled = app.status === 'Cancelado';
-                const isComplete = app.status === 'Concluído';
-                const isChecklistComplete = app.chkOrientacao && app.chkAnexo;
-                
-                // Verifica se agendamento está atrasado
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const [year, month, day] = app.data.split('-').map(Number);
-                const appointmentDate = new Date(year, month - 1, day);
-                appointmentDate.setHours(0, 0, 0, 0);
-                const isOverdue = appointmentDate < today && !isComplete && !isCanceled;
-                
-                let rowClass = 'hover:bg-slate-50';
-                if (isOverdue) rowClass = 'bg-red-50 hover:bg-red-100';
-                else if (isCanceled) rowClass = 'opacity-60 bg-slate-50';
-                else if (isComplete) rowClass = 'bg-green-50 hover:bg-green-100';
-                else if (isInfantil) rowClass = 'bg-orange-50 hover:bg-orange-100';
-                else rowClass = 'bg-blue-50 hover:bg-blue-100'; // Agendado normal (adulto)
-
-                const tr = document.createElement('tr');
-                tr.className = `transition-colors group ${rowClass}`;
-                
-                const exameColor = app.exame === 'TRESP' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800';
-                
-                const statusIcon = isOverdue ? '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-red-100 text-red-600" title="Atrasado"><i class="fas fa-exclamation-triangle"></i></div>' :
-                                   app.status === 'Concluído' ? '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-green-100 text-green-600" title="Concluído"><i class="fas fa-check-double"></i></div>' : 
-                                   app.status === 'Cancelado' ? '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-red-100 text-red-600" title="Cancelado"><i class="fas fa-ban"></i></div>' : 
-                                   app.status === 'Em andamento' ? '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-purple-100 text-purple-600" title="Em andamento"><i class="fas fa-spinner"></i></div>' :
-                                   '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-yellow-100 text-yellow-600" title="Agendado"><i class="fas fa-clock"></i></div>';
-                
-                const checklistIcon = isChecklistComplete 
-                    ? '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-blue-100 text-blue-600" title="Checklist Completo"><i class="fas fa-clipboard-check"></i></div>' 
-                    : '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-slate-100 text-slate-400" title="Checklist Incompleto"><i class="fas fa-clipboard-list"></i></div>';
-                
-                tr.innerHTML = `
-                    <td class="p-5">
-                        <div class="font-black text-navy-900 ${isCanceled ? 'line-through' : ''}">${app.data.split('-').reverse().join('/')}</div>
-                        <div class="text-[10px] text-slate-500 font-bold uppercase">${app.horaInicio} - ${app.horaFim}</div>
-                    </td>
-                    <td class="p-5">
-                        <div class="font-bold text-slate-700 uppercase text-xs flex items-center gap-2 ${isCanceled ? 'line-through' : ''}">
-                            ${app.paciente} ${isOverdue ? '<span class="bg-red-600 text-white text-[8px] px-1 rounded"><i class="fas fa-exclamation-triangle mr-1"></i>ATRASADO</span>' : ''} ${isInfantil && !isComplete && !isCanceled ? '<span class="bg-orange-500 text-white text-[8px] px-1 rounded">INFANTIL</span>' : ''}
-                        </div>
-                        <div class="text-[10px] text-slate-400 font-bold">${app.idade} anos</div>
-                    </td>
-                    <td class="p-5">
-                        <span class="px-2 py-1 rounded text-[9px] font-black uppercase border ${exameColor}">${app.exame}</span>
-                        <div class="text-[10px] font-bold text-slate-600 mt-1 uppercase">${app.substrato}${app.metano === 'Sim' ? ' (metano)' : ''}</div>
-                    </td>
-                    <td class="p-5">
-                        <div class="font-black text-slate-600 text-xs">${app.pedido}</div>
-                        <div class="text-[10px] text-slate-400"><i class="fas fa-user-circle mr-1"></i>${app.atendente}</div>
-                    </td>
-                    <td class="p-5 text-center">
-                        ${checklistIcon}
-                    </td>
-                    <td class="p-5 text-center">
-                        ${statusIcon}
-                    </td>
-                    <td class="p-5">
-                        <div class="flex justify-center gap-2">
-                            <a href="https://wa.me/55${app.contato.replace(/\D/g, '')}" target="_blank" class="h-8 w-8 rounded-lg flex items-center justify-center text-green-500 border border-green-200 hover:bg-green-500 hover:text-white transition-all"><i class="fab fa-whatsapp"></i></a>
-                            <button onclick="openObsModal(${app.id})" class="h-8 w-8 rounded-lg flex items-center justify-center ${app.comentarios ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'text-slate-400 hover:bg-slate-100'} transition-all"><i class="fas fa-comment"></i></button>
-                            <button onclick="editRecord(${app.id})" class="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 border border-slate-100 hover:bg-navy-900 hover:text-white transition-all"><i class="fas fa-edit"></i></button>
-                            ${isAdmin() ? `<button onclick="deleteRecord(${app.id})" class="h-8 w-8 rounded-lg flex items-center justify-center text-red-500 border border-red-200 hover:bg-red-500 hover:text-white transition-all"><i class="fas fa-trash"></i></button>` : ''}
-                        </div>
-                    </td>
-                `;
-                body.appendChild(tr);
-            });
-
-            document.getElementById('pagination-info').innerText = `Mostrando ${total === 0 ? 0 : start + 1} a ${Math.min(start + itemsPerPage, total)} de ${total}`;
-            document.querySelectorAll('button[onclick^="changePage"]').forEach((btn, idx) => {
-                if(idx === 0) btn.disabled = tablePage === 1;
-                else btn.disabled = tablePage >= totalPages || total === 0;
-            });
-        }
-
-        // INDICADORES & FILTROS
-        function toggleIndFilters() {
-            const type = document.getElementById('ind-filter-type').value;
-            document.getElementById('ind-box-year').classList.toggle('hidden', type !== 'year');
-            document.getElementById('ind-box-month').classList.toggle('hidden', type !== 'month');
-            document.getElementById('ind-box-start').classList.toggle('hidden', type !== 'range');
-            document.getElementById('ind-box-end').classList.toggle('hidden', type !== 'range');
-        }
-
-        function filterIndData() {
-            const type = document.getElementById('ind-filter-type').value;
-            return appointments.filter(app => {
-                if (type === 'all') return true;
-                if (type === 'year') return app.data.startsWith(document.getElementById('ind-year').value);
-                if (type === 'month') return app.data.startsWith(document.getElementById('ind-month').value);
-                if (type === 'range') {
-                    const s = document.getElementById('ind-start').value;
-                    const e = document.getElementById('ind-end').value;
-                    return (s ? app.data >= s : true) && (e ? app.data <= e : true);
-                }
-                return true;
-            });
-        }
-
-        function renderIndicadores() {
-            const indData = filterIndData();
-
-            const tresp = indData.filter(a => a.exame === 'TRESP');
-            const tsbac = indData.filter(a => a.exame === 'TSBAC');
-            const concluidos = indData.filter(a => a.status === 'Concluído');
-            const andamento = indData.filter(a => a.status === 'Em andamento');
-            const pendentes = indData.filter(a => a.status === 'Agendado');
-            const cancelados = indData.filter(a => a.status === 'Cancelado');
-            
-            document.getElementById('kpi-total').innerText = indData.length;
-            document.getElementById('kpi-tresp').innerText = tresp.length;
-            document.getElementById('kpi-tsbac').innerText = tsbac.length;
-            document.getElementById('kpi-concluidos').innerText = concluidos.length;
-            document.getElementById('kpi-andamento').innerText = andamento.length;
-            document.getElementById('kpi-pendentes').innerText = pendentes.length;
-            document.getElementById('kpi-cancelados').innerText = cancelados.length;
-
-            const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-            
-            // Gráfico de Barras Mensal
-            const monthlyData = new Array(12).fill(0);
-            indData.forEach(a => monthlyData[new Date(a.data + 'T12:00:00').getMonth()]++);
-
-            if(charts.bar) charts.bar.destroy();
-            charts.bar = new Chart(document.getElementById('chart-bar-monthly'), {
-                type: 'bar',
-                data: { labels: months, datasets: [{ label: 'Volume Total', data: monthlyData, backgroundColor: '#1e40af' }] }
-            });
-
-            // Gráfico de Linha - Volume de Exames por Tipo
-            const trespData = new Array(12).fill(0);
-            const tsbacData = new Array(12).fill(0);
-            
-            // Contar exames por mês
-            indData.forEach(a => {
-                const month = new Date(a.data + 'T12:00:00').getMonth();
-                if (a.exame === 'TRESP') trespData[month]++;
-                if (a.exame === 'TSBAC') tsbacData[month]++;
-            });
-
-            if(charts.line) charts.line.destroy();
-            charts.line = new Chart(document.getElementById('chart-line-trend'), {
-                type: 'line',
-                data: { 
-                    labels: months, 
-                    datasets: [
-                        { label: 'TRESP', data: trespData, borderColor: '#3b82f6', backgroundColor: '#3b82f6', tension: 0.3 },
-                        { label: 'TSBAC', data: tsbacData, borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.3 }
-                    ] 
-                }
-            });
-
-            // Gráfico Donut - Exames
-            if(charts.donutE) charts.donutE.destroy();
-            charts.donutE = new Chart(document.getElementById('chart-donut-exame'), {
-                type: 'doughnut',
-                data: { labels: ['TRESP', 'TSBAC'], datasets: [{ data: [tresp.length, tsbac.length], backgroundColor: ['#3b82f6', '#10b981'] }] }
-            });
-
-            // Gráfico Donut - Substratos
-            if(charts.donutS) charts.donutS.destroy();
-            const subMap = {};
-            indData.forEach(a => subMap[a.substrato] = (subMap[a.substrato] || 0) + 1);
-            charts.donutS = new Chart(document.getElementById('chart-donut-substrato'), {
-                type: 'doughnut',
-                data: { labels: Object.keys(subMap), datasets: [{ data: Object.values(subMap), backgroundColor: ['#6366f1', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#8b5cf6'] }] }
-            });
-        }
-
-        // CALENDÁRIO
-        function changeMonth(dir) { currentDate.setMonth(currentDate.getMonth() + dir); renderCalendar(); }
-        function renderCalendar() {
-            const body = document.getElementById('calendar-body'); body.innerHTML = '';
-            const year = currentDate.getFullYear(); const month = currentDate.getMonth();
-            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-            document.getElementById('current-month-label').innerText = `${monthNames[month]} ${year}`;
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            for (let i = 0; i < firstDay; i++) body.innerHTML += `<div class="p-4 rounded-xl border border-dashed border-slate-200 opacity-50 bg-slate-50"></div>`;
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const dateObj = new Date(year, month, day);
-                const isSunday = dateObj.getDay() === 0;
-                const isHoliday = holidays[dateStr];
-                
-                // Exclui os cancelados da contagem de lotação do dia
-                const dayApps = appointments.filter(a => a.data === dateStr && a.status !== 'Cancelado');
-                const hasInfantil = dayApps.some(a => a.idade < 12);
-                
-                // Verifica se há agendamentos cancelados no dia
-                const canceledApps = appointments.filter(a => a.data === dateStr && a.status === 'Cancelado');
-                const hasCanceled = canceledApps.length > 0;
-                
-                // Verifica se todos os agendamentos do dia estão concluídos
-                const allCompleted = dayApps.length > 0 && dayApps.every(a => a.status === 'Concluído');
-                
-                // Verifica se há agendamentos atrasados (data menor que hoje e não concluídos)
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const calendarDate = new Date(year, month, day);
-                calendarDate.setHours(0, 0, 0, 0);
-                const isPastDate = calendarDate < today;
-                const hasOverdue = isPastDate && dayApps.some(a => a.status !== 'Concluído');
-                
-                // Define classes baseado no estado do dia
-                let boxClass, textColor, clickAction;
-                
-                if (isHoliday) {
-                    // Estilo de feriado (cinza, como domingo)
-                    boxClass = 'bg-slate-100 border-slate-300 opacity-60 cursor-pointer';
-                    textColor = 'text-slate-400';
-                    clickAction = `openDayDetails('${dateStr}')`;
-                } else if (isSunday) {
-                    boxClass = 'bg-red-50/30 border-red-100 opacity-60 cursor-not-allowed';
-                    textColor = 'text-red-400';
-                    clickAction = '';
-                } else {
-                    boxClass = 'bg-white hover:border-blue-300 border-slate-200 cursor-pointer';
-                    textColor = 'text-navy-900';
-                    clickAction = `openDayDetails('${dateStr}')`;
-                    
-                    if(dayApps.length > 0) {
-                        // Prioridade: Atrasado > Concluído > Em andamento > Infantil > Normal
-                        if(hasOverdue) {
-                            // Dias com agendamentos atrasados ficam vermelhos
-                            boxClass = 'bg-red-50 border-red-300 cursor-pointer';
-                            textColor = 'text-red-700';
-                        } else if(allCompleted) {
-                            // Dias com todos agendamentos concluídos ficam verdes
-                            boxClass = 'bg-green-50 border-green-300 cursor-pointer';
-                            textColor = 'text-green-700';
-                        } else {
-                            // Verifica se há agendamentos "Em andamento" para priorizar a cor roxa
-                            const hasAndamento = dayApps.some(a => a.status === 'Em andamento');
-                            
-                            if(hasAndamento) {
-                                boxClass = 'bg-purple-50 border-purple-300 cursor-pointer';
-                            } else if(hasInfantil) {
-                                boxClass = 'bg-orange-50 border-orange-300 cursor-pointer';
-                            } else {
-                                boxClass = 'bg-blue-50 border-blue-200 cursor-pointer';
-                            }
-                        }
-                    }
-                }
-                
-                const dots = dayApps.map(a => {
-                    // Verifica se o checklist está incompleto e não se aplica a status cancelado e em andamento
-                    const isChecklistIncomplete = !a.chkOrientacao || !a.chkAnexo;
-                    const shouldShowClipboard = isChecklistIncomplete && a.status !== 'Cancelado' && a.status !== 'Em andamento';
-                    
-                    if (shouldShowClipboard) {
-                        // Ícone de prancheta para checklist incompleto com a cor do teste
-                        return `<div class="h-2 w-2 rounded-full flex items-center justify-center ${a.exame === 'TRESP' ? 'bg-blue-300' : 'bg-emerald-500'} border-2 border-yellow-400"><i class="fas fa-clipboard-list text-[10px]" style="color: ${a.exame === 'TRESP' ? '#3b82f6' : '#10b981'}"></i></div>`;
-                    } else {
-                        // Círculo normal para outros casos
-                        return `<div class="h-2 w-2 rounded-full ${a.exame === 'TRESP' ? 'bg-blue-500' : 'bg-emerald-500'}"></div>`;
-                    }
-                }).join('');
-                const canceledX = canceledApps.map(() => '<div class="h-2 w-2 rounded-full bg-red-500 flex items-center justify-center text-white text-[10px] font-black">×</div>').join('');
-                const holidayIcon = isHoliday ? '<div class="absolute top-1 right-1 text-red-400"><i class="fas fa-calendar-times text-xs"></i></div>' : '';
-                
-                body.innerHTML += `<div onclick="${clickAction}" class="p-3 h-24 border rounded-xl flex flex-col items-center group relative transition-all ${boxClass}">
-                    ${holidayIcon}
-                    <span class="font-black text-sm ${textColor}">${day}</span>
-                    <div class="mt-2 flex gap-1 justify-center">${dots}${canceledX}</div>
-                    ${dayApps.length && !isHoliday ? `<span class="text-[8px] font-black uppercase mt-1 text-slate-500">${dayApps.length}/3 Vagas</span>` : ''}
-                    ${isHoliday ? '<span class="text-[8px] font-black uppercase mt-1 text-red-400">Feriado</span>' : ''}
-                </div>`;
-            }
-        }
-
-        // MODAIS
-        function closeModals() { 
-            document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); 
-        }
-
-        // Funções para modal de data passada
-        let pendingPastDateAction = null;
-
-        function showPastDateModal(callback) {
-            pendingPastDateAction = callback;
-            document.getElementById('modal-past-date').classList.add('active');
-        }
-
-        function confirmPastDate() {
-            document.getElementById('modal-past-date').classList.remove('active');
-            if (pendingPastDateAction) {
-                pendingPastDateAction();
-                pendingPastDateAction = null;
-            }
-        }
-
-        function cancelPastDate() {
-            document.getElementById('modal-past-date').classList.remove('active');
-            pendingPastDateAction = null;
-        }
-        
-        function openRecordModal() {
-            document.getElementById('record-form').reset();
-            document.getElementById('reg-id').value = '';
-            const histBtnNew = document.getElementById('btn-record-history');
-            histBtnNew.classList.add('hidden');
-            histBtnNew.classList.remove('flex');
-            
-            // Reseta Checklist
-            document.getElementById('chk-orientacao-val').value = 'false';
-            document.getElementById('chk-anexo-val').value = 'false';
-            updateCheckUI('orientacao', false);
-            updateCheckUI('anexo', false);
-            
-            // Reseta Status e Comentários
-            document.getElementById('reg-status').value = 'Agendado';
-            toggleCancelado();
-            
-            // Oculta campo metano inicialmente
-            updateSubstratos();
-            
-            document.getElementById('modal-title').innerText = "Novo Agendamento";
-            document.getElementById('modal-record').classList.add('active');
-        }
-        
-        function openRecordModalWithDate(dateStr) {
-            openRecordModal();
-            if (dateStr.includes('/')) document.getElementById('reg-data').value = dateStr.split('/').reverse().join('-');
-        }
-
-        function openDayDetails(dateStr) {
-            const dayApps = appointments.filter(a => a.data === dateStr).sort((a,b) => a.horaInicio.localeCompare(b.horaInicio));
-            document.getElementById('day-details-date').innerText = dateStr.split('-').reverse().join('/');
-            const list = document.getElementById('day-appointments-list');
-            
-            // Verifica se a data é anterior a hoje
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const [year, month, day] = dateStr.split('-').map(Number);
-            const appointmentDate = new Date(year, month - 1, day);
-            appointmentDate.setHours(0, 0, 0, 0);
-            const isPastDate = appointmentDate < today;
-            
-            list.innerHTML = dayApps.length ? dayApps.map(app => {
-                
-                let bgClass = 'bg-slate-50 border-slate-200';
-                let textColor = 'text-slate-500';
-                let accentColor = app.exame === 'TRESP' ? 'bg-blue-600' : 'bg-emerald-600';
-                let overdueBadge = '';
-                
-                // Verifica se agendamento está atrasado
-                const isOverdue = isPastDate && app.status !== 'Concluído' && app.status !== 'Cancelado';
-                
-                if (isOverdue) {
-                    bgClass = 'bg-red-50 border-red-300';
-                    textColor = 'text-red-700';
-                    accentColor = 'bg-red-600';
-                    overdueBadge = '<div class="absolute top-2 right-4 bg-red-600 text-white text-[8px] font-black px-2 py-1 rounded-full z-10"><i class="fas fa-exclamation-triangle mr-1"></i>ATRASADO</div>';
-                } else if (app.status === 'Cancelado') {
-                    bgClass = 'bg-slate-100 opacity-70 border-slate-200';
-                    textColor = 'text-slate-400 line-through';
-                    accentColor = 'bg-slate-400';
-                } else if (app.status === 'Em andamento') {
-                    bgClass = 'bg-purple-50 border-purple-200';
-                    textColor = 'text-purple-700';
-                    accentColor = 'bg-purple-600';
-                } else if (app.status === 'Concluído') {
-                    bgClass = 'bg-green-50 border-green-200';
-                    textColor = 'text-green-700';
-                } else if (app.idade < 12) {
-                    bgClass = 'bg-orange-50 border-orange-200';
-                    textColor = 'text-orange-700';
-                } else {
-                    // Agendado normal (adulto) - volta para cor azul padrão
-                    bgClass = 'bg-blue-50 border-blue-200';
-                    textColor = 'text-blue-700';
-                    accentColor = app.exame === 'TRESP' ? 'bg-blue-600' : 'bg-emerald-600';
-                }
-                
-                const isChecklistComplete = app.chkOrientacao && app.chkAnexo;
-                let checklistBadge;
-                if (app.status === 'Em andamento') {
-                    // Para "Em andamento", não mostra aviso de checklist incompleto
-                    checklistBadge = '<div class="h-8 w-8 rounded-md border border-purple-200 bg-purple-50 text-purple-600 flex items-center justify-center shadow-sm" title="Em andamento"><i class="fas fa-spinner"></i></div>';
-                } else {
-                    checklistBadge = isChecklistComplete 
-                        ? '<div class="h-8 w-8 rounded-md border border-blue-200 bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm" title="Checklist Completo"><i class="fas fa-clipboard-check"></i></div>' 
-                        : '<div class="h-8 w-8 rounded-md border border-slate-200 bg-slate-50 text-slate-400 flex items-center justify-center shadow-sm" title="Checklist Incompleto"><i class="fas fa-clipboard-list"></i></div>';
-                }
-                
-                return `
-                <div class="border rounded-xl p-4 ${bgClass} relative overflow-hidden">
-                    <div class="absolute left-0 top-0 bottom-0 w-1.5 ${accentColor}"></div>
-                    ${overdueBadge}
-                    <div class="absolute right-4 ${isOverdue ? 'top-8' : 'top-4'}">
-                        ${checklistBadge}
-                    </div>
-                    <div class="flex justify-between items-start pl-2">
-                        <div>
-                            <div class="font-black ${app.status === 'Cancelado' ? 'text-slate-400 line-through' : 'text-navy-900'} text-sm uppercase">${app.horaInicio} - ${app.horaFim} | ${app.paciente} (${app.idade} anos)</div>
-                            <div class="text-[10px] font-black ${textColor} uppercase">${app.exame} | ${app.substrato}${app.metano === 'Sim' ? ' (metano)' : ''} ${app.idade < 12 && app.status !== 'Concluído' && app.status !== 'Cancelado' ? '[INFANTIL]' : ''}</div>
-                        </div>
-                    </div>
-                    <div class="pl-2 pt-3 border-t border-slate-200 mt-3 flex justify-between items-center">
-                        <div class="flex flex-col">
-                            <span class="text-[10px] font-bold text-slate-500">👤 ${formatAtendenteName(app.atendente)}</span>
-                            ${app.status === 'Em andamento' 
-                                ? '<span class="text-[10px] font-bold text-purple-600 mt-0.5">🔄 Em andamento</span>' 
-                                : `<span class="text-[10px] font-bold text-slate-500 mt-0.5">Pedido: ${app.pedido}</span>`
-                            }
-                        </div>
-                        <div class="flex gap-2 items-center">
-                            <a href="https://wa.me/55${app.contato.replace(/\D/g, '')}" target="_blank" class="h-8 w-8 rounded-md border border-green-200 bg-white text-green-600 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all shadow-sm" title="WhatsApp"><i class="fab fa-whatsapp text-lg"></i></a>
-                            <button onclick="editRecord(${app.id})" class="px-3 py-1.5 bg-blue-50 text-blue-700 font-black text-[9px] uppercase rounded-md border border-blue-200 hover:bg-blue-600 hover:text-white transition-all shadow-sm"><i class="fas fa-eye mr-1"></i> Visualizar</button>
-                            ${isAdmin() ? `<button onclick="deleteRecord(${app.id})" class="px-3 py-1.5 bg-red-50 text-red-700 font-black text-[9px] uppercase rounded-md border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm"><i class="fas fa-trash mr-1"></i> Excluir</button>` : ''}
-                        </div>
-                    </div>
-                </div>`;
-            }).join('') : '<p class="text-center py-6 text-slate-400 font-bold uppercase text-[10px]">Sem marcações</p>';
-            
-            document.getElementById('modal-day-details').classList.add('active');
-            
-            // Verifica se o dia é feriado e atualiza o botão
-            updateHolidayToggle(dateStr);
-            
-            // Oculta ou mostra o botão de agendar baseado no número de agendamentos ativos
-            const activeApps = dayApps.filter(a => a.status !== 'Cancelado');
-            const scheduleBtn = document.querySelector('button[onclick*="openRecordModalWithDate"]');
-            if (scheduleBtn) {
-                if (activeApps.length >= 3) {
-                    scheduleBtn.style.display = 'none';
-                } else {
-                    scheduleBtn.style.display = 'block';
-                }
-            }
-        }
-
-        // Estado para controle de feriados
-        let holidays = {};
-
-        function toggleHolidayMode() {
-            const dateStr = document.getElementById('day-details-date').innerText.split('/').reverse().join('-');
-            const btn = document.getElementById('btn-holiday-toggle');
-            const slider = document.getElementById('holiday-toggle-slider');
-            const icon = slider.querySelector('i');
-            
-            if (holidays[dateStr]) {
-                // Desativa modo feriado (volta para ativo/verde) - bolinha vai para direita
-                delete holidays[dateStr];
-                btn.classList.remove('bg-red-500', 'border-red-400/50');
-                btn.classList.add('bg-green-500', 'border-green-400/50');
-                slider.style.transform = 'translateX(24px)';
-                icon.className = 'fas fa-check text-white text-xs';
-                
-                // Reabilita botão de agendar
-                const scheduleBtn = document.querySelector('button[onclick*="openRecordModalWithDate"]');
-                if (scheduleBtn) {
-                    scheduleBtn.disabled = false;
-                    scheduleBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-slate-200');
-                    scheduleBtn.classList.add('bg-slate-100', 'hover:bg-slate-200');
-                }
-            } else {
-                // Ativa modo feriado (só se não houver marcações) - bolinha vai para esquerda
-                const dayApps = appointments.filter(a => a.data === dateStr);
-                if (dayApps.length === 0) {
-                    holidays[dateStr] = true;
-                    btn.classList.remove('bg-green-500', 'border-green-400/50');
-                    btn.classList.add('bg-red-500', 'border-red-400/50');
-                    slider.style.transform = 'translateX(0)';
-                    icon.className = 'fas fa-calendar-times text-white text-xs';
-                    
-                    // Desabilita botão de agendar
-                    const scheduleBtn = document.querySelector('button[onclick*="openRecordModalWithDate"]');
-                    if (scheduleBtn) {
-                        scheduleBtn.disabled = true;
-                        scheduleBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-slate-200');
-                        scheduleBtn.classList.remove('bg-slate-100', 'hover:bg-slate-200');
-                    }
-                } else {
-                    showNotification('Não é possível marcar como feriado. Existem agendamentos neste dia.', 'warning');
-                    return; // Interrompe a função se houver marcações
-                }
-            }
-            
-            // Salva no Firebase (só se houver alteração)
-            saveHolidaysToFirebase();
-            
-            // Atualiza o calendário
-            renderCalendar();
-        }
-
-        function updateHolidayToggle(dateStr) {
-            const btn = document.getElementById('btn-holiday-toggle');
-            const slider = document.getElementById('holiday-toggle-slider');
-            const icon = slider.querySelector('i');
-            const scheduleBtn = document.querySelector('button[onclick*="openRecordModalWithDate"]');
-            
-            if (holidays[dateStr]) {
-                // Modo feriado ativo (vermelho) - bolinha à esquerda
-                btn.classList.remove('bg-green-500', 'border-green-400/50');
-                btn.classList.add('bg-red-500', 'border-red-400/50');
-                slider.style.transform = 'translateX(0)';
-                icon.className = 'fas fa-calendar-times text-white text-xs';
-                
-                // Desabilita botão de agendar
-                if (scheduleBtn) {
-                    scheduleBtn.disabled = true;
-                    scheduleBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-slate-200');
-                    scheduleBtn.classList.remove('bg-slate-100', 'hover:bg-slate-200');
-                }
-            } else {
-                // Modo ativo (verde) - bolinha à direita
-                btn.classList.remove('bg-red-500', 'border-red-400/50');
-                btn.classList.add('bg-green-500', 'border-green-400/50');
-                slider.style.transform = 'translateX(24px)';
-                icon.className = 'fas fa-check text-white text-xs';
-                
-                // Reabilita botão de agendar
-                if (scheduleBtn) {
-                    scheduleBtn.disabled = false;
-                    scheduleBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-slate-200');
-                    scheduleBtn.classList.add('bg-slate-100', 'hover:bg-slate-200');
-                }
-            }
-        }
-
-        function saveHolidaysToFirebase() {
-            database.ref('holidays').set(holidays)
-                .then(() => {
-                    console.log('Status de feriado salvo com sucesso no Firebase');
-                    showNotification('Status de feriado atualizado com sucesso', 'success');
-                })
-                .catch((error) => {
-                    console.error('Erro ao salvar status de feriado:', error);
-                    showNotification('Erro ao salvar status de feriado', 'error');
-                });
-        }
-
-        function loadHolidaysFromFirebase() {
-            return database.ref('holidays').once('value')
-                .then(snapshot => {
-                    const data = snapshot.val();
-                    if (data) {
-                        holidays = data;
-                        console.log('Feriados carregados do Firebase:', holidays);
-                    }
-                })
-                .catch((error) => {
-                    console.error('Erro ao carregar feriados do Firebase:', error);
-                    showNotification('Erro ao carregar status de feriados', 'error');
-                });
-        }
-
-        // Configurar listener em tempo real para atualizações de feriados
-        function setupHolidaysRealtimeListener() {
-            database.ref('holidays').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    holidays = data;
-                    console.log('Feriados atualizados em tempo real:', holidays);
-                    renderCalendar();
-                }
-            });
-        }
-
-        function editRecord(id) {
-            const app = appointments.find(a => a.id == id);
-            if(!app) return;
-            document.getElementById('reg-id').value = app.id;
-            document.getElementById('reg-data').value = app.data;
-            document.getElementById('reg-hora-inicio').value = app.horaInicio;
-            document.getElementById('reg-paciente').value = app.paciente ? app.paciente.toUpperCase() : '';
-            document.getElementById('reg-idade').value = app.idade;
-            document.getElementById('reg-contato').value = app.contato;
-            document.getElementById('reg-exame').value = app.exame;
-            updateSubstratos();
-            document.getElementById('reg-metano').value = app.metano || '';
-            document.getElementById('reg-substrato').value = app.substrato;
-            document.getElementById('reg-duracao').value = app.duracao;
-            document.getElementById('reg-hora-fim').value = app.horaFim;
-            document.getElementById('reg-pedido').value = app.pedido;
-            document.getElementById('reg-atendente').value = app.atendente;
-            
-            // Restaura Checklist
-            document.getElementById('chk-orientacao-val').value = app.chkOrientacao ? 'true' : 'false';
-            document.getElementById('chk-anexo-val').value = app.chkAnexo ? 'true' : 'false';
-            updateCheckUI('orientacao', app.chkOrientacao);
-            updateCheckUI('anexo', app.chkAnexo);
-            
-            // Restaura Status
-            document.getElementById('reg-status').value = app.status;
-            document.getElementById('reg-comentarios').value = app.comentarios || '';
-
-            // Trata exibição do campo comentário
-            toggleCancelado();
-            if (app.comentarios && app.status !== 'Cancelado') {
-                document.getElementById('box-motivo').classList.remove('hidden');
-            }
-
-            // Restaura Motivo de Perda
-            if (app.status === 'Cancelado' && app.motivoPerda) {
-                updateMotivosPerdaSelect();
-                document.getElementById('reg-motivo-perda').value = app.motivoPerda;
-            }
-            
-            document.getElementById('modal-title').innerText = "Editar Agendamento";
-            const histBtn = document.getElementById('btn-record-history');
-            histBtn.classList.remove('hidden');
-            histBtn.classList.add('flex');
-            document.getElementById('modal-record').classList.add('active');
-        }
-
-        let _pendingDeleteId = null;
-
-        function deleteRecord(id) {
-            _pendingDeleteId = id;
-            const input = document.getElementById('delete-confirm-input');
-            input.value = '';
-            const btn = document.getElementById('btn-confirm-delete');
-            btn.disabled = true;
-            btn.classList.add('opacity-60', 'cursor-not-allowed', 'from-red-300', 'to-red-400');
-            btn.classList.remove('from-red-600', 'to-red-700', 'hover:from-red-700', 'hover:to-red-800', 'shadow-red-200', 'cursor-pointer');
-            document.getElementById('modal-delete-confirm').classList.add('active');
-        }
-
-        function onDeleteInputChange() {
-            const input = document.getElementById('delete-confirm-input');
-            const btn = document.getElementById('btn-confirm-delete');
-            const isValid = input.value.trim().toUpperCase() === 'SIM';
-            btn.disabled = !isValid;
-            if (isValid) {
-                btn.classList.remove('opacity-60', 'cursor-not-allowed', 'from-red-300', 'to-red-400');
-                btn.classList.add('from-red-600', 'to-red-700', 'hover:from-red-700', 'hover:to-red-800', 'shadow-red-200', 'cursor-pointer');
-            } else {
-                btn.classList.add('opacity-60', 'cursor-not-allowed', 'from-red-300', 'to-red-400');
-                btn.classList.remove('from-red-600', 'to-red-700', 'hover:from-red-700', 'hover:to-red-800', 'shadow-red-200', 'cursor-pointer');
-            }
-        }
-
-        function cancelDeleteRecord() {
-            _pendingDeleteId = null;
-            document.getElementById('delete-confirm-input').value = '';
-            document.getElementById('modal-delete-confirm').classList.remove('active');
-        }
-
-        function confirmDeleteRecord() {
-            const input = document.getElementById('delete-confirm-input');
-            if (input.value.trim().toUpperCase() !== 'SIM') return;
-            const id = _pendingDeleteId;
-            _pendingDeleteId = null;
-            input.value = '';
-            document.getElementById('modal-delete-confirm').classList.remove('active');
-
-            if (!id) return;
-
-            const deleted = appointments.find(a => a.id === id);
-            appointments = appointments.filter(a => a.id !== id);
-            if (deleted) addAuditLog('delete', deleted);
-
-            saveAppointmentsToFirebase()
-                .then(() => {
-                    renderTable();
-                    renderCalendar();
-                    closeModals();
-                    showNotification("Agendamento excluído com sucesso.", "success");
-                })
-                .catch(error => {
-                    console.error("Erro ao excluir agendamento:", error);
-                    showNotification("Erro ao excluir o agendamento. Tente novamente.", "error");
-                    loadAppointmentsFromFirebase();
-                });
-        }
-
-        function openObsModal(id) {
-            const app = appointments.find(a => a.id == id);
-            document.getElementById('obs-id').value = app.id;
-            document.getElementById('obs-text').value = app.comentarios || '';
-            document.getElementById('modal-obs').classList.add('active');
-        }
-
-        function saveObservation() {
-            const id = document.getElementById('obs-id').value;
-            appointments = appointments.map(a => a.id == id ? {...a, comentarios: document.getElementById('obs-text').value} : a);
-            saveAppointmentsToFirebase();
-            closeModals(); renderTable();
-        }
-
-        // FUNÇÕES DE BACKUP E CONFIGURAÇÕES
-        function updateConfigStatus() {
-            document.getElementById('total-appointments').innerText = appointments.length;
-        }
-
-        function exportData() {
-            const backupData = {
-                version: '1.0',
-                exportDate: new Date().toISOString(),
-                appointments: appointments,
-                atendentesList: atendentesList,
-                metadata: {
-                    totalAppointments: appointments.length,
-                    firebaseConnected: !!database,
-                    exportType: 'full_backup'
-                }
-            };
-
-            const dataStr = JSON.stringify(backupData, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            const url = URL.createObjectURL(dataBlob);
-            
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `respiroLamic_backup_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-
-            showNotification('✅ Backup exportado com sucesso! Arquivo salvo como: respiroLamic_backup_' + new Date().toISOString().split('T')[0] + '.json', 'success');
-        }
-
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const backupData = JSON.parse(e.target.result);
-                    
-                    if (!backupData.appointments || !Array.isArray(backupData.appointments)) {
-                        throw new Error('Formato de backup inválido');
-                    }
-
-                    const confirmImport = confirm(
-                        `⚠️ ATENÇÃO!\n\n` +
-                        `Você está prestes a importar ${backupData.appointments.length} agendamentos.\n` +
-                        `Isso SUBSTITUIRÁ todos os dados atuais.\n\n` +
-                        `Deseja continuar?`
-                    );
-
-                    if (confirmImport) {
-                        appointments = backupData.appointments;
-                        
-                        // Migrar dados antigos para nova estrutura se necessário
-                        appointments = appointments.map(app => {
-                            if(!app.status) {
-                                app.status = app.chkConcluido ? 'Concluído' : 'Agendado';
-                            }
-                            return app;
-                        });
-
-                        // Restaurar lista de atendentes se existir
-                        if (backupData.atendentesList && Array.isArray(backupData.atendentesList)) {
-                            atendentesList = backupData.atendentesList;
-                            updateFilterDropdowns();
-                        }
-
-                        saveAppointmentsToFirebase();
-                        renderTable();
-                        renderCalendar();
-                        updateDatalists();
-                        updateConfigStatus();
-
-                        showNotification('✅ Backup importado com sucesso! ' + backupData.appointments.length + ' agendamentos restaurados.', 'success');
-                    }
-                } catch (error) {
-                    showNotification('❌ Erro ao importar backup: ' + error.message + '. Verifique se o arquivo é um backup válido.', 'error');
-                }
-            };
-            reader.readAsText(file);
-            
-            // Limpar o input para permitir importar o mesmo arquivo novamente
-            event.target.value = '';
-        }
-
-        
-        // Navega diretamente (uso interno)
-        function switchTabDirect(tab) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(`tab-${tab}`).classList.add('active');
-            document.querySelectorAll('nav button').forEach(b => b.className = "px-6 py-2.5 rounded-lg hover:bg-navy-700 transition-all font-bold text-xs tracking-widest ml-1");
-            document.getElementById(`btn-${tab}`).className = "px-6 py-2.5 rounded-lg bg-blue-600 transition-all font-bold text-xs tracking-widest shadow-lg";
-            if (tab === 'dashboard') renderCalendar();
-            if (tab === 'indicadores') renderIndicadores();
-            if (tab === 'config') { updateConfigStatus(); updateConfigSectionVisibility(); }
-        }
-
-        const _origSwitchTab = switchTab;
-        switchTab = function(tab) {
-            if (tab === 'config' && !isAdmin()) {
-                showNotification('Acesso restrito a administradores.', 'warning');
-                return;
-            }
-            _origSwitchTab(tab);
-            if (tab === 'config') { updateConfigStatus(); updateConfigSectionVisibility(); }
-        };
-    </script>
+    <!-- ── Infraestrutura ─────────────────────────────────────────── -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/notifications.js"></script>
+
+    <!-- ── Domínio ────────────────────────────────────────────────── -->
+    <script src="js/auth.js"></script>
+    <script src="js/audit.js"></script>
+    <script src="js/firebase-data.js"></script>
+    <script src="js/motivos-perda.js"></script>
+    <script src="js/atendentes.js"></script>
+    <script src="js/validation.js"></script>
+
+    <!-- ── Interface ──────────────────────────────────────────────── -->
+    <script src="js/navigation.js"></script>
+    <script src="js/checklist.js"></script>
+    <script src="js/save.js"></script>
+    <script src="js/table.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/calendar.js"></script>
+    <script src="js/modals.js"></script>
+    <script src="js/backup.js"></script>
+
+    <!-- ── Bootstrap ──────────────────────────────────────────────── -->
+    <script src="js/app-init.js"></script>
 </body>
 </html>

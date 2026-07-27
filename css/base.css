@@ -1,0 +1,33 @@
+/* Reset leve, tipografia, fundo, animações de aba/modal e scrollbars */
+
+html { -webkit-text-size-adjust: 100%; }
+body {
+    font-feature-settings: 'cv02','cv03','cv04','ss01';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    background:
+        radial-gradient(1200px 600px at 100% -10%, rgba(61,124,240,.07), transparent 60%),
+        radial-gradient(900px 500px at -10% 110%, rgba(14,22,40,.06), transparent 60%),
+        #f4f6fb;
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: tabIn .32s var(--ease-drawer) both; }
+@keyframes tabIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal { display: none; }
+.modal.active { display: flex; animation: fadeIn .18s ease-out; }
+.modal.active > div { animation: modalIn .28s var(--ease-drawer) both; }
+@keyframes modalIn { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: none; } }
+
+/* Scrollbars discretas */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(14,22,40,.22); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: rgba(14,22,40,.38); background-clip: content-box; }
+* { scrollbar-color: rgba(14,22,40,.28) transparent; scrollbar-width: thin; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

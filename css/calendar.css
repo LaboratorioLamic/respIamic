@@ -1,0 +1,13 @@
+/* Grade e células do calendário */
+
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .6rem; }
+@media (min-width: 1024px) { .calendar-grid { gap: .75rem; } }
+
+.calendar-day { transition: transform .18s var(--ease-drawer), box-shadow .22s ease, border-color .22s ease, background-color .22s ease; }
+.calendar-day.cursor-pointer:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px -14px rgba(14,22,40,.45);
+    border-color: rgba(61,124,240,.55);
+}
+@keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.animate-spin-slow { animation: spin-slow 8s linear infinite; }
