@@ -134,28 +134,44 @@
                         <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400 mt-1.5">Calendário operacional</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-2 sm:gap-3">
+                <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
                     <button onclick="openHistoryModal({type:'global'})" title="Rastreabilidade" class="h-10 w-10 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-xl flex items-center justify-center"><i class="fas fa-clock-rotate-left text-sm"></i></button>
+                    <div class="h-10 flex items-center gap-1 rounded-xl bg-slate-100 p-1" role="tablist" aria-label="Modo de visualização">
+                        <button id="view-tab-month" role="tab" onclick="setCalendarView('month')" class="view-tab h-8 px-3 rounded-lg font-black uppercase tracking-[0.12em] text-[10px] flex items-center gap-1.5"><i class="fas fa-table-cells text-[10px]"></i>Mês</button>
+                        <button id="view-tab-week" role="tab" onclick="setCalendarView('week')" class="view-tab h-8 px-3 rounded-lg font-black uppercase tracking-[0.12em] text-[10px] flex items-center gap-1.5"><i class="fas fa-calendar-week text-[10px]"></i>Semana</button>
+                    </div>
+                    <button onclick="goToToday()" title="Ir para hoje" class="h-10 px-3 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-xl font-black uppercase tracking-[0.12em] text-[10px] flex items-center gap-1.5"><i class="fas fa-crosshairs text-[10px]"></i>Hoje</button>
                     <div class="h-10 flex items-center gap-1 rounded-xl bg-slate-100 p-1">
-                        <button onclick="changeMonth(-1)" title="Mês anterior" class="h-8 w-8 rounded-lg bg-white hover:bg-navy-900 hover:text-white text-navy-900 shadow-sm flex items-center justify-center"><i class="fas fa-chevron-left text-xs"></i></button>
-                        <h3 id="current-month-label" class="font-black text-navy-900 uppercase tracking-[0.14em] text-xs w-36 sm:w-40 text-center">Abril 2026</h3>
-                        <button onclick="changeMonth(1)" title="Próximo mês" class="h-8 w-8 rounded-lg bg-white hover:bg-navy-900 hover:text-white text-navy-900 shadow-sm flex items-center justify-center"><i class="fas fa-chevron-right text-xs"></i></button>
+                        <button onclick="navigatePeriod(-1)" id="btn-period-prev" title="Período anterior" class="h-8 w-8 rounded-lg bg-white hover:bg-navy-900 hover:text-white text-navy-900 shadow-sm flex items-center justify-center"><i class="fas fa-chevron-left text-xs"></i></button>
+                        <h3 id="current-month-label" class="font-black text-navy-900 uppercase tracking-[0.14em] text-xs w-40 sm:w-48 text-center">Abril 2026</h3>
+                        <button onclick="navigatePeriod(1)" id="btn-period-next" title="Próximo período" class="h-8 w-8 rounded-lg bg-white hover:bg-navy-900 hover:text-white text-navy-900 shadow-sm flex items-center justify-center"><i class="fas fa-chevron-right text-xs"></i></button>
                     </div>
                 </div>
             </div>
 
             <div class="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200/80">
-                <div class="calendar-grid mb-4">
-                    <div class="text-center text-[10px] font-black uppercase text-red-500 tracking-widest">Dom</div>
-                    <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Seg</div>
-                    <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Ter</div>
-                    <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Qua</div>
-                    <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Qui</div>
-                    <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Sex</div>
-                    <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Sáb</div>
+                <div id="calendar-month-view">
+                    <div class="calendar-grid mb-4">
+                        <div class="text-center text-[10px] font-black uppercase text-red-500 tracking-widest">Dom</div>
+                        <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Seg</div>
+                        <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Ter</div>
+                        <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Qua</div>
+                        <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Qui</div>
+                        <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Sex</div>
+                        <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Sáb</div>
+                    </div>
+                    <div id="calendar-body" class="calendar-grid"></div>
                 </div>
-                <div id="calendar-body" class="calendar-grid"></div>
-                
+
+                <div id="calendar-week-view" class="hidden">
+                    <div class="week-scroll">
+                        <div class="week-frame">
+                            <div id="week-head" class="week-row week-head"></div>
+                            <div id="week-canvas" class="week-row week-canvas"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Legenda dos exames -->
                 <div class="mt-5 pt-4 border-t border-slate-100 flex justify-center">
                     <div class="flex items-center justify-center gap-x-4 gap-y-2 text-[11px] font-semibold text-slate-500 flex-wrap">

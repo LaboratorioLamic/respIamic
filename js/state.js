@@ -15,6 +15,9 @@ appointments = appointments.map(app => {
 let atendentesList = [];
 let motivosPerdaList = [];
 let currentDate = new Date();
+
+// Visão do calendário: 'month' (padrão) ou 'week'
+let calendarView = localStorage.getItem('respiroCalendarView') === 'week' ? 'week' : 'month';
 let tablePage = 1;
 const itemsPerPage = 20;
 

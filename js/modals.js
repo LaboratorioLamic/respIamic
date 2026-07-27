@@ -50,9 +50,15 @@ function openRecordModal() {
     document.getElementById('modal-record').classList.add('active');
 }
 
-function openRecordModalWithDate(dateStr) {
+function openRecordModalWithDate(dateStr, hora) {
     openRecordModal();
-    if (dateStr.includes('/')) document.getElementById('reg-data').value = dateStr.split('/').reverse().join('-');
+    // Aceita dd/mm/aaaa (modal de detalhes do dia) ou aaaa-mm-dd (visão semanal)
+    const iso = dateStr.includes('/') ? dateStr.split('/').reverse().join('-') : dateStr;
+    document.getElementById('reg-data').value = iso;
+    if (hora) {
+        document.getElementById('reg-hora-inicio').value = hora;
+        calculateTimes();
+    }
 }
 
 function openDayDetails(dateStr) {
