@@ -24,6 +24,21 @@
     font-weight: 600;
 }
 .notification-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+
+/* Selo de verificado do toast de sucesso — check verde sobre círculo branco */
+.notification-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 1.5rem;
+    width: 1.5rem;
+    border-radius: 9999px;
+    background: #fff;
+    color: #059669;
+    font-size: 0.75rem;
+    line-height: 1;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
+}
 .notification-error { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
 .notification-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
 .notification-info { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }

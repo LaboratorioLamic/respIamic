@@ -13,9 +13,16 @@ function showNotification(message, type = 'info', duration = 10000) {
     };
     
     notification.className = `notification notification-${type} rounded-xl shadow-2xl p-4 min-w-[320px] max-w-[400px] flex items-start gap-3`;
+
+    // Sucesso ganha um selo de verificado: círculo branco com o check em verde,
+    // legível sobre o fundo verde do toast.
+    const icone = type === 'success'
+        ? `<span class="notification-check"><i class="fas fa-check"></i></span>`
+        : `<i class="fas ${icons[type]} text-xl"></i>`;
+
     notification.innerHTML = `
         <div class="flex-shrink-0">
-            <i class="fas ${icons[type]} text-xl"></i>
+            ${icone}
         </div>
         <div class="flex-1">
             <p class="font-bold text-sm uppercase tracking-wider">${message}</p>

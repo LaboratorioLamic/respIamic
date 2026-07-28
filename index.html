@@ -29,6 +29,8 @@
     <link rel="stylesheet" href="css/home.css">
     <link rel="stylesheet" href="css/login.css">
     <link rel="stylesheet" href="css/notifications.css">
+    <link rel="stylesheet" href="css/upload.css">
+    <link rel="stylesheet" href="css/view-record.css">
 </head>
 <body class="font-sans text-slate-800 antialiased h-screen flex flex-col overflow-hidden">
     
@@ -628,6 +630,39 @@
         </section>
     </main>
 
+    <!-- Janela de visualização do agendamento (somente leitura) -->
+    <div id="modal-view-record" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[115] justify-center items-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden border border-white/20 my-auto">
+            <div id="view-barra-agenda" class="view-barra bg-blue-600"></div>
+
+            <div class="view-header relative">
+                <button type="button" onclick="closeViewRecord()" title="Fechar"
+                    class="absolute top-5 right-5 h-9 w-9 flex items-center justify-center rounded-full hover:bg-white/10 transition-all">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+
+                <p id="view-agenda-nome" class="view-agenda-nome">Agenda</p>
+                <h3 id="view-paciente" class="view-paciente">Paciente</h3>
+                <p id="view-quando" class="view-quando">—</p>
+                <div id="view-selos" class="view-selos"></div>
+            </div>
+
+            <div id="view-corpo" class="view-corpo"></div>
+
+            <div class="view-footer">
+                <button type="button" onclick="editFromView()" class="view-btn view-btn-editar">
+                    <i class="fas fa-pen-to-square"></i> Editar Agendamento
+                </button>
+                <button type="button" id="view-btn-excluir" onclick="deleteFromView()" class="view-btn view-btn-excluir">
+                    <i class="fas fa-trash"></i> Excluir
+                </button>
+                <button type="button" onclick="closeViewRecord()" class="view-btn view-btn-fechar">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-record" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[110] justify-center items-center p-4 overflow-y-auto">
         <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-4xl overflow-hidden border border-white/20 my-auto">
             <div class="bg-navy-900 p-6 text-white flex justify-between items-center">
@@ -833,6 +868,41 @@
                     </div>
                 </div>
 
+                <div class="col-span-1 md:col-span-4 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-3">Anexos do Agendamento</label>
+
+                    <div id="reg-anexos-list" class="anexo-lista mb-3"></div>
+
+                    <div class="anexo-widget">
+                        <div class="anexo-widget-linha">
+                            <select id="reg-upload-tipo" class="anexo-select">
+                                <option value="arquivo">Arquivo</option>
+                                <option value="imagem">Imagem</option>
+                                <option value="link">Link</option>
+                            </select>
+                            <input type="text" id="reg-upload-title" class="anexo-title-input" placeholder="Nome do anexo (ex.: Pedido médico)">
+                            <button type="button" id="reg-upload-btn" class="anexo-btn-enviar" onclick="submitAnexoUpload('reg')">Enviar</button>
+                        </div>
+
+                        <div id="reg-link-wrap" class="anexo-link-wrap hidden">
+                            <input type="url" id="reg-link-input" class="anexo-link-input" placeholder="https://...">
+                        </div>
+
+                        <div id="reg-file-preview" class="w-full hidden"></div>
+
+                        <div id="reg-upload-zone" class="anexo-drop-zone">
+                            <span class="anexo-drop-titulo"><i class="fas fa-cloud-arrow-up mr-1"></i> Clique ou arraste o arquivo aqui</span>
+                            <span id="reg-upload-dica" class="anexo-drop-dica">PDF, Word, planilha, slides · até 30 MB</span>
+                            <input type="file" id="reg-file-input" style="display:none">
+                        </div>
+
+                        <div id="reg-img-progress" class="anexo-progress hidden">
+                            <div class="anexo-progress-trilho"><div id="reg-img-progress-bar" class="anexo-progress-barra"></div></div>
+                            <span id="reg-img-progress-pct" class="anexo-progress-pct">0%</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="col-span-1 md:col-span-4 flex justify-start items-center">
                     <button type="button" id="btn-toggle-comentario" onclick="toggleComentario()" class="px-5 py-2.5 bg-blue-100 text-blue-700 border border-blue-200 hover:bg-blue-600 hover:text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-sm flex items-center gap-2">
                         <i class="fas fa-comment-dots text-sm"></i> Adicionar Comentário
@@ -856,7 +926,7 @@
                 </div>
 
                 <div class="col-span-1 md:col-span-4 mt-2 flex gap-4">
-                    <button type="submit" class="flex-1 bg-navy-900 text-white font-black py-4 rounded-2xl hover:bg-blue-600 shadow-xl transition-all uppercase tracking-widest text-xs">Confirmar Salvar</button>
+                    <button type="submit" id="reg-save-btn" class="flex-1 bg-navy-900 text-white font-black py-4 rounded-2xl hover:bg-blue-600 shadow-xl transition-all uppercase tracking-widest text-xs">Confirmar Salvar</button>
                     <button type="button" onclick="duplicateRecord()" title="Duplicar agendamento mantendo paciente, idade, WhatsApp e Nº do Pedido" class="px-4 py-4 border-2 border-blue-200 bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white rounded-2xl font-black transition-all text-xs flex items-center gap-2 uppercase tracking-widest"><i class="fas fa-copy"></i> Duplicar</button>
                     <button type="button" onclick="closeModals()" class="px-8 py-4 border-2 border-slate-100 rounded-2xl font-black text-slate-400 hover:bg-slate-50 transition-all text-xs uppercase tracking-widest">Cancelar</button>
                 </div>
@@ -969,6 +1039,43 @@
                     </button>
                     <button onclick="cancelChecklistConfirm()" class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
                         <i class="fas fa-arrow-left mr-2"></i>Voltar ao Formulário
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Aviso: agendamento sem anexo vinculado -->
+    <div id="modal-anexo-faltando" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[120] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/20">
+            <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-6 text-white">
+                <div class="flex items-center gap-4">
+                    <div class="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-paperclip text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-lg">Sem Anexo Vinculado</h3>
+                        <p class="text-[10px] text-white/80 font-bold uppercase tracking-widest">Coleta Domiciliar</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <p class="text-slate-700 font-medium mb-4">Este agendamento de coleta domiciliar está sendo salvo <strong>sem nenhum anexo</strong> vinculado.</p>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                    <p class="text-amber-800 text-sm font-medium">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Anexe o pedido médico ou a guia do paciente para manter o registro completo.
+                    </p>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="confirmAnexoFaltando()" class="flex-1 bg-navy-900 text-white font-black py-3 rounded-xl hover:bg-blue-600 shadow-lg transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-check mr-2"></i>Salvar Mesmo Assim
+                    </button>
+                    <button onclick="cancelAnexoFaltando()" class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-arrow-left mr-2"></i>Voltar e Anexar
                     </button>
                 </div>
             </div>
@@ -1602,11 +1709,13 @@
     <script src="js/navigation.js"></script>
     <script src="js/home.js"></script>
     <script src="js/checklist.js"></script>
+    <script src="js/upload.js"></script>
     <script src="js/save.js"></script>
     <script src="js/table.js"></script>
     <script src="js/charts.js"></script>
     <script src="js/calendar.js"></script>
     <script src="js/modals.js"></script>
+    <script src="js/view-record.js"></script>
     <script src="js/backup.js"></script>
 
     <!-- ── Bootstrap ──────────────────────────────────────────────── -->

@@ -1,8 +1,26 @@
 // Modais: detalhes do dia, agendamento, feriados e observações
 
 // MODAIS
-function closeModals() { 
-    document.querySelectorAll('.modal').forEach(m => m.classList.remove('active')); 
+function closeModals() {
+    // Fechar sem salvar descarta os blobs de imagem enviados nesta sessão que
+    // não ficaram referenciados em nenhum agendamento já persistido.
+    if (document.getElementById('modal-record')?.classList.contains('active')) {
+        discardSessionBlobs('reg', blobsPersistidos());
+    }
+    document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+}
+
+// IDs de imagem já referenciados em algum agendamento salvo (todas as agendas)
+function blobsPersistidos() {
+    const ids = [];
+    Object.values(agendaData).forEach(lista => {
+        lista.forEach(app => {
+            (app.anexos || []).forEach(anexo => {
+                if (anexo && anexo.tipo === 'imagem' && anexo.fileId) ids.push(anexo.fileId);
+            });
+        });
+    });
+    return ids;
 }
 
 // Funções para modal de data passada
@@ -36,6 +54,9 @@ function openRecordModal() {
     
     // Reseta Checklist
     resetChecklistUI({});
+
+    // Modo criação — zera a lista de anexos e a zona de upload
+    clearAnexosUpload('reg');
 
     // Reseta Status e Comentários
     document.getElementById('reg-status').value = 'Agendado';
@@ -181,7 +202,7 @@ function openDayDetails(dateStr) {
                 </div>
                 <div class="flex gap-2 items-center">
                     <a href="https://wa.me/55${app.contato.replace(/\D/g, '')}" target="_blank" class="h-8 w-8 rounded-md border border-green-200 bg-white text-green-600 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all shadow-sm" title="WhatsApp"><i class="fab fa-whatsapp text-lg"></i></a>
-                    <button onclick="editRecord(${app.id})" class="px-3 py-1.5 bg-blue-50 text-blue-700 font-black text-[9px] uppercase rounded-md border border-blue-200 hover:bg-blue-600 hover:text-white transition-all shadow-sm"><i class="fas fa-eye mr-1"></i> Visualizar</button>
+                    <button onclick="viewRecord(${app.id})" class="px-3 py-1.5 bg-blue-50 text-blue-700 font-black text-[9px] uppercase rounded-md border border-blue-200 hover:bg-blue-600 hover:text-white transition-all shadow-sm"><i class="fas fa-eye mr-1"></i> Visualizar</button>
                     ${isAdmin() ? `<button onclick="deleteRecord(${app.id})" class="px-3 py-1.5 bg-red-50 text-red-700 font-black text-[9px] uppercase rounded-md border border-red-200 hover:bg-red-600 hover:text-white transition-all shadow-sm"><i class="fas fa-trash mr-1"></i> Excluir</button>` : ''}
                 </div>
             </div>
@@ -363,6 +384,9 @@ function editRecord(id) {
     document.getElementById('reg-pedido').value = app.pedido;
     document.getElementById('reg-atendente').value = app.atendente;
     
+    // Modo edição — carrega os anexos já vinculados
+    restoreAnexosUpload('reg', app.anexos || []);
+
     // Restaura Checklist
     resetChecklistUI({
         orientacao: !!app.chkOrientacao,
@@ -438,7 +462,10 @@ function confirmDeleteRecord() {
 
     const deleted = appointments.find(a => a.id === id);
     setAppointments(appointments.filter(a => a.id !== id));
-    if (deleted) addAuditLog('delete', deleted);
+    if (deleted) {
+        addAuditLog('delete', deleted);
+        apagarAnexosDoRegistro(deleted);   // remove os arquivos reais (Drive / imgBlobs)
+    }
 
     saveAppointmentsToFirebase()
         .then(() => {

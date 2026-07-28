@@ -349,7 +349,7 @@ function renderWeekView() {
 
             return `<div class="week-event ${theme.bg} ${theme.border} ${theme.canceled ? 'week-event-canceled' : ''}"
                 style="top:${top}px;height:${height}px;left:calc(${leftPct}% + 2px);width:calc(${width}% - 5px)"
-                onclick="event.stopPropagation(); editRecord(${a.id})"
+                onclick="event.stopPropagation(); viewRecord(${a.id})"
                 title="${tooltip.replace(/"/g, '&quot;')}">
                 <span class="week-event-accent ${theme.accent}"></span>
                 <div class="week-event-body">

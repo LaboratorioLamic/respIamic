@@ -71,7 +71,8 @@ function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
         chkConcluido: statusVal === 'Concluído', // legado/garantia
         status: statusVal,
         comentarios: document.getElementById('reg-comentarios').value,
-        motivoPerda: statusVal === 'Cancelado' ? document.getElementById('reg-motivo-perda').value : ''
+        motivoPerda: statusVal === 'Cancelado' ? document.getElementById('reg-motivo-perda').value : '',
+        anexos: getAnexosUpload('reg')
     };
 
     // Checklist — grava sempre as três chaves para manter o formato estável
@@ -126,7 +127,21 @@ function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
     proceedWithSaveAfterValidation(record, id);
 }
 
+// Agendas que exigem anexo avisam (sem bloquear) quando o registro vai sem nenhum.
+function exigeAnexo(agenda) {
+    return (agenda || currentAgenda()).id === 'coletaDomiciliar';
+}
+
 function proceedWithSaveAfterValidation(record, id) {
+    // Aviso de anexo faltando — cancelado não precisa de anexo
+    if (exigeAnexo(currentAgenda()) && !(record.anexos || []).length
+        && record.status !== 'Cancelado' && !_anexoAvisoConfirmado) {
+        pendingAnexoAction = () => proceedWithSaveAfterValidation(record, id);
+        showAnexoFaltandoModal();
+        return;
+    }
+    _anexoAvisoConfirmado = false;
+
     const isNew = !id;
     const oldRecord = isNew ? null : appointments.find(a => a.id == id) || null;
     if(id) setAppointments(appointments.map(a => a.id == id ? record : a)); else setAppointments([...appointments, record]);
@@ -134,6 +149,30 @@ function proceedWithSaveAfterValidation(record, id) {
     addAuditLog(isNew ? 'create' : 'edit', record, oldRecord);
     showNotification(id ? "Agendamento atualizado com sucesso!" : "Agendamento criado com sucesso!", "success");
     closeModals(); renderTable(); renderCalendar(); updateDatalists(); updateFilterDropdowns();
+}
+
+// MODAL DE AVISO — AGENDAMENTO SEM ANEXO
+let pendingAnexoAction = null;
+let _anexoAvisoConfirmado = false;
+
+function showAnexoFaltandoModal() {
+    document.getElementById('modal-anexo-faltando').classList.add('active');
+}
+
+function confirmAnexoFaltando() {
+    document.getElementById('modal-anexo-faltando').classList.remove('active');
+    _anexoAvisoConfirmado = true;
+    if (pendingAnexoAction) {
+        const acao = pendingAnexoAction;
+        pendingAnexoAction = null;
+        acao();
+    }
+}
+
+function cancelAnexoFaltando() {
+    document.getElementById('modal-anexo-faltando').classList.remove('active');
+    pendingAnexoAction = null;
+    _anexoAvisoConfirmado = false;
 }
 
 // FUNÇÕES DA MODAL DE CHECKLIST
