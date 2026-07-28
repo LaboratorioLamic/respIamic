@@ -12,18 +12,23 @@ function changePage(dir) {
 }
 
 function renderTable() {
+    const agenda = currentAgenda();
+    const cores = agendaCores(agenda);
     const body = document.getElementById('table-body');
     const search = normalizeStr(document.getElementById('filter-search').value);
     const atendente = document.getElementById('filter-atendente').value;
     const substrato = document.getElementById('filter-substrato').value;
     const status = document.getElementById('filter-status').value;
 
+    // Nas agendas domiciliares o 3º filtro passa a ser o Bairro
+    const filtraPorBairro = temCampo('endereco', agenda);
+
     let filtered = appointments.filter(a => {
         const matchSearch = !search || normalizeStr(a.paciente).includes(search) || normalizeStr(a.pedido).includes(search);
         const matchAtendente = !atendente || a.atendente === atendente;
-        const matchSubstrato = !substrato || a.substrato === substrato;
+        const matchTerceiro = !substrato || (filtraPorBairro ? a.bairro === substrato : a.substrato === substrato);
         const matchStatus = !status || a.status === status;
-        return matchSearch && matchAtendente && matchSubstrato && matchStatus;
+        return matchSearch && matchAtendente && matchTerceiro && matchStatus;
     });
 
     filtered.sort((a,b) => b.id - a.id);
@@ -35,10 +40,11 @@ function renderTable() {
 
     body.innerHTML = '';
     pageData.forEach(app => {
-        const isInfantil = app.idade < 12;
+        const faixa = faixaEtariaDe(app, agenda);
+        const temaFaixa = FAIXA_ETARIA_TEMA[faixa];
         const isCanceled = app.status === 'Cancelado';
         const isComplete = app.status === 'Concluído';
-        const isChecklistComplete = app.chkOrientacao && app.chkAnexo;
+        const isChecklistComplete = agenda.checklist.every(item => !!app[CHECKLIST_ITENS[item].chave]);
         
         // Verifica se agendamento está atrasado
         const today = new Date();
@@ -52,12 +58,12 @@ function renderTable() {
         if (isOverdue) rowClass = 'bg-red-50 hover:bg-red-100';
         else if (isCanceled) rowClass = 'opacity-60 bg-slate-50';
         else if (isComplete) rowClass = 'bg-green-50 hover:bg-green-100';
-        else if (isInfantil) rowClass = 'bg-orange-50 hover:bg-orange-100';
-        else rowClass = 'bg-blue-50 hover:bg-blue-100'; // Agendado normal (adulto)
+        else if (temaFaixa) rowClass = `${temaFaixa.bg} hover:brightness-95`;
+        else rowClass = `${cores.bg} hover:brightness-95`; // Agendado normal
 
         const tr = document.createElement('tr');
         tr.className = `transition-colors group ${rowClass}`;
-        
+
         const exameColor = app.exame === 'TRESP' ? 'bg-blue-100 text-blue-800' : 'bg-emerald-100 text-emerald-800';
         
         const statusIcon = isOverdue ? '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-red-100 text-red-600" title="Atrasado"><i class="fas fa-exclamation-triangle"></i></div>' :
@@ -77,13 +83,24 @@ function renderTable() {
             </td>
             <td class="p-5">
                 <div class="font-bold text-slate-700 uppercase text-xs flex items-center gap-2 ${isCanceled ? 'line-through' : ''}">
-                    ${app.paciente} ${isOverdue ? '<span class="bg-red-600 text-white text-[8px] px-1 rounded"><i class="fas fa-exclamation-triangle mr-1"></i>ATRASADO</span>' : ''} ${isInfantil && !isComplete && !isCanceled ? '<span class="bg-orange-500 text-white text-[8px] px-1 rounded">INFANTIL</span>' : ''}
+                    ${app.paciente} ${isOverdue ? '<span class="bg-red-600 text-white text-[8px] px-1 rounded"><i class="fas fa-exclamation-triangle mr-1"></i>ATRASADO</span>' : ''} ${temaFaixa && !isComplete && !isCanceled ? `<span class="${temaFaixa.badge} text-white text-[8px] px-1 rounded">${temaFaixa.rotulo}</span>` : ''}
                 </div>
-                <div class="text-[10px] text-slate-400 font-bold">${app.idade} anos</div>
+                <div class="text-[10px] text-slate-400 font-bold">${app.idade} ano${app.idade === 1 ? '' : 's'}</div>
             </td>
-            <td class="p-5">
-                <span class="px-2 py-1 rounded text-[9px] font-black uppercase border ${exameColor}">${app.exame}</span>
-                <div class="text-[10px] font-bold text-slate-600 mt-1 uppercase">${app.substrato}${app.metano === 'Sim' ? ' (metano)' : ''}</div>
+            <td class="p-5 ${temCampo('exame', agenda) ? '' : 'hidden'}">
+                <span class="px-2 py-1 rounded text-[9px] font-black uppercase border ${exameColor}">${app.exame || '—'}</span>
+                <div class="text-[10px] font-bold text-slate-600 mt-1 uppercase">${app.substrato || ''}${app.metano === 'Sim' ? ' (metano)' : ''}</div>
+            </td>
+            <td class="p-5 ${temCampo('abstinencia', agenda) ? '' : 'hidden'}">
+                <div class="font-black text-slate-600 text-xs">${app.abstinencia != null ? `${app.abstinencia} dia${app.abstinencia === 1 ? '' : 's'}` : '—'}</div>
+            </td>
+            <td class="p-5 ${temCampo('endereco', agenda) ? '' : 'hidden'}">
+                <div class="font-bold text-slate-700 text-xs">${[app.logradouro, app.numero].filter(Boolean).join(', ') || '—'}${app.complemento ? ` <span class="text-slate-400 font-normal">(${app.complemento})</span>` : ''}</div>
+                <div class="text-[10px] text-slate-400 font-bold uppercase">${[app.bairro, app.cidade].filter(Boolean).join(' · ')}</div>
+                ${app.pontoReferencia ? `<div class="text-[10px] text-slate-400 mt-0.5"><i class="fas fa-location-dot mr-1"></i>${app.pontoReferencia}</div>` : ''}
+            </td>
+            <td class="p-5 ${temCampo('coletador', agenda) ? '' : 'hidden'}">
+                <div class="text-[10px] font-bold text-slate-600 uppercase">${app.coletador ? formatAtendenteName(app.coletador) : '—'}</div>
             </td>
             <td class="p-5">
                 <div class="font-black text-slate-600 text-xs">${app.pedido}</div>

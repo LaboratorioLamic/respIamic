@@ -3,51 +3,43 @@
 // SALVAR
 function saveRecord(e) {
     e.preventDefault();
+    const agenda = currentAgenda();
     const id = document.getElementById('reg-id').value;
     const atendenteInput = document.getElementById('reg-atendente').value.trim();
-    
-    // Validação Checklist & Status
+
+    // Validação Checklist & Status — só os itens que a agenda usa
     const statusVal = document.getElementById('reg-status').value;
-    const chkOr = document.getElementById('chk-orientacao-val').value === 'true';
-    const chkAn = document.getElementById('chk-anexo-val').value === 'true';
-    
-    // Se o status for "Em andamento" ou "Cancelado", pula toda a validação de checklist e continua diretamente
+    const valores = lerChecklist();
+    const itensAtivos = agenda.checklist;
+    const faltando = itensAtivos.filter(item => !valores[item]);
+
+    // Em "Em andamento" e "Cancelado", o checklist não é obrigatório
     if (statusVal === 'Em andamento' || statusVal === 'Cancelado') {
-        // Para "Em andamento" e "Cancelado", o checklist não é obrigatório
-        // Define os valores como false para garantir consistência
-        document.getElementById('chk-orientacao-val').value = 'false';
-        document.getElementById('chk-anexo-val').value = 'false';
-        proceedWithSave(id, atendenteInput, false, false, statusVal);
-        return;
-    }
-    
-    // Validação específica para status "Concluído"
-    if (statusVal === 'Concluído' && (!chkOr || !chkAn)) {
-        showNotification("ERRO: Para marcar o status como Concluído, todo o checklist (Orientação e Anexo) deve estar ativado.", "error");
-        return;
-    }
-    
-    // Aviso para checklist incompleto em outros status (exceto "Em andamento")
-    if (!chkOr || !chkAn) {
-        const checklistItems = [];
-        if (!chkOr) checklistItems.push("Enviar orientação ao paciente");
-        if (!chkAn) checklistItems.push("Anexar guia no sistema UniLab");
-        
-        // Salvar ação pendente e mostrar modal
-        pendingChecklistAction = () => {
-            // Continuar com o salvamento
-            proceedWithSave(id, atendenteInput, chkOr, chkAn, statusVal);
-        };
-        
-        showChecklistConfirmModal(checklistItems);
+        resetChecklistUI({});
+        proceedWithSave(id, atendenteInput, {}, statusVal);
         return;
     }
 
-    // Se não houver problema com checklist, continuar com validação
-    proceedWithSave(id, atendenteInput, chkOr, chkAn, statusVal);
+    // Validação específica para status "Concluído"
+    if (statusVal === 'Concluído' && faltando.length) {
+        const nomes = itensAtivos.map(i => CHECKLIST_ITENS[i].rotulo).join(', ');
+        showNotification(`ERRO: Para marcar o status como Concluído, o checklist (${nomes}) deve estar ativado.`, "error");
+        return;
+    }
+
+    // Aviso para checklist incompleto nos demais status
+    if (faltando.length) {
+        pendingChecklistAction = () => {
+            proceedWithSave(id, atendenteInput, valores, statusVal);
+        };
+        showChecklistConfirmModal(faltando.map(i => CHECKLIST_ITENS[i].aviso));
+        return;
+    }
+
+    proceedWithSave(id, atendenteInput, valores, statusVal);
 }
 
-function proceedWithSave(id, atendenteInput, chkOr, chkAn, statusVal) {
+function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
     // Forçar nome do paciente para maiúsculas
     const pacienteInput = document.getElementById('reg-paciente').value.trim();
     document.getElementById('reg-paciente').value = pacienteInput.toUpperCase();
@@ -63,8 +55,10 @@ function proceedWithSave(id, atendenteInput, chkOr, chkAn, statusVal) {
         }
     }
 
+    const agenda = currentAgenda();
     const record = {
         id: id ? parseInt(id) : Date.now(),
+        agendaId: agenda.id,
         data: document.getElementById('reg-data').value,
         horaInicio: document.getElementById('reg-hora-inicio').value,
         horaFim: document.getElementById('reg-hora-fim').value,
@@ -72,19 +66,43 @@ function proceedWithSave(id, atendenteInput, chkOr, chkAn, statusVal) {
         paciente: document.getElementById('reg-paciente').value,
         idade: parseInt(document.getElementById('reg-idade').value),
         contato: document.getElementById('reg-contato').value,
-        exame: document.getElementById('reg-exame').value,
-        metano: document.getElementById('reg-metano').value,
-        substrato: document.getElementById('reg-substrato').value,
         pedido: document.getElementById('reg-pedido').value,
         atendente: document.getElementById('reg-atendente').value,
-        chkOrientacao: chkOr,
-        chkAnexo: chkAn,
         chkConcluido: statusVal === 'Concluído', // legado/garantia
         status: statusVal,
         comentarios: document.getElementById('reg-comentarios').value,
         motivoPerda: statusVal === 'Cancelado' ? document.getElementById('reg-motivo-perda').value : ''
     };
-    
+
+    // Checklist — grava sempre as três chaves para manter o formato estável
+    Object.keys(CHECKLIST_ITENS).forEach(item => {
+        record[CHECKLIST_ITENS[item].chave] = temChecklist(item, agenda) ? !!chkValores[item] : false;
+    });
+
+    // Campos específicos da agenda
+    if (temCampo('exame', agenda))     record.exame = document.getElementById('reg-exame').value;
+    if (temCampo('substrato', agenda)) record.substrato = document.getElementById('reg-substrato').value;
+    if (temCampo('metano', agenda))    record.metano = document.getElementById('reg-metano').value;
+    if (temCampo('abstinencia', agenda)) {
+        const val = document.getElementById('reg-abstinencia').value;
+        record.abstinencia = val === '' ? null : parseInt(val);
+    }
+    if (temCampo('endereco', agenda)) {
+        record.cep         = document.getElementById('reg-cep').value.trim();
+        record.logradouro  = document.getElementById('reg-logradouro').value.trim();
+        record.numero      = document.getElementById('reg-numero').value.trim();
+        record.complemento = document.getElementById('reg-complemento').value.trim();
+        record.bairro      = document.getElementById('reg-bairro').value.trim().toUpperCase();
+        record.cidade      = document.getElementById('reg-cidade').value.trim().toUpperCase();
+        record.estado      = document.getElementById('reg-estado').value.trim().toUpperCase();
+    }
+    if (temCampo('pontoReferencia', agenda)) {
+        record.pontoReferencia = document.getElementById('reg-ponto-referencia').value.trim();
+    }
+    if (temCampo('coletador', agenda)) {
+        record.coletador = document.getElementById('reg-coletador').value.trim().toUpperCase();
+    }
+
     // NOTA: O status "atrasado" é calculado dinamicamente nas funções de renderização
     // (renderCalendar, openDayDetails, renderTable) com base na data atual vs data do agendamento
     // Ao alterar a data para hoje ou futuro, a visualização será atualizada automaticamente
@@ -95,7 +113,7 @@ function proceedWithSave(id, atendenteInput, chkOr, chkAn, statusVal) {
             // Mostrar modal elegante de confirmação para data passada
             showPastDateModal(() => {
                 // Usuário confirmou, continuar com o salvamento
-                proceedWithSaveAfterValidation(record, id, chkOr, chkAn, statusVal);
+                proceedWithSaveAfterValidation(record, id);
             });
             return;
         } else {
@@ -105,13 +123,13 @@ function proceedWithSave(id, atendenteInput, chkOr, chkAn, statusVal) {
     }
     
     // Se não houver erro, continuar com salvamento normal
-    proceedWithSaveAfterValidation(record, id, chkOr, chkAn, statusVal);
+    proceedWithSaveAfterValidation(record, id);
 }
 
-function proceedWithSaveAfterValidation(record, id, chkOr, chkAn, statusVal) {
+function proceedWithSaveAfterValidation(record, id) {
     const isNew = !id;
     const oldRecord = isNew ? null : appointments.find(a => a.id == id) || null;
-    if(id) appointments = appointments.map(a => a.id == id ? record : a); else appointments.push(record);
+    if(id) setAppointments(appointments.map(a => a.id == id ? record : a)); else setAppointments([...appointments, record]);
     saveAppointmentsToFirebase();
     addAuditLog(isNew ? 'create' : 'edit', record, oldRecord);
     showNotification(id ? "Agendamento atualizado com sucesso!" : "Agendamento criado com sucesso!", "success");

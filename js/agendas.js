@@ -1,0 +1,254 @@
+// Registro de agendas — toda regra específica de cada agenda vive aqui.
+// Para criar uma nova agenda, basta acrescentar uma entrada em AGENDAS.
+//
+// `janela` aceita uma LISTA de faixas [inicioMin, fimMin] por dia da semana,
+// permitindo turnos separados (ex.: manhã e tarde).
+
+const AGENDAS = {
+    respiratorio: {
+        id: 'respiratorio',
+        nome: 'Teste Respiratório',
+        curto: 'Respiratório',
+        subtitulo: 'TRESP · TSBAC',
+        descricao: 'Teste respiratório de hidrogênio e supercrescimento bacteriano',
+        icon: 'fa-lungs',
+        cor: 'blue',
+
+        // Persistência
+        fbPath: 'agendas/respiratorio',
+        legacyPath: 'appointments',      // nó antigo, migrado uma única vez
+        lsKey: 'respiroLamicData',
+
+        // Janela operacional (minutos desde 00:00)
+        dias: [1, 2, 3, 4, 5, 6],        // 0 = domingo
+        janela: { 6: [[420, 480]], default: [[420, 540]] },
+        slotMin: null,                   // horário livre dentro da janela
+        slotUnico: false,                // não bloqueia slot ocupado
+        limiteDia: 3,
+        semana: { startHour: 6, endHour: 14 },
+
+        // Duração
+        duracao: { tipo: 'porExame', porExame: { TRESP: 180, TSBAC: 120 } },
+
+        // Campos do formulário
+        campos: { exame: true, substrato: true, metano: true, idade: true, pedido: true, abstinencia: false, endereco: false, pontoReferencia: false, coletador: false },
+        faixaEtaria: ['infantil'],       // realces etários usados por esta agenda
+        substratos: { TRESP: ['Lactose', 'Frutose', 'Sorbitol', 'Sacarose', 'D-Xilose', 'Frutano'], TSBAC: ['Lactulose', 'Glicose'] },
+
+        // Operação
+        checklist: ['orientacao', 'anexo'],
+        regra48h: true,
+
+        // Indicadores
+        kpis: ['total', 'tresp', 'tsbac', 'concluidos', 'andamento', 'pendentes', 'cancelados'],
+        charts: ['barMensal', 'linhaTipo', 'donutExame', 'donutSubstrato'],
+        legenda: ['tresp', 'tsbac', 'cancelado', 'concluido', 'atrasado', 'adulto', 'infantil', 'andamento']
+    },
+
+    espermograma: {
+        id: 'espermograma',
+        nome: 'Espermograma',
+        curto: 'Espermograma',
+        subtitulo: 'Coleta seminal',
+        descricao: 'Agendamento de coleta para análise seminal',
+        icon: 'fa-microscope',
+        cor: 'teal',
+
+        fbPath: 'agendas/espermograma',
+        legacyPath: null,
+        lsKey: 'espermogramaLamicData',
+
+        dias: [1, 2, 3, 4, 5, 6],
+        janela: { 6: [[420, 600]], default: [[420, 900]] },  // Seg–sex 07:00–15:00 · Sáb 07:00–10:00
+        slotMin: 30,                        // 30 min entre um paciente e outro
+        slotUnico: true,                    // um paciente por slot
+        limiteDia: 'slots',                 // 16 slots seg–sex, 6 sáb
+        semana: { startHour: 7, endHour: 15 },
+
+        duracao: { tipo: 'fixa', fixaMin: 30 },
+
+        campos: { exame: false, substrato: false, metano: false, idade: true, pedido: true, abstinencia: true, endereco: false, pontoReferencia: false, coletador: false },
+        faixaEtaria: [],                    // não se aplica
+        substratos: {},
+
+        checklist: ['orientacao'],
+        regra48h: false,
+
+        kpis: ['total', 'concluidos', 'andamento', 'pendentes', 'cancelados'],
+        charts: ['barMensal', 'donutStatus'],
+        legenda: ['agendado', 'cancelado', 'concluido', 'atrasado', 'andamento']
+    },
+
+    coletaDomiciliar: {
+        id: 'coletaDomiciliar',
+        nome: 'Coleta Domiciliar',
+        curto: 'Domiciliar',
+        subtitulo: 'Atendimento em casa',
+        descricao: 'Agendamento de coleta realizada no endereço do paciente',
+        icon: 'fa-house-medical',
+        cor: 'amber',
+
+        fbPath: 'agendas/coleta-domiciliar',
+        legacyPath: null,
+        lsKey: 'coletaDomiciliarLamicData',
+
+        dias: [1, 2, 3, 4, 5, 6],
+        // Seg–sex: 07:00–11:00 e 13:00–17:00 · Sábado: só a manhã
+        janela: { 6: [[420, 660]], default: [[420, 660], [780, 1020]] },
+        slotMin: 60,                        // 60 min entre um paciente e outro
+        slotUnico: true,
+        limiteDia: 'slots',                 // 8 seg–sex, 4 no sábado
+        semana: { startHour: 7, endHour: 17 },
+
+        duracao: { tipo: 'fixa', fixaMin: 60 },
+
+        campos: { exame: false, substrato: false, metano: false, idade: true, pedido: true, abstinencia: false, endereco: true, pontoReferencia: true, coletador: true },
+        faixaEtaria: ['rn', 'infantil'],
+        substratos: {},
+
+        checklist: ['orientacao', 'endereco', 'anexo'],
+        regra48h: false,
+
+        kpis: ['total', 'concluidos', 'andamento', 'pendentes', 'cancelados'],
+        charts: ['barMensal', 'donutStatus'],
+        legenda: ['agendado', 'cancelado', 'concluido', 'atrasado', 'andamento', 'rn', 'infantil']
+    }
+};
+
+const AGENDA_IDS = Object.keys(AGENDAS);
+const AGENDA_PADRAO = 'respiratorio';
+
+// Paleta por agenda (classes Tailwind resolvidas estaticamente para não caírem no purge)
+const AGENDA_CORES = {
+    blue: {
+        bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700',
+        accent: 'bg-blue-600', dot: 'bg-blue-500', chart: '#3b82f6',
+        grad: 'from-blue-500 to-blue-700', ring: 'hover:border-blue-300'
+    },
+    teal: {
+        bg: 'bg-teal-50', border: 'border-teal-200', text: 'text-teal-700',
+        accent: 'bg-teal-600', dot: 'bg-teal-500', chart: '#14b8a6',
+        grad: 'from-teal-500 to-teal-700', ring: 'hover:border-teal-300'
+    },
+    amber: {
+        bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700',
+        accent: 'bg-amber-600', dot: 'bg-amber-500', chart: '#f59e0b',
+        grad: 'from-amber-500 to-amber-700', ring: 'hover:border-amber-300'
+    }
+};
+
+// Itens de checklist disponíveis no sistema
+const CHECKLIST_ITENS = {
+    orientacao: { chave: 'chkOrientacao', input: 'chk-orientacao-val', botao: 'btn-chk-orientacao', rotulo: 'Orientação', aviso: 'Enviar orientação ao paciente' },
+    anexo:      { chave: 'chkAnexo',      input: 'chk-anexo-val',      botao: 'btn-chk-anexo',      rotulo: 'Anexo Unilab', aviso: 'Anexar guia no sistema UniLab' },
+    endereco:   { chave: 'chkEndereco',   input: 'chk-endereco-val',   botao: 'btn-chk-endereco',   rotulo: 'Endereço', aviso: 'Confirmar endereço e contato com o paciente' }
+};
+
+// ── ACESSO ──────────────────────────────────────────────────
+function getAgenda(id) {
+    return AGENDAS[id] || AGENDAS[AGENDA_PADRAO];
+}
+
+function currentAgenda() {
+    return getAgenda(currentAgendaId);
+}
+
+function agendaCores(agenda) {
+    return AGENDA_CORES[(agenda || currentAgenda()).cor] || AGENDA_CORES.blue;
+}
+
+function temCampo(nome, agenda) {
+    return !!(agenda || currentAgenda()).campos[nome];
+}
+
+function temChecklist(nome, agenda) {
+    return (agenda || currentAgenda()).checklist.includes(nome);
+}
+
+// ── FAIXA ETÁRIA ────────────────────────────────────────────
+// Retorna 'rn', 'infantil' ou 'adulto', respeitando os realces que a agenda usa.
+function faixaEtariaDe(app, agenda) {
+    const ag = agenda || currentAgenda();
+    const idade = Number(app.idade);
+    if (isNaN(idade)) return 'adulto';
+    if (idade < 1 && ag.faixaEtaria.includes('rn')) return 'rn';
+    if (idade < 12 && ag.faixaEtaria.includes('infantil')) return 'infantil';
+    return 'adulto';
+}
+
+const FAIXA_ETARIA_TEMA = {
+    rn:       { bg: 'bg-fuchsia-50', border: 'border-fuchsia-200', text: 'text-fuchsia-700', badge: 'bg-fuchsia-500', rotulo: 'RN' },
+    infantil: { bg: 'bg-orange-50',  border: 'border-orange-200',  text: 'text-orange-700',  badge: 'bg-orange-500',  rotulo: 'INFANTIL' }
+};
+
+// ── JANELA HORÁRIA ──────────────────────────────────────────
+// Retorna a LISTA de faixas [inicioMin, fimMin] de horários de INÍCIO
+// permitidos no dia, ou [] se a agenda não atende nesse dia.
+function janelaAgenda(dayOfWeek, agenda) {
+    const ag = agenda || currentAgenda();
+    if (!ag.dias.includes(dayOfWeek)) return [];
+    const faixas = ag.janela[dayOfWeek] || ag.janela.default;
+    if (!faixas || !faixas.length) return [];
+
+    // Com slot fixo, o último início de cada faixa recua pela duração do exame
+    if (ag.slotMin && ag.duracao.tipo === 'fixa') {
+        return faixas
+            .map(([ini, fim]) => [ini, fim - ag.duracao.fixaMin])
+            .filter(([ini, fim]) => fim >= ini);
+    }
+    return faixas.map(f => [f[0], f[1]]);
+}
+
+// Faixas brutas configuradas (sem recuo da duração) — usadas em rótulos
+function faixasBrutas(dayOfWeek, agenda) {
+    const ag = agenda || currentAgenda();
+    if (dayOfWeek != null && !ag.dias.includes(dayOfWeek)) return [];
+    return (dayOfWeek != null ? (ag.janela[dayOfWeek] || ag.janela.default) : ag.janela.default) || [];
+}
+
+// O minuto está dentro de alguma das faixas?
+function dentroDaJanela(minuto, faixas) {
+    return faixas.some(([ini, fim]) => minuto >= ini && minuto <= fim);
+}
+
+// A faixa que contém o minuto (usada para alinhar a grade de slots)
+function faixaDoMinuto(minuto, faixas) {
+    return faixas.find(([ini, fim]) => minuto >= ini && minuto <= fim) || null;
+}
+
+// Lista de horários de início válidos (minutos), percorrendo todas as faixas
+function slotsAgenda(dayOfWeek, agenda) {
+    const ag = agenda || currentAgenda();
+    const faixas = janelaAgenda(dayOfWeek, ag);
+    if (!faixas.length) return [];
+    const passo = ag.slotMin || 30;
+    const slots = [];
+    faixas.forEach(([ini, fim]) => {
+        for (let m = ini; m <= fim; m += passo) slots.push(m);
+    });
+    return slots;
+}
+
+// Limite de agendamentos ativos no dia — número fixo ou derivado da grade
+function limiteDoDia(dayOfWeek, agenda) {
+    const ag = agenda || currentAgenda();
+    if (ag.limiteDia === 'slots') return slotsAgenda(dayOfWeek, ag).length;
+    return ag.limiteDia;
+}
+
+// Duração em minutos de um agendamento desta agenda
+function duracaoAgenda(exame, agenda) {
+    const ag = agenda || currentAgenda();
+    if (ag.duracao.tipo === 'fixa') return ag.duracao.fixaMin;
+    return ag.duracao.porExame[exame] || 0;
+}
+
+// Rótulo legível da duração ("3 Horas" / "30 Minutos")
+function duracaoLabel(minutos) {
+    if (!minutos) return '';
+    if (minutos % 60 === 0) {
+        const h = minutos / 60;
+        return `${h} ${h === 1 ? 'Hora' : 'Horas'}`;
+    }
+    return `${minutos} Minutos`;
+}

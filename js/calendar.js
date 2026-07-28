@@ -4,11 +4,8 @@ const MONTH_NAMES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
 const MONTH_SHORT = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 const WEEKDAY_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
-// Janela horária exibida na visão semanal
-const WEEK_START_HOUR = 6;
-const WEEK_END_HOUR = 14;
+// Janela horária exibida na visão semanal (base vem da config da agenda)
 const WEEK_HOUR_PX = 56;
-const WEEK_SLOT_MIN = 30;
 
 // HELPERS DE DATA
 function toDateStr(d) {
@@ -30,11 +27,9 @@ function minToTime(min) {
     return `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
 }
 
-// Limite de horário inicial permitido por dia da semana (espelha validation.js)
+// Faixas de horário inicial permitidas por dia da semana (config da agenda ativa)
 function allowedStartWindow(dayOfWeek) {
-    if (dayOfWeek === 0) return null;               // domingo bloqueado
-    if (dayOfWeek === 6) return [420, 480];         // sábado 07:00–08:00
-    return [420, 540];                              // seg–sex 07:00–09:00
+    return janelaAgenda(dayOfWeek);
 }
 
 // CONTROLE DE VISÃO
@@ -88,19 +83,37 @@ function renderCalendar() {
     else renderMonthView();
 }
 
+// Cor de destaque do agendamento: por exame quando a agenda tem exames, senão a cor da agenda
+function accentDoAgendamento(app, agenda) {
+    const ag = agenda || currentAgenda();
+    if (!temCampo('exame', ag)) return agendaCores(ag).accent;
+    return app.exame === 'TRESP' ? 'bg-blue-600' : 'bg-emerald-600';
+}
+
 // TEMA COMPARTILHADO DE AGENDAMENTO
 function getAppointmentTheme(app, isPastDate) {
+    const agenda = currentAgenda();
+    const cores = agendaCores(agenda);
+    const accent = accentDoAgendamento(app, agenda);
     const isOverdue = isPastDate && app.status !== 'Concluído' && app.status !== 'Cancelado';
+
     if (isOverdue) return { bg: 'bg-red-50', border: 'border-red-300', text: 'text-red-700', accent: 'bg-red-600', overdue: true };
     if (app.status === 'Cancelado') return { bg: 'bg-slate-100', border: 'border-slate-200', text: 'text-slate-400', accent: 'bg-slate-400', canceled: true };
     if (app.status === 'Em andamento') return { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700', accent: 'bg-purple-600' };
     if (app.status === 'Concluído') return { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', accent: 'bg-green-600' };
-    if (app.idade < 12) return { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700', accent: app.exame === 'TRESP' ? 'bg-blue-600' : 'bg-emerald-600' };
-    return { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', accent: app.exame === 'TRESP' ? 'bg-blue-600' : 'bg-emerald-600' };
+
+    const faixa = faixaEtariaDe(app, agenda);
+    if (FAIXA_ETARIA_TEMA[faixa]) {
+        const t = FAIXA_ETARIA_TEMA[faixa];
+        return { bg: t.bg, border: t.border, text: t.text, accent, faixa };
+    }
+    return { bg: cores.bg, border: cores.border, text: cores.text, accent };
 }
 
 // VISÃO MENSAL
 function renderMonthView() {
+    const agenda = currentAgenda();
+    const cores = agendaCores(agenda);
     const body = document.getElementById('calendar-body'); body.innerHTML = '';
     const year = currentDate.getFullYear(); const month = currentDate.getMonth();
     document.getElementById('current-month-label').innerText = `${MONTH_NAMES[month]} ${year}`;
@@ -110,12 +123,14 @@ function renderMonthView() {
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const dateObj = new Date(year, month, day);
+        const isClosed = !agenda.dias.includes(dateObj.getDay());   // dia sem atendimento nesta agenda
         const isSunday = dateObj.getDay() === 0;
         const isHoliday = holidays[dateStr];
 
         // Exclui os cancelados da contagem de lotação do dia
         const dayApps = appointments.filter(a => a.data === dateStr && a.status !== 'Cancelado');
-        const hasInfantil = dayApps.some(a => a.idade < 12);
+        const faixaDestaque = ['rn', 'infantil'].find(f => dayApps.some(a => faixaEtariaDe(a, agenda) === f));
+        const limiteDia = limiteDoDia(dateObj.getDay(), agenda);
 
         // Verifica se há agendamentos cancelados no dia
         const canceledApps = appointments.filter(a => a.data === dateStr && a.status === 'Cancelado');
@@ -137,12 +152,15 @@ function renderMonthView() {
             boxClass = 'bg-slate-100 border-slate-300 opacity-60 cursor-pointer';
             textColor = 'text-slate-400';
             clickAction = `openDayDetails('${dateStr}')`;
-        } else if (isSunday) {
-            boxClass = 'bg-red-50/30 border-red-100 opacity-60 cursor-not-allowed';
-            textColor = 'text-red-400';
+        } else if (isClosed) {
+            // Dia sem atendimento nesta agenda
+            boxClass = isSunday
+                ? 'bg-red-50/30 border-red-100 opacity-60 cursor-not-allowed'
+                : 'bg-slate-50 border-slate-200 opacity-60 cursor-not-allowed';
+            textColor = isSunday ? 'text-red-400' : 'text-slate-400';
             clickAction = '';
         } else {
-            boxClass = 'bg-white hover:border-blue-300 border-slate-200 cursor-pointer';
+            boxClass = `bg-white ${cores.ring} border-slate-200 cursor-pointer`;
             textColor = 'text-navy-900';
             clickAction = `openDayDetails('${dateStr}')`;
 
@@ -162,27 +180,32 @@ function renderMonthView() {
 
                     if(hasAndamento) {
                         boxClass = 'bg-purple-50 border-purple-300 cursor-pointer';
-                    } else if(hasInfantil) {
-                        boxClass = 'bg-orange-50 border-orange-300 cursor-pointer';
+                    } else if(faixaDestaque) {
+                        const t = FAIXA_ETARIA_TEMA[faixaDestaque];
+                        boxClass = `${t.bg} ${t.border} cursor-pointer`;
                     } else {
-                        boxClass = 'bg-blue-50 border-blue-200 cursor-pointer';
+                        boxClass = `${cores.bg} ${cores.border} cursor-pointer`;
                     }
                 }
             }
         }
 
         const dots = dayApps.map(a => {
-            // Verifica se o checklist está incompleto e não se aplica a status cancelado e em andamento
-            const isChecklistIncomplete = !a.chkOrientacao || !a.chkAnexo;
+            // Verifica se o checklist está incompleto — só conta os itens usados pela agenda
+            const isChecklistIncomplete = agenda.checklist.some(item => !a[CHECKLIST_ITENS[item].chave]);
             const shouldShowClipboard = isChecklistIncomplete && a.status !== 'Cancelado' && a.status !== 'Em andamento';
+            const dotCor = temCampo('exame', agenda)
+                ? (a.exame === 'TRESP' ? 'bg-blue-500' : 'bg-emerald-500')
+                : cores.dot;
+            const dotHex = temCampo('exame', agenda)
+                ? (a.exame === 'TRESP' ? '#3b82f6' : '#10b981')
+                : cores.chart;
 
             if (shouldShowClipboard) {
-                // Ícone de prancheta para checklist incompleto com a cor do teste
-                return `<div class="h-2 w-2 rounded-full flex items-center justify-center ${a.exame === 'TRESP' ? 'bg-blue-300' : 'bg-emerald-500'} border-2 border-yellow-400"><i class="fas fa-clipboard-list text-[10px]" style="color: ${a.exame === 'TRESP' ? '#3b82f6' : '#10b981'}"></i></div>`;
-            } else {
-                // Círculo normal para outros casos
-                return `<div class="h-2 w-2 rounded-full ${a.exame === 'TRESP' ? 'bg-blue-500' : 'bg-emerald-500'}"></div>`;
+                // Ícone de prancheta para checklist incompleto, na cor da agenda/teste
+                return `<div class="h-2 w-2 rounded-full flex items-center justify-center ${dotCor} border-2 border-yellow-400"><i class="fas fa-clipboard-list text-[10px]" style="color: ${dotHex}"></i></div>`;
             }
+            return `<div class="h-2 w-2 rounded-full ${dotCor}"></div>`;
         }).join('');
         const canceledX = canceledApps.map(() => '<div class="h-2 w-2 rounded-full bg-red-500 flex items-center justify-center text-white text-[10px] font-black">×</div>').join('');
         const holidayIcon = isHoliday ? '<div class="absolute top-1 right-1 text-red-400"><i class="fas fa-calendar-times text-xs"></i></div>' : '';
@@ -192,7 +215,7 @@ function renderMonthView() {
             ${holidayIcon}
             <span class="font-black text-sm ${textColor}">${day}</span>
             <div class="mt-2 flex gap-1 justify-center flex-wrap">${dots}${canceledX}</div>
-            ${dayApps.length && !isHoliday ? `<span class="text-[8px] font-black uppercase tracking-wider mt-auto text-slate-500">${dayApps.length}/3 Vagas</span>` : ''}
+            ${dayApps.length && !isHoliday ? `<span class="text-[8px] font-black uppercase tracking-wider mt-auto text-slate-500">${dayApps.length}/${limiteDia} Vagas</span>` : ''}
             ${isHoliday ? '<span class="text-[8px] font-black uppercase tracking-wider mt-auto text-red-400">Feriado</span>' : ''}
         </div>`;
     }
@@ -203,6 +226,9 @@ function renderWeekView() {
     const head = document.getElementById('week-head');
     const canvas = document.getElementById('week-canvas');
     if (!head || !canvas) return;
+
+    const agenda = currentAgenda();
+    const slotMin = agenda.slotMin || 30;
 
     const weekStart = getWeekStart(currentDate);
     const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 6);
@@ -220,22 +246,23 @@ function renderWeekView() {
         const d = new Date(weekStart); d.setDate(d.getDate() + i);
         const dateStr = toDateStr(d);
         const isToday = d.getTime() === today.getTime();
-        const isSunday = d.getDay() === 0;
         const isHoliday = !!holidays[dateStr];
         const activeCount = appointments.filter(a => a.data === dateStr && a.status !== 'Cancelado').length;
 
+        const isClosed = !agenda.dias.includes(d.getDay());
+
         let stateClass = '';
         if (isHoliday) stateClass = 'week-day-head-holiday';
-        else if (isSunday) stateClass = 'week-day-head-sunday';
+        else if (isClosed) stateClass = 'week-day-head-sunday';
 
-        const clickable = !isSunday;
+        const clickable = !isClosed;
         headHtml += `<div class="week-day-head ${stateClass} ${isToday ? 'week-day-head-today' : ''} ${clickable ? 'week-day-head-clickable' : ''}"
             ${clickable ? `onclick="openDayDetails('${dateStr}')" title="Ver detalhes do dia"` : ''}>
             <span class="week-day-name">${WEEKDAY_SHORT[d.getDay()]}</span>
             <span class="week-day-number">${d.getDate()}</span>
             ${isHoliday ? '<span class="week-day-tag week-day-tag-holiday">Feriado</span>'
-                : isSunday ? '<span class="week-day-tag week-day-tag-off">Fechado</span>'
-                : `<span class="week-day-tag">${activeCount}/3 vagas</span>`}
+                : isClosed ? '<span class="week-day-tag week-day-tag-off">Fechado</span>'
+                : `<span class="week-day-tag">${activeCount}/${limiteDoDia(d.getDay(), agenda)} vagas</span>`}
         </div>`;
     }
     head.innerHTML = headHtml;
@@ -243,8 +270,8 @@ function renderWeekView() {
     // GRADE HORÁRIA — janela padrão expandida se houver agendamentos fora dela
     const weekEndStr = toDateStr(weekEnd);
     const weekStartStr = toDateStr(weekStart);
-    let firstHour = WEEK_START_HOUR;
-    let lastHour = WEEK_END_HOUR;
+    let firstHour = agenda.semana.startHour;
+    let lastHour = agenda.semana.endHour;
     appointments.filter(a => a.data >= weekStartStr && a.data <= weekEndStr).forEach(a => {
         const s = timeToMin(a.horaInicio);
         const e = timeToMin(a.horaFim);
@@ -268,18 +295,24 @@ function renderWeekView() {
         const isPastDate = d < today;
         const isToday = d.getTime() === today.getTime();
         const isHoliday = !!holidays[dateStr];
-        const startWindow = allowedStartWindow(d.getDay());
-        const activeCount = appointments.filter(a => a.data === dateStr && a.status !== 'Cancelado').length;
-        const dayOpen = !!startWindow && !isHoliday && !isPastDate && activeCount < 3;
+        const startWindows = allowedStartWindow(d.getDay());
+        const diaApps = appointments.filter(a => a.data === dateStr && a.status !== 'Cancelado');
+        const activeCount = diaApps.length;
+        const dayOpen = startWindows.length > 0 && !isHoliday && !isPastDate && activeCount < limiteDoDia(d.getDay(), agenda);
+        const ocupados = new Set(diaApps.map(a => a.horaInicio));
 
         // Slots de fundo
         let slots = '';
-        for (let m = viewStart; m < viewEnd; m += WEEK_SLOT_MIN) {
-            const inWindow = startWindow && m >= startWindow[0] && m <= startWindow[1];
-            const selectable = dayOpen && inWindow;
+        for (let m = viewStart; m < viewEnd; m += slotMin) {
+            const faixa = faixaDoMinuto(m, startWindows);
+            const inWindow = !!faixa;
+            // Alinhamento é relativo ao início da faixa (turno) em que o minuto cai
+            const alinhado = !agenda.slotMin || !faixa || (m - faixa[0]) % agenda.slotMin === 0;
             const hora = minToTime(m);
+            const livre = !agenda.slotUnico || !ocupados.has(hora);
+            const selectable = dayOpen && inWindow && alinhado && livre;
             slots += `<div class="week-slot ${m % 60 === 0 ? 'week-slot-hour' : ''} ${inWindow ? 'week-slot-open' : 'week-slot-closed'} ${selectable ? 'week-slot-selectable' : ''}"
-                style="top:${((m - viewStart) / 60) * WEEK_HOUR_PX}px;height:${(WEEK_SLOT_MIN / 60) * WEEK_HOUR_PX}px"
+                style="top:${((m - viewStart) / 60) * WEEK_HOUR_PX}px;height:${(slotMin / 60) * WEEK_HOUR_PX}px"
                 ${selectable ? `onclick="openRecordModalWithDate('${dateStr}','${hora}')" title="Agendar às ${hora}"` : ''}>
                 ${selectable ? '<span class="week-slot-plus"><i class="fas fa-plus"></i></span>' : ''}
             </div>`;
@@ -307,7 +340,12 @@ function renderWeekView() {
             const width = 100 / ev.cols;
             const leftPct = ev.col * width;
             const compact = height < 52;
-            const tooltip = `${a.horaInicio} – ${a.horaFim} | ${a.paciente} (${a.idade} anos)\n${a.exame} · ${a.substrato}${a.metano === 'Sim' ? ' (metano)' : ''}\nStatus: ${a.status}\nAtendente: ${formatAtendenteName(a.atendente)}`;
+            const detalhe = temCampo('exame', agenda)
+                ? `${a.exame} · ${a.substrato}${a.metano === 'Sim' ? ' (metano)' : ''}`
+                : temCampo('endereco', agenda)
+                    ? [a.logradouro, a.numero].filter(Boolean).join(', ') || agenda.nome
+                    : (temCampo('abstinencia', agenda) && a.abstinencia != null ? `Abstinência: ${a.abstinencia} dia(s)` : agenda.nome);
+            const tooltip = `${a.horaInicio} – ${a.horaFim} | ${a.paciente} (${a.idade} anos)\n${detalhe}\nStatus: ${a.status}\nAtendente: ${formatAtendenteName(a.atendente)}`;
 
             return `<div class="week-event ${theme.bg} ${theme.border} ${theme.canceled ? 'week-event-canceled' : ''}"
                 style="top:${top}px;height:${height}px;left:calc(${leftPct}% + 2px);width:calc(${width}% - 5px)"
@@ -317,7 +355,7 @@ function renderWeekView() {
                 <div class="week-event-body">
                     <div class="week-event-time ${theme.text}">${a.horaInicio}${compact ? '' : ` – ${a.horaFim}`}</div>
                     <div class="week-event-name">${a.paciente}</div>
-                    ${compact ? '' : `<div class="week-event-meta ${theme.text}">${a.exame} · ${a.substrato}${a.idade < 12 ? ' · Infantil' : ''}</div>`}
+                    ${compact ? '' : `<div class="week-event-meta ${theme.text}">${detalhe}${theme.faixa ? ` · ${FAIXA_ETARIA_TEMA[theme.faixa].rotulo}` : ''}</div>`}
                 </div>
                 ${theme.overdue ? '<span class="week-event-badge"><i class="fas fa-exclamation-triangle"></i></span>' : ''}
             </div>`;
@@ -333,7 +371,7 @@ function renderWeekView() {
             }
         }
 
-        colsHtml += `<div class="week-col ${isToday ? 'week-col-today' : ''} ${isHoliday || !startWindow ? 'week-col-off' : ''}" style="height:${colHeight}px">
+        colsHtml += `<div class="week-col ${isToday ? 'week-col-today' : ''} ${isHoliday || !startWindows.length ? 'week-col-off' : ''}" style="height:${colHeight}px">
             ${slots}${events}${nowLine}
         </div>`;
     }

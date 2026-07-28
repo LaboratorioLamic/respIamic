@@ -1,16 +1,29 @@
 // Estado global da aplicação
 
-// ESTADO DA APLICAÇÃO
-let appointments = [];
-let pendingChecklistAction = null;
+// AGENDA ATIVA
+let currentAgendaId = localStorage.getItem('respiroAgendaAtiva') || AGENDA_PADRAO;
+if (!AGENDAS[currentAgendaId]) currentAgendaId = AGENDA_PADRAO;
 
-// MIGRAR DADOS ANTIGOS PARA NOVA ESTRUTURA DE STATUS
-appointments = appointments.map(app => {
-    if(!app.status) {
-        app.status = app.chkConcluido ? 'Concluído' : 'Agendado';
-    }
-    return app;
-});
+// Dados de TODAS as agendas (mantidos vivos para os cards da tela inicial)
+const agendaData = {};
+AGENDA_IDS.forEach(id => agendaData[id] = []);
+
+// ESTADO DA APLICAÇÃO
+// `appointments` é sempre a lista da agenda ativa. Use setAppointments() para
+// substituí-la, para que agendaData continue sincronizado.
+let appointments = agendaData[currentAgendaId];
+
+function setAppointments(lista, agendaId) {
+    const id = agendaId || currentAgendaId;
+    agendaData[id] = lista;
+    if (id === currentAgendaId) appointments = lista;
+}
+
+function appointmentsDe(agendaId) {
+    return agendaData[agendaId] || [];
+}
+
+let pendingChecklistAction = null;
 
 let atendentesList = [];
 let motivosPerdaList = [];

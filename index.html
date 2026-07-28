@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RespiratórioLAMIC | Agenda de Testes</title>
+    <title>AgendaLAMIC | Agenda de Testes</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -26,6 +26,7 @@
     <link rel="stylesheet" href="css/calendar.css">
     <link rel="stylesheet" href="css/header.css">
     <link rel="stylesheet" href="css/drawer.css">
+    <link rel="stylesheet" href="css/home.css">
     <link rel="stylesheet" href="css/login.css">
     <link rel="stylesheet" href="css/notifications.css">
 </head>
@@ -49,11 +50,11 @@
                 </button>
                 <div class="h-9 w-px bg-white/12 hidden sm:block"></div>
                 <div class="h-11 flex items-center shrink-0">
-                    <img src="https://i.imgur.com/vXM6l52.png" alt="RespiratórioLAMIC" class="h-full w-auto object-contain">
+                    <img src="https://i.imgur.com/vXM6l52.png" alt="AgendasLAMIC" class="h-full w-auto object-contain">
                 </div>
                 <div class="h-9 w-px bg-white/12 hidden md:block"></div>
                 <div class="hidden md:block leading-none">
-                    <span class="block text-[15px] font-light tracking-[0.22em] uppercase">Respiratório<span class="font-black text-blue-400">LAMIC</span></span>
+                    <span class="block text-[15px] font-light tracking-[0.22em] uppercase">Agenda<span class="font-black text-blue-400">LAMIC</span></span>
                     <span class="block mt-1 text-[9px] font-bold uppercase tracking-[0.3em] text-navy-300">Agenda de Testes</span>
                 </div>
             </div>
@@ -91,24 +92,97 @@
         </div>
 
         <!-- Navegação -->
-        <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <nav class="drawer-nav flex-1 overflow-y-auto px-3 py-4 space-y-1">
             <p class="drawer-section-title px-2 mb-2">Navegação</p>
-            <button onclick="drawerNavigate('dashboard')" data-drawer-tab="dashboard" class="drawer-item is-active">
-                <span class="drawer-ico"><i class="fas fa-calendar-alt"></i></span>
-                <span class="drawer-label">Agenda</span>
+
+            <button onclick="drawerNavigate('inicio')" data-drawer-tab="inicio" class="drawer-item is-active">
+                <span class="drawer-ico"><i class="fas fa-house"></i></span>
+                <span class="drawer-label">Início</span>
             </button>
-            <button onclick="drawerNavigate('dados')" data-drawer-tab="dados" class="drawer-item">
-                <span class="drawer-ico"><i class="fas fa-table-list"></i></span>
-                <span class="drawer-label">Tabela</span>
-            </button>
-            <button onclick="drawerNavigate('indicadores')" data-drawer-tab="indicadores" class="drawer-item">
-                <span class="drawer-ico"><i class="fas fa-chart-line"></i></span>
-                <span class="drawer-label">Indicadores</span>
-            </button>
-            <button onclick="drawerNavigate('config')" data-drawer-tab="config" id="drawer-btn-config" class="drawer-item hidden">
-                <span class="drawer-ico"><i class="fas fa-sliders-h"></i></span>
-                <span class="drawer-label">Configurações</span>
-            </button>
+
+            <p class="drawer-section-title px-2 pt-3 pb-1">Agendas</p>
+
+            <!-- Grupo: Teste Respiratório -->
+            <div class="drawer-group drawer-group-blue" data-drawer-group="respiratorio">
+                <button type="button" onclick="toggleDrawerGroup('respiratorio')" aria-expanded="false"
+                    aria-controls="drawer-panel-respiratorio" class="drawer-item drawer-group-header">
+                    <span class="drawer-ico"><i class="fas fa-lungs"></i></span>
+                    <span class="drawer-label">Respiratório</span>
+                    <i class="fas fa-chevron-down drawer-chevron"></i>
+                </button>
+                <div class="drawer-group-panel" id="drawer-panel-respiratorio">
+                    <div>
+                        <div class="drawer-subitems">
+                            <button onclick="drawerNavigateAgenda('respiratorio','dashboard')" data-drawer-agenda="respiratorio" data-drawer-tab="dashboard" class="drawer-subitem">
+                                <i class="fas fa-calendar-alt"></i>Agenda
+                            </button>
+                            <button onclick="drawerNavigateAgenda('respiratorio','dados')" data-drawer-agenda="respiratorio" data-drawer-tab="dados" class="drawer-subitem">
+                                <i class="fas fa-table-list"></i>Tabela
+                            </button>
+                            <button onclick="drawerNavigateAgenda('respiratorio','indicadores')" data-drawer-agenda="respiratorio" data-drawer-tab="indicadores" class="drawer-subitem">
+                                <i class="fas fa-chart-line"></i>Indicadores
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grupo: Espermograma -->
+            <div class="drawer-group drawer-group-teal" data-drawer-group="espermograma">
+                <button type="button" onclick="toggleDrawerGroup('espermograma')" aria-expanded="false"
+                    aria-controls="drawer-panel-espermograma" class="drawer-item drawer-group-header">
+                    <span class="drawer-ico"><i class="fas fa-microscope"></i></span>
+                    <span class="drawer-label">Espermograma</span>
+                    <i class="fas fa-chevron-down drawer-chevron"></i>
+                </button>
+                <div class="drawer-group-panel" id="drawer-panel-espermograma">
+                    <div>
+                        <div class="drawer-subitems">
+                            <button onclick="drawerNavigateAgenda('espermograma','dashboard')" data-drawer-agenda="espermograma" data-drawer-tab="dashboard" class="drawer-subitem">
+                                <i class="fas fa-calendar-alt"></i>Agenda
+                            </button>
+                            <button onclick="drawerNavigateAgenda('espermograma','dados')" data-drawer-agenda="espermograma" data-drawer-tab="dados" class="drawer-subitem">
+                                <i class="fas fa-table-list"></i>Tabela
+                            </button>
+                            <button onclick="drawerNavigateAgenda('espermograma','indicadores')" data-drawer-agenda="espermograma" data-drawer-tab="indicadores" class="drawer-subitem">
+                                <i class="fas fa-chart-line"></i>Indicadores
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grupo: Coleta Domiciliar -->
+            <div class="drawer-group drawer-group-amber" data-drawer-group="coletaDomiciliar">
+                <button type="button" onclick="toggleDrawerGroup('coletaDomiciliar')" aria-expanded="false"
+                    aria-controls="drawer-panel-coletaDomiciliar" class="drawer-item drawer-group-header">
+                    <span class="drawer-ico"><i class="fas fa-house-medical"></i></span>
+                    <span class="drawer-label">Domiciliar</span>
+                    <i class="fas fa-chevron-down drawer-chevron"></i>
+                </button>
+                <div class="drawer-group-panel" id="drawer-panel-coletaDomiciliar">
+                    <div>
+                        <div class="drawer-subitems">
+                            <button onclick="drawerNavigateAgenda('coletaDomiciliar','dashboard')" data-drawer-agenda="coletaDomiciliar" data-drawer-tab="dashboard" class="drawer-subitem">
+                                <i class="fas fa-calendar-alt"></i>Agenda
+                            </button>
+                            <button onclick="drawerNavigateAgenda('coletaDomiciliar','dados')" data-drawer-agenda="coletaDomiciliar" data-drawer-tab="dados" class="drawer-subitem">
+                                <i class="fas fa-table-list"></i>Tabela
+                            </button>
+                            <button onclick="drawerNavigateAgenda('coletaDomiciliar','indicadores')" data-drawer-agenda="coletaDomiciliar" data-drawer-tab="indicadores" class="drawer-subitem">
+                                <i class="fas fa-chart-line"></i>Indicadores
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-3">
+                <button onclick="drawerNavigate('config')" data-drawer-tab="config" id="drawer-btn-config" class="drawer-item hidden">
+                    <span class="drawer-ico"><i class="fas fa-sliders-h"></i></span>
+                    <span class="drawer-label">Configurações</span>
+                </button>
+            </div>
         </nav>
 
         <!-- Rodapé -->
@@ -117,20 +191,35 @@
                 class="w-full h-11 rounded-2xl bg-white/[0.06] hover:bg-red-600 border border-white/10 hover:border-red-500 text-white font-black text-[11px] uppercase tracking-[0.18em] flex items-center justify-center gap-2">
                 <i class="fas fa-sign-out-alt"></i>Sair do Sistema
             </button>
-            <p class="text-center text-[9px] font-bold uppercase tracking-[0.26em] text-navy-400">Respiratório<span class="text-blue-400">LAMIC</span></p>
+            <p class="text-center text-[9px] font-bold uppercase tracking-[0.26em] text-navy-400">Agendas<span class="text-blue-400">LAMIC</span></p>
         </div>
     </aside>
 
     <main class="flex-1 overflow-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
 
-        <section id="tab-dashboard" class="tab-content active w-full max-w-[1500px] mx-auto">
+        <section id="tab-inicio" class="tab-content active w-full max-w-[1500px] mx-auto">
+            <div class="text-center mb-8 mt-2">
+                <span class="inline-flex h-12 w-12 rounded-2xl bg-navy-900 text-blue-400 items-center justify-center shadow-lg mb-4">
+                    <i class="fas fa-layer-group text-lg"></i>
+                </span>
+                <h2 class="text-navy-900 font-black text-2xl sm:text-3xl tracking-tight leading-none">Selecione uma agenda</h2>
+                <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400 mt-3">Escolha o serviço para visualizar calendário, tabela e indicadores</p>
+            </div>
+
+            <div id="home-cards-grid" class="home-grid"></div>
+        </section>
+
+        <section id="tab-dashboard" class="tab-content w-full max-w-[1500px] mx-auto">
             <div class="glass-card p-5 sm:p-6 rounded-3xl border border-slate-200/80 mb-6 flex flex-col lg:flex-row gap-4 lg:gap-6 justify-between lg:items-center">
                 <div class="flex items-center gap-4">
-                    <div class="h-11 w-11 rounded-2xl bg-navy-900 text-blue-400 flex items-center justify-center shadow-lg shrink-0">
-                        <i class="fas fa-calendar-day"></i>
+                    <button onclick="switchTab('inicio')" title="Voltar ao início" class="h-11 w-11 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-2xl flex items-center justify-center shrink-0 transition-colors">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div class="h-11 w-11 rounded-2xl bg-navy-900 flex items-center justify-center shadow-lg shrink-0" data-agenda-accent>
+                        <i id="agenda-icone-dashboard" class="fas fa-lungs"></i>
                     </div>
                     <div>
-                        <h2 class="text-navy-900 font-black text-lg sm:text-xl tracking-tight leading-none">Visão Geral de Agendamentos</h2>
+                        <h2 id="agenda-nome-dashboard" class="text-navy-900 font-black text-lg sm:text-xl tracking-tight leading-none">Teste Respiratório</h2>
                         <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400 mt-1.5">Calendário operacional</p>
                     </div>
                 </div>
@@ -175,35 +264,43 @@
                 <!-- Legenda dos exames -->
                 <div class="mt-5 pt-4 border-t border-slate-100 flex justify-center">
                     <div class="flex items-center justify-center gap-x-4 gap-y-2 text-[11px] font-semibold text-slate-500 flex-wrap">
-                        <div class="flex items-center gap-1">
+                        <div class="flex items-center gap-1" data-agenda-legenda="tresp">
                             <div class="h-2 w-2 rounded-full bg-blue-500"></div>
                             <span>TRESP</span>
                         </div>
-                        <div class="flex items-center gap-1">
+                        <div class="flex items-center gap-1" data-agenda-legenda="tsbac">
                             <div class="h-2 w-2 rounded-full bg-emerald-500"></div>
                             <span>TSBAC</span>
                         </div>
-                        <div class="flex items-center gap-1">
+                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="agendado">
+                            <div id="legenda-agendado-dot" class="h-2 w-2 rounded-full bg-teal-500"></div>
+                            <span>Agendado</span>
+                        </div>
+                        <div class="flex items-center gap-1" data-agenda-legenda="cancelado">
                             <div class="h-2 w-2 rounded-full bg-red-500 flex items-center justify-center text-white text-[10px] font-black">×</div>
                             <span>Cancelado</span>
                         </div>
-                        <div class="flex items-center gap-1">
+                        <div class="flex items-center gap-1" data-agenda-legenda="concluido">
                             <div class="h-3 w-3 rounded border border-green-300 bg-green-50"></div>
                             <span>Concluído</span>
                         </div>
-                        <div class="flex items-center gap-1">
+                        <div class="flex items-center gap-1" data-agenda-legenda="atrasado">
                             <div class="h-3 w-3 rounded border border-red-300 bg-red-50"></div>
                             <span>Atrasado</span>
                         </div>
-                        <div class="flex items-center gap-1">
+                        <div class="flex items-center gap-1" data-agenda-legenda="adulto">
                             <div class="h-3 w-3 rounded border border-blue-200 bg-blue-50"></div>
                             <span>Adulto</span>
                         </div>
-                        <div class="flex items-center gap-1">
+                        <div class="flex items-center gap-1" data-agenda-legenda="infantil">
                             <div class="h-3 w-3 rounded border border-orange-300 bg-orange-50"></div>
                             <span>Infantil</span>
                         </div>
-                        <div class="flex items-center gap-1">
+                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="rn">
+                            <div class="h-3 w-3 rounded border border-fuchsia-300 bg-fuchsia-50"></div>
+                            <span>Recém-nascido</span>
+                        </div>
+                        <div class="flex items-center gap-1" data-agenda-legenda="andamento">
                             <div class="h-3 w-3 rounded border border-purple-300 bg-purple-50"></div>
                             <span>Em andamento</span>
                         </div>
@@ -223,12 +320,12 @@
                 <div class="p-5 sm:p-6 bg-gradient-to-b from-slate-50 to-white border-b border-slate-200">
                     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5 mb-6">
                         <div class="flex items-center gap-4">
-                            <div class="h-11 w-11 rounded-2xl bg-navy-900 text-blue-400 flex items-center justify-center shadow-lg shrink-0">
-                                <i class="fas fa-table-list"></i>
+                            <div class="h-11 w-11 rounded-2xl bg-navy-900 flex items-center justify-center shadow-lg shrink-0" data-agenda-accent>
+                                <i id="agenda-icone-tabela" class="fas fa-lungs"></i>
                             </div>
                             <div>
-                                <h2 class="text-xl font-black text-navy-900 tracking-tight leading-none">Relação de Testes</h2>
-                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.22em] mt-1.5">Gerenciamento de pacientes respiratórios</p>
+                                <h2 id="agenda-nome-tabela" class="text-xl font-black text-navy-900 tracking-tight leading-none">Teste Respiratório</h2>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.22em] mt-1.5">Relação de agendamentos</p>
                             </div>
                         </div>
                         <button onclick="openRecordModal()" class="w-full lg:w-auto px-6 py-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 font-black text-[11px] tracking-[0.16em] shadow-lg shadow-blue-600/25">
@@ -259,7 +356,10 @@
                             <tr>
                                 <th class="px-5 py-4">Data/Hora</th>
                                 <th class="px-5 py-4">Paciente (Idade)</th>
-                                <th class="px-5 py-4">Exame / Substrato</th>
+                                <th class="px-5 py-4" data-agenda-coluna="exame">Exame / Substrato</th>
+                                <th class="px-5 py-4" data-agenda-coluna="abstinencia">Abstinência</th>
+                                <th class="px-5 py-4" data-agenda-coluna="endereco">Endereço</th>
+                                <th class="px-5 py-4" data-agenda-coluna="coletador">Coletador</th>
                                 <th class="px-5 py-4">Nº Pedido / Atendente</th>
                                 <th class="px-5 py-4 text-center">Checklist</th>
                                 <th class="px-5 py-4 text-center">Status</th>
@@ -286,11 +386,11 @@
             <div class="glass-card p-5 sm:p-6 rounded-3xl border border-slate-200/80 mb-6">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
                     <div class="flex items-center gap-4">
-                        <div class="h-11 w-11 rounded-2xl bg-navy-900 text-blue-400 flex items-center justify-center shadow-lg shrink-0">
-                            <i class="fas fa-chart-line"></i>
+                        <div class="h-11 w-11 rounded-2xl bg-navy-900 flex items-center justify-center shadow-lg shrink-0" data-agenda-accent>
+                            <i id="agenda-icone-indicadores" class="fas fa-lungs"></i>
                         </div>
                         <div>
-                            <h3 class="text-navy-900 font-black text-lg tracking-tight leading-none">Indicadores de Desempenho</h3>
+                            <h3 class="text-navy-900 font-black text-lg tracking-tight leading-none">Indicadores — <span id="agenda-nome-indicadores">Teste Respiratório</span></h3>
                             <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-400 mt-1.5">Filtro de período para análise</p>
                         </div>
                     </div>
@@ -323,37 +423,37 @@
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
-                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden" data-agenda-kpi="total">
                     <span class="absolute inset-y-0 left-0 w-1 bg-navy-900"></span>
                     <p class="text-slate-400 text-[9px] font-black uppercase tracking-[0.16em] leading-tight">Total de Exames</p>
                     <p id="kpi-total" class="text-2xl font-black text-navy-900 mt-1.5 tracking-tight">0</p>
                 </div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden" data-agenda-kpi="tresp">
                     <span class="absolute inset-y-0 left-0 w-1 bg-blue-600"></span>
                     <p class="text-slate-400 text-[9px] font-black uppercase tracking-[0.16em] leading-tight">Total TRESP</p>
                     <p id="kpi-tresp" class="text-2xl font-black text-blue-600 mt-1.5 tracking-tight">0</p>
                 </div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden" data-agenda-kpi="tsbac">
                     <span class="absolute inset-y-0 left-0 w-1 bg-emerald-500"></span>
                     <p class="text-slate-400 text-[9px] font-black uppercase tracking-[0.16em] leading-tight">Total TSBAC</p>
                     <p id="kpi-tsbac" class="text-2xl font-black text-emerald-600 mt-1.5 tracking-tight">0</p>
                 </div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden" data-agenda-kpi="concluidos">
                     <span class="absolute inset-y-0 left-0 w-1 bg-green-500"></span>
                     <p class="text-slate-400 text-[9px] font-black uppercase tracking-[0.16em] leading-tight">Concluídos</p>
                     <p id="kpi-concluidos" class="text-2xl font-black text-green-600 mt-1.5 tracking-tight">0</p>
                 </div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden" data-agenda-kpi="andamento">
                     <span class="absolute inset-y-0 left-0 w-1 bg-purple-500"></span>
                     <p class="text-slate-400 text-[9px] font-black uppercase tracking-[0.16em] leading-tight">Em andamento</p>
                     <p id="kpi-andamento" class="text-2xl font-black text-purple-600 mt-1.5 tracking-tight">0</p>
                 </div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden" data-agenda-kpi="pendentes">
                     <span class="absolute inset-y-0 left-0 w-1 bg-amber-400"></span>
                     <p class="text-slate-400 text-[9px] font-black uppercase tracking-[0.16em] leading-tight">Pendentes</p>
                     <p id="kpi-pendentes" class="text-2xl font-black text-amber-500 mt-1.5 tracking-tight">0</p>
                 </div>
-                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 relative overflow-hidden" data-agenda-kpi="cancelados">
                     <span class="absolute inset-y-0 left-0 w-1 bg-red-500"></span>
                     <p class="text-slate-400 text-[9px] font-black uppercase tracking-[0.16em] leading-tight">Cancelados</p>
                     <p id="kpi-cancelados" class="text-2xl font-black text-red-600 mt-1.5 tracking-tight">0</p>
@@ -361,24 +461,28 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80">
+                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80" data-agenda-chart="barMensal">
                     <h3 class="text-[11px] font-black text-navy-900 uppercase mb-5 tracking-[0.18em] flex items-center gap-2"><i class="fas fa-chart-column text-blue-500"></i>Volume Mensal de Exames</h3>
                     <canvas id="chart-bar-monthly"></canvas>
                 </div>
-                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80">
+                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80" data-agenda-chart="linhaTipo">
                     <h3 class="text-[11px] font-black text-navy-900 uppercase mb-5 tracking-[0.18em] flex items-center gap-2"><i class="fas fa-arrow-trend-up text-blue-500"></i>Volume de Exames</h3>
                     <canvas id="chart-line-trend"></canvas>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80">
+                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80" data-agenda-chart="donutExame">
                     <h3 class="text-[11px] font-black text-navy-900 uppercase mb-5 tracking-[0.18em] flex items-center gap-2"><i class="fas fa-chart-pie text-blue-500"></i>Distribuição por Tipo de Exame</h3>
                     <canvas id="chart-donut-exame" style="max-height: 300px;"></canvas>
                 </div>
-                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80">
+                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80" data-agenda-chart="donutSubstrato">
                     <h3 class="text-[11px] font-black text-navy-900 uppercase mb-5 tracking-[0.18em] flex items-center gap-2"><i class="fas fa-flask text-blue-500"></i>Substratos Mais Utilizados</h3>
                     <canvas id="chart-donut-substrato" style="max-height: 300px;"></canvas>
+                </div>
+                <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 hidden" data-agenda-chart="donutStatus">
+                    <h3 class="text-[11px] font-black text-navy-900 uppercase mb-5 tracking-[0.18em] flex items-center gap-2"><i class="fas fa-chart-pie text-blue-500"></i>Distribuição por Status</h3>
+                    <canvas id="chart-donut-status" style="max-height: 300px;"></canvas>
                 </div>
             </div>
         </section>
@@ -559,10 +663,14 @@
 
                 <div class="col-span-1 md:col-span-4 border-t border-slate-100 my-1"></div>
 
-                <div class="col-span-1 md:col-span-2">
+                <div class="col-span-1 md:col-span-2 relative">
                     <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Nome do Paciente *</label>
-                    <input type="text" id="reg-paciente" list="pacientes-list" required oninput="this.value = this.value.toUpperCase()" class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm uppercase">
-                    <datalist id="pacientes-list"></datalist>
+                    <input type="text" id="reg-paciente" required autocomplete="off"
+                        oninput="this.value = this.value.toUpperCase(); filtrarPacientes(this.value)"
+                        onfocus="filtrarPacientes(this.value)"
+                        onblur="fecharSugestoesTardio('paciente')"
+                        class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm uppercase">
+                    <div id="paciente-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
                 </div>
                 <div class="col-span-1 md:col-span-1">
                     <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Idade *</label>
@@ -573,7 +681,7 @@
                     <input type="text" id="reg-contato" required placeholder="(00) 00000-0000" class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
                 </div>
 
-                <div class="col-span-1 md:col-span-2">
+                <div class="col-span-1 md:col-span-2" data-agenda-campo="exame">
                     <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Exame *</label>
                     <select id="reg-exame" required onchange="updateSubstratos(); calculateTimes()" class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm font-bold text-navy-900">
                         <option value="">Selecione...</option>
@@ -581,28 +689,122 @@
                         <option value="TSBAC">TSBAC (Teste de Supercrescimento)</option>
                     </select>
                 </div>
-                <div class="col-span-1 md:col-span-1">
+                <div class="col-span-1 md:col-span-1" data-agenda-campo="metano">
                     <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Metano *</label>
                     <select id="reg-metano" required class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
                         <option value="Sim">Sim</option>
                         <option value="Não" selected>Não</option>
                     </select>
                 </div>
-                <div class="col-span-1 md:col-span-1">
+                <div class="col-span-1 md:col-span-1" data-agenda-campo="substrato">
                     <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Substrato *</label>
                     <select id="reg-substrato" required class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
                         <option value="">Aguardando exame...</option>
                     </select>
+                </div>
+                <div class="col-span-1 md:col-span-2 hidden" data-agenda-campo="abstinencia">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Dias de Abstinência <span id="lbl-abstinencia-obrig" class="text-slate-300">(obrigatório ao concluir)</span></label>
+                    <input type="number" id="reg-abstinencia" min="0" max="30" placeholder="Ex.: 3" class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
+                </div>
+
+                <!-- ══ ENDEREÇO DA COLETA (agendas domiciliares) ══ -->
+                <div class="col-span-1 md:col-span-4 hidden" data-agenda-campo="endereco">
+                    <div class="bg-amber-50/60 p-5 rounded-2xl border border-amber-200">
+                        <div class="flex items-center gap-2 mb-4">
+                            <i class="fas fa-house-medical text-amber-600"></i>
+                            <label class="text-[11px] font-black text-slate-700 uppercase tracking-wider">Endereço da Coleta</label>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                            <div class="md:col-span-3">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">CEP</label>
+                                <input type="text" id="reg-cep" placeholder="00000-000" maxlength="9" inputmode="numeric" oninput="formatCep(this)" onblur="buscarCep()" class="w-full border border-slate-200 bg-white rounded-xl py-2.5 px-3 shadow-sm">
+                            </div>
+                            <div class="md:col-span-7 relative">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Logradouro *</label>
+                                <input type="text" id="reg-logradouro" placeholder="Rua, avenida..." autocomplete="off"
+                                    oninput="filtrarSugestoes('logradouro', this.value)"
+                                    onfocus="filtrarSugestoes('logradouro', this.value)"
+                                    onblur="fecharSugestoesTardio('logradouro')"
+                                    class="w-full border border-slate-200 bg-white rounded-xl py-2.5 px-3 shadow-sm">
+                                <div id="logradouro-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Nº *</label>
+                                <input type="text" id="reg-numero" class="w-full border border-slate-200 bg-white rounded-xl py-2.5 px-3 shadow-sm">
+                            </div>
+                            <div class="md:col-span-4 relative">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Bairro *</label>
+                                <input type="text" id="reg-bairro" autocomplete="off"
+                                    oninput="filtrarSugestoes('bairro', this.value)"
+                                    onfocus="filtrarSugestoes('bairro', this.value)"
+                                    onblur="fecharSugestoesTardio('bairro')"
+                                    class="w-full border border-slate-200 bg-white rounded-xl py-2.5 px-3 shadow-sm uppercase">
+                                <div id="bairro-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
+                            </div>
+                            <div class="md:col-span-4 relative">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Cidade *</label>
+                                <input type="text" id="reg-cidade" autocomplete="off"
+                                    oninput="filtrarSugestoes('cidade', this.value)"
+                                    onfocus="filtrarSugestoes('cidade', this.value)"
+                                    onblur="fecharSugestoesTardio('cidade')"
+                                    class="w-full border border-slate-200 bg-white rounded-xl py-2.5 px-3 shadow-sm uppercase">
+                                <div id="cidade-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
+                            </div>
+                            <div class="md:col-span-2 relative">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">UF *</label>
+                                <input type="text" id="reg-estado" placeholder="UF ou nome" autocomplete="off"
+                                    oninput="filtrarEstados(this.value)"
+                                    onfocus="filtrarEstados(this.value)"
+                                    onblur="setTimeout(validarEstado, 150)"
+                                    class="w-full border border-slate-200 bg-white rounded-xl py-2.5 px-3 shadow-sm uppercase">
+                                <div id="estados-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Complemento</label>
+                                <input type="text" id="reg-complemento" placeholder="Apto, bloco..." class="w-full border border-slate-200 bg-white rounded-xl py-2.5 px-3 shadow-sm">
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="button" id="btn-mapa-toggle" onclick="toggleMapaEndereco()"
+                                class="group inline-flex items-center gap-2.5 pl-3.5 pr-4 py-2.5 bg-amber-600 hover:bg-amber-700 active:scale-95 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                                <i class="fas fa-map-location-dot text-white text-sm transition-transform duration-300 group-hover:scale-125 group-hover:-rotate-6"></i>
+                                <span id="btn-mapa-label" class="text-[11px] font-black text-white uppercase tracking-wide">Ver no mapa</span>
+                                <i class="fas fa-chevron-down text-white text-[10px] transition-transform duration-300"></i>
+                            </button>
+                            <div id="mapa-endereco-container" class="hidden mt-3 rounded-xl overflow-hidden border border-amber-200 shadow-sm">
+                                <iframe id="mapa-endereco-iframe" class="w-full h-64 border-0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-span-1 md:col-span-2 hidden" data-agenda-campo="pontoReferencia">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Ponto de Referência</label>
+                    <input type="text" id="reg-ponto-referencia" placeholder="Ex.: em frente à praça" class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
+                </div>
+                <div class="col-span-1 md:col-span-2 hidden relative" data-agenda-campo="coletador">
+                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Coletador Responsável</label>
+                    <input type="text" id="reg-coletador" placeholder="Quem realizará a coleta..." autocomplete="off"
+                        oninput="filtrarAtendentes('coletador', this.value)"
+                        onfocus="filtrarAtendentes('coletador', this.value)"
+                        onblur="fecharSugestoesTardio('coletador')"
+                        class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm uppercase placeholder-slate-400">
+                    <div id="coletador-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
                 </div>
 
                 <div id="campo-pedido-container" class="col-span-1 md:col-span-1">
                     <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Nº do Pedido *</label>
                     <input type="text" id="reg-pedido" required class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
                 </div>
-                <div class="col-span-1 md:col-span-2">
+                <div class="col-span-1 md:col-span-2 relative">
                     <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Atendente Responsável *</label>
-                    <input type="text" id="reg-atendente" list="atendentes-list" required class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm uppercase placeholder-slate-400" placeholder="Busque ou selecione...">
-                    <datalist id="atendentes-list"></datalist>
+                    <input type="text" id="reg-atendente" required placeholder="Busque ou selecione..." autocomplete="off"
+                        oninput="filtrarAtendentes('atendente', this.value)"
+                        onfocus="filtrarAtendentes('atendente', this.value)"
+                        onblur="fecharSugestoesTardio('atendente')"
+                        class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm uppercase placeholder-slate-400">
+                    <div id="atendente-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
                 </div>
                 <div class="col-span-1 md:col-span-1">
                     <label class="block text-[10px] font-black text-blue-500 uppercase mb-2">Status do Teste *</label>
@@ -616,16 +818,18 @@
 
                 <div class="col-span-1 md:col-span-4 border-t border-slate-100 my-1"></div>
 
-                <div class="col-span-1 md:col-span-4 bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div id="box-checklist" class="col-span-1 md:col-span-4 bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <label class="block text-[11px] font-black text-slate-700 uppercase mb-1">Checklist Operacional</label>
                         <p class="text-[10px] text-slate-500">Preenchimento obrigatório para concluir processo</p>
                     </div>
-                    <div class="flex gap-3">
+                    <div class="flex gap-3 flex-wrap">
                         <input type="hidden" id="chk-orientacao-val" value="false">
                         <input type="hidden" id="chk-anexo-val" value="false">
-                        <button type="button" id="btn-chk-orientacao" onclick="toggleCheck('orientacao')" class="px-5 py-2.5 border-2 border-slate-200 bg-white rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-400 transition-all flex items-center gap-2"><i class="fas fa-check-circle text-lg"></i> Orientação</button>
-                        <button type="button" id="btn-chk-anexo" onclick="toggleCheck('anexo')" class="px-5 py-2.5 border-2 border-slate-200 bg-white rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-400 transition-all flex items-center gap-2"><i class="fas fa-file-medical text-lg"></i> Anexo Unilab</button>
+                        <input type="hidden" id="chk-endereco-val" value="false">
+                        <button type="button" id="btn-chk-orientacao" data-checklist-item="orientacao" onclick="toggleCheck('orientacao')" class="px-5 py-2.5 border-2 border-slate-200 bg-white rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-400 transition-all flex items-center gap-2"><i class="fas fa-check-circle text-lg"></i> Orientação</button>
+                        <button type="button" id="btn-chk-endereco" data-checklist-item="endereco" onclick="toggleCheck('endereco')" class="px-5 py-2.5 border-2 border-slate-200 bg-white rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-400 transition-all flex items-center gap-2"><i class="fas fa-map-location-dot text-lg"></i> Endereço</button>
+                        <button type="button" id="btn-chk-anexo" data-checklist-item="anexo" onclick="toggleCheck('anexo')" class="px-5 py-2.5 border-2 border-slate-200 bg-white rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-400 transition-all flex items-center gap-2"><i class="fas fa-file-medical text-lg"></i> Anexo Unilab</button>
                     </div>
                 </div>
 
@@ -998,7 +1202,7 @@
             <div class="relative p-8 flex flex-col items-center" style="background:linear-gradient(160deg,#111a2e 0%,#0e1628 60%,#0b1221 100%)">
                 <span class="absolute bottom-0 left-0 right-0 h-[2px]" style="background:linear-gradient(90deg,transparent,rgba(61,124,240,.9),transparent)"></span>
                 <img src="https://i.imgur.com/vXM6l52.png" alt="Logo" class="h-16 w-auto object-contain mb-4">
-                <h1 class="text-white font-black text-lg uppercase tracking-[0.18em]">Respiratório<span class="text-blue-400">LAMIC</span></h1>
+                <h1 class="text-white font-black text-lg uppercase tracking-[0.18em]">Agendas<span class="text-blue-400">LAMIC</span></h1>
                 <p class="text-navy-300 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Agenda de Testes</p>
             </div>
 
@@ -1381,6 +1585,7 @@
 
     <!-- ── Infraestrutura ─────────────────────────────────────────── -->
     <script src="js/firebase-config.js"></script>
+    <script src="js/agendas.js"></script>
     <script src="js/state.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/notifications.js"></script>
@@ -1395,6 +1600,7 @@
 
     <!-- ── Interface ──────────────────────────────────────────────── -->
     <script src="js/navigation.js"></script>
+    <script src="js/home.js"></script>
     <script src="js/checklist.js"></script>
     <script src="js/save.js"></script>
     <script src="js/table.js"></script>

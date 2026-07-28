@@ -13,14 +13,56 @@ function toggleCheck(type) {
     updateCheckUI(type, !isChecked);
 }
 
+// Lê/escreve todos os itens de checklist de uma vez
+function lerChecklist() {
+    const valores = {};
+    Object.keys(CHECKLIST_ITENS).forEach(item => {
+        const el = document.getElementById(CHECKLIST_ITENS[item].input);
+        valores[item] = !!el && el.value === 'true';
+    });
+    return valores;
+}
+
+function resetChecklistUI(valores) {
+    Object.keys(CHECKLIST_ITENS).forEach(item => {
+        const marcado = !!(valores && valores[item]);
+        const el = document.getElementById(CHECKLIST_ITENS[item].input);
+        if (el) el.value = marcado ? 'true' : 'false';
+        updateCheckUI(item, marcado);
+    });
+}
+
 function updateCheckUI(type, isChecked) {
     const btn = document.getElementById(`btn-chk-${type}`);
+    if (!btn) return;
     if (isChecked) {
         btn.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-600');
         btn.classList.remove('border-slate-200', 'bg-white', 'text-slate-400');
     } else {
         btn.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-600');
         btn.classList.add('border-slate-200', 'bg-white', 'text-slate-400');
+    }
+}
+
+// Dias de abstinência só é obrigatório quando o status é "Concluído"
+function updateAbstinenciaRequisito(status) {
+    if (!temCampo('abstinencia')) return;
+    const campo = document.getElementById('reg-abstinencia');
+    const lbl = document.getElementById('lbl-abstinencia-obrig');
+    if (!campo) return;
+
+    const obrigatorio = status === 'Concluído';
+    campo.required = obrigatorio;
+    campo.dataset.eraObrigatorio = obrigatorio ? '1' : '0';
+
+    campo.classList.toggle('border-amber-300', obrigatorio);
+    campo.classList.toggle('bg-amber-50', obrigatorio);
+    campo.classList.toggle('border-slate-200', !obrigatorio);
+
+    if (lbl) {
+        lbl.innerText = obrigatorio ? '*' : '(obrigatório ao concluir)';
+        lbl.classList.toggle('text-red-500', obrigatorio);
+        lbl.classList.toggle('text-slate-300', !obrigatorio);
     }
 }
 
@@ -32,8 +74,11 @@ function toggleCancelado() {
     const btnToggle = document.getElementById('btn-toggle-comentario');
     const campoPedido = document.getElementById('reg-pedido');
     const campoPedidoContainer = document.getElementById('campo-pedido-container');
-    const checklistBox = document.querySelector('.bg-slate-50.p-5.rounded-2xl.border.border-slate-200');
-    
+    const checklistBox = document.getElementById('box-checklist');
+
+    // Abstinência: obrigatória apenas ao concluir
+    updateAbstinenciaRequisito(status);
+
     // Ajusta campos obrigatórios baseado no status
     if (status === 'Em andamento') {
         campoPedido.required = false;
@@ -103,19 +148,23 @@ function toggleCancelado() {
 
 // DUPLICAR AGENDAMENTO
 function duplicateRecord() {
-    const paciente = document.getElementById('reg-paciente').value;
-    const idade    = document.getElementById('reg-idade').value;
-    const contato  = document.getElementById('reg-contato').value;
-    const pedido   = document.getElementById('reg-pedido').value;
+    // Campos copiados para o novo agendamento do mesmo paciente
+    const campos = ['reg-paciente', 'reg-idade', 'reg-contato', 'reg-pedido'];
+    if (temCampo('endereco')) campos.push('reg-cep', 'reg-logradouro', 'reg-numero', 'reg-complemento', 'reg-bairro', 'reg-cidade');
+    if (temCampo('pontoReferencia')) campos.push('reg-ponto-referencia');
+    if (temCampo('coletador')) campos.push('reg-coletador');
+
+    const valores = {};
+    campos.forEach(id => { const el = document.getElementById(id); if (el) valores[id] = el.value; });
 
     closeModals();
 
     // Pequeno delay para garantir que o modal fechou antes de reabrir
     setTimeout(() => {
         openRecordModal();
-        document.getElementById('reg-paciente').value = paciente;
-        document.getElementById('reg-idade').value    = idade;
-        document.getElementById('reg-contato').value  = contato;
-        document.getElementById('reg-pedido').value   = pedido;
+        Object.keys(valores).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = valores[id];
+        });
     }, 150);
 }

@@ -211,7 +211,7 @@ function logoutUser() {
     document.getElementById('login-password').value = '';
     document.getElementById('login-error').classList.add('hidden');
     initLoginOverlay();
-    switchTabDirect('dashboard');
+    switchTabDirect('inicio');
     syncDrawerUser();
 }
 
@@ -433,12 +433,16 @@ async function saveEditUser() {
 
     // Propagar mudança de nome em todos os agendamentos onde era atendente
     if (oldFullName && fullName && oldFullName.toUpperCase() !== fullName.toUpperCase()) {
-        appointments = appointments.map(a =>
-            a.atendente && a.atendente.toUpperCase() === oldFullName.toUpperCase()
-                ? { ...a, atendente: fullName.toUpperCase() }
-                : a
-        );
-        saveAppointmentsToFirebase();
+        // Propaga em todas as agendas
+        AGENDA_IDS.forEach(agendaId => {
+            const atualizada = appointmentsDe(agendaId).map(a =>
+                a.atendente && a.atendente.toUpperCase() === oldFullName.toUpperCase()
+                    ? { ...a, atendente: fullName.toUpperCase() }
+                    : a
+            );
+            setAppointments(atualizada, agendaId);
+            saveAppointmentsToFirebase(agendaId);
+        });
         // Atualizar badge se for o próprio usuário logado
         if (currentUser && currentUser.username === username) {
             currentUser.fullName = fullName;

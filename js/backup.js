@@ -2,17 +2,24 @@
 
 // FUNÇÕES DE BACKUP E CONFIGURAÇÕES
 function updateConfigStatus() {
-    document.getElementById('total-appointments').innerText = appointments.length;
+    const total = AGENDA_IDS.reduce((soma, id) => soma + appointmentsDe(id).length, 0);
+    document.getElementById('total-appointments').innerText = total;
 }
 
 function exportData() {
+    const agendasExport = {};
+    AGENDA_IDS.forEach(id => agendasExport[id] = appointmentsDe(id));
+    const total = AGENDA_IDS.reduce((soma, id) => soma + appointmentsDe(id).length, 0);
+
     const backupData = {
-        version: '1.0',
+        version: '2.0',
         exportDate: new Date().toISOString(),
-        appointments: appointments,
+        agendas: agendasExport,
+        appointments: appointments,   // compatibilidade com backups v1.0 (agenda ativa)
+        agendaAtiva: currentAgendaId,
         atendentesList: atendentesList,
         metadata: {
-            totalAppointments: appointments.length,
+            totalAppointments: total,
             firebaseConnected: !!database,
             exportType: 'full_backup'
         }
@@ -41,27 +48,38 @@ function importData(event) {
     reader.onload = function(e) {
         try {
             const backupData = JSON.parse(e.target.result);
-            
-            if (!backupData.appointments || !Array.isArray(backupData.appointments)) {
-                throw new Error('Formato de backup inválido');
+
+            // v2.0 traz `agendas`; v1.0 traz só `appointments` (agenda respiratória)
+            const porAgenda = {};
+            if (backupData.agendas && typeof backupData.agendas === 'object') {
+                AGENDA_IDS.forEach(id => {
+                    if (Array.isArray(backupData.agendas[id])) porAgenda[id] = backupData.agendas[id];
+                });
+            } else if (Array.isArray(backupData.appointments)) {
+                porAgenda[AGENDA_PADRAO] = backupData.appointments;
             }
+
+            const alvos = Object.keys(porAgenda);
+            if (!alvos.length) throw new Error('Formato de backup inválido');
+
+            const total = alvos.reduce((soma, id) => soma + porAgenda[id].length, 0);
+            const resumo = alvos.map(id => `• ${getAgenda(id).nome}: ${porAgenda[id].length}`).join('\n');
 
             const confirmImport = confirm(
                 `⚠️ ATENÇÃO!\n\n` +
-                `Você está prestes a importar ${backupData.appointments.length} agendamentos.\n` +
-                `Isso SUBSTITUIRÁ todos os dados atuais.\n\n` +
+                `Você está prestes a importar ${total} agendamentos:\n${resumo}\n\n` +
+                `Isso SUBSTITUIRÁ os dados atuais dessas agendas.\n\n` +
                 `Deseja continuar?`
             );
 
             if (confirmImport) {
-                appointments = backupData.appointments;
-                
-                // Migrar dados antigos para nova estrutura se necessário
-                appointments = appointments.map(app => {
-                    if(!app.status) {
-                        app.status = app.chkConcluido ? 'Concluído' : 'Agendado';
-                    }
-                    return app;
+                alvos.forEach(id => {
+                    const lista = porAgenda[id].map(app => {
+                        if (!app.status) app.status = app.chkConcluido ? 'Concluído' : 'Agendado';
+                        return app;
+                    });
+                    setAppointments(lista, id);
+                    saveAppointmentsToFirebase(id);
                 });
 
                 // Restaurar lista de atendentes se existir
@@ -70,13 +88,13 @@ function importData(event) {
                     updateFilterDropdowns();
                 }
 
-                saveAppointmentsToFirebase();
+                renderHomeCards();
                 renderTable();
                 renderCalendar();
                 updateDatalists();
                 updateConfigStatus();
 
-                showNotification('✅ Backup importado com sucesso! ' + backupData.appointments.length + ' agendamentos restaurados.', 'success');
+                showNotification(`✅ Backup importado com sucesso! ${total} agendamentos restaurados.`, 'success');
             }
         } catch (error) {
             showNotification('❌ Erro ao importar backup: ' + error.message + '. Verifique se o arquivo é um backup válido.', 'error');
@@ -94,6 +112,7 @@ function switchTabDirect(tab) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.getElementById(`tab-${tab}`).classList.add('active');
     markActiveTab(tab);
+    if (tab === 'inicio') renderHomeCards();
     if (tab === 'dashboard') renderCalendar();
     if (tab === 'indicadores') renderIndicadores();
     if (tab === 'config') { updateConfigStatus(); updateConfigSectionVisibility(); }

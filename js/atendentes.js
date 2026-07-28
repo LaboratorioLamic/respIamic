@@ -5,30 +5,31 @@ async function loadAtendentes() {
     try {
         const response = await fetch("https://script.google.com/macros/s/AKfycbzUd6efhfzkCmYd88_eIIL6dGIQxIINsw-6Y_qM3PRemUbZ06obtF9xKY1S8WRfvXyq9Q/exec");
         atendentesList = await response.json();
-        const list = document.getElementById('atendentes-list');
-        list.innerHTML = atendentesList.map(name => `<option value="${name}">`).join('');
         updateFilterDropdowns();
         populateRegAttendentesList();
     } catch (e) { console.error("Erro ao carregar atendentes", e); }
 }
 
-function updateDatalists() {
-    const list = document.getElementById('pacientes-list');
-    const uniquePatients = [...new Set(appointments.map(a => a.paciente))];
-    list.innerHTML = uniquePatients.map(name => `<option value="${name}">`).join('');
-}
+// Sugestões de paciente são lidas direto de `appointments` pelo popover (ver filtrarPacientes em utils.js)
+function updateDatalists() {}
 
 function updateFilterDropdowns() {
+    const agenda = currentAgenda();
+    // O 3º filtro é Substrato nas agendas com exame e Bairro nas domiciliares
+    const porBairro = temCampo('endereco', agenda);
+    const campoTerceiro = porBairro ? 'bairro' : 'substrato';
+    const rotuloTerceiro = porBairro ? 'Filtrar por Bairro' : 'Filtrar por Substrato';
+
     const search = normalizeStr(document.getElementById('filter-search').value);
     const atendente = document.getElementById('filter-atendente').value;
     const substrato = document.getElementById('filter-substrato').value;
     const status = document.getElementById('filter-status').value;
-    
+
     // Para cada filtro, calcular os dados base sem considerar o filtro atual
     // Filtro de atendente: considerar busca, substrato e status
     let filteredForAtendente = appointments.filter(a => {
         const matchSearch = !search || normalizeStr(a.paciente).includes(search) || normalizeStr(a.pedido).includes(search);
-        const matchSubstrato = !substrato || a.substrato === substrato;
+        const matchSubstrato = !substrato || a[campoTerceiro] === substrato;
         const matchStatus = !status || a.status === status;
         return matchSearch && matchSubstrato && matchStatus;
     });
@@ -45,7 +46,7 @@ function updateFilterDropdowns() {
     let filteredForStatus = appointments.filter(a => {
         const matchSearch = !search || normalizeStr(a.paciente).includes(search) || normalizeStr(a.pedido).includes(search);
         const matchAtendente = !atendente || a.atendente === atendente;
-        const matchSubstrato = !substrato || a.substrato === substrato;
+        const matchSubstrato = !substrato || a[campoTerceiro] === substrato;
         return matchSearch && matchAtendente && matchSubstrato;
     });
     
@@ -61,10 +62,10 @@ function updateFilterDropdowns() {
         atendenteFilter.value = atendente;
     }
 
-    // Atualizar filtro de substrato
+    // Atualizar 3º filtro (substrato ou bairro)
     const substratoFilter = document.getElementById('filter-substrato');
-    const uniqueSubstratos = [...new Set(filteredForSubstrato.map(a => a.substrato))];
-    substratoFilter.innerHTML = '<option value="">Filtrar por Substrato</option>' + 
+    const uniqueSubstratos = [...new Set(filteredForSubstrato.map(a => a[campoTerceiro]).filter(Boolean))].sort();
+    substratoFilter.innerHTML = `<option value="">${rotuloTerceiro}</option>` +
         uniqueSubstratos.map(sub => `<option value="${sub}">${sub}</option>`).join('');
     
     if (substrato && !uniqueSubstratos.includes(substrato)) {

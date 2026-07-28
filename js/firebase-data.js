@@ -1,130 +1,134 @@
-// Persistência de agendamentos no Firebase
+// Persistência de agendamentos no Firebase — um nó por agenda
 
-// FUNÇÕES DO FIREBASE
-function loadAppointmentsFromFirebase() {
-    return database.ref('appointments').once('value')
+// Normaliza registros vindos do Firebase (array antigo ou objeto novo)
+function _toAppointmentList(data) {
+    if (!data) return [];
+    const lista = Array.isArray(data) ? data.filter(Boolean) : Object.values(data);
+    return lista.map(app => {
+        if (!app.status) app.status = app.chkConcluido ? 'Concluído' : 'Agendado';
+        return app;
+    });
+}
+
+function _appointmentsRef(agendaId) {
+    return database.ref(`${getAgenda(agendaId).fbPath}/appointments`);
+}
+
+// MIGRAÇÃO ÚNICA DO NÓ LEGADO
+// Copia `appointments` (estrutura antiga, agenda única) para o nó da agenda.
+// O nó legado NUNCA é apagado — permite rollback.
+function migrateLegacyAgenda(agendaId) {
+    const agenda = getAgenda(agendaId);
+    if (!agenda.legacyPath) return Promise.resolve(false);
+
+    return _appointmentsRef(agendaId).once('value').then(snap => {
+        if (snap.exists() && Object.keys(snap.val() || {}).length > 0) return false;
+
+        return database.ref(agenda.legacyPath).once('value').then(legacySnap => {
+            const legacy = _toAppointmentList(legacySnap.val());
+            if (!legacy.length) return false;
+
+            const obj = {};
+            legacy.forEach(app => obj[app.id] = app);
+            return _appointmentsRef(agendaId).set(obj)
+                .then(() => database.ref('agendas/_migracao').update({
+                    [agenda.id]: { em: new Date().toISOString(), registros: legacy.length, origem: agenda.legacyPath }
+                }))
+                .then(() => {
+                    console.log(`Migração concluída: ${legacy.length} registros de '${agenda.legacyPath}' → '${agenda.fbPath}/appointments'. Nó legado preservado.`);
+                    return true;
+                });
+        });
+    }).catch(error => {
+        console.error(`Erro na migração da agenda ${agendaId}:`, error);
+        return false;
+    });
+}
+
+// CARGA
+function loadAgendaFromFirebase(agendaId) {
+    const agenda = getAgenda(agendaId);
+    return migrateLegacyAgenda(agendaId)
+        .then(() => _appointmentsRef(agendaId).once('value'))
         .then(snapshot => {
-            const data = snapshot.val();
-            let firebaseAppointments = [];
-            
-            if (data) {
-                // Verificar se data é array (estrutura antiga) ou objeto (nova estrutura)
-                if (Array.isArray(data)) {
-                    // Estrutura antiga
-                    firebaseAppointments = data;
-                } else {
-                    // Nova estrutura - objeto com IDs como chaves
-                    firebaseAppointments = Object.values(data);
-                }
-            }
-            
-            // Migrar dados antigos para nova estrutura de status
-            firebaseAppointments = firebaseAppointments.map(app => {
-                if(!app.status) {
-                    app.status = app.chkConcluido ? 'Concluído' : 'Agendado';
-                }
-                return app;
-            });
-            
-            // SEMPRE priorizar Firebase sobre localStorage
-            appointments = firebaseAppointments;
-            
-            // Atualizar localStorage com dados do Firebase (backup)
-            localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
-            
-            console.log("Dados carregados do Firebase. LocalStorage atualizado como backup.");
-            
-            return loadHolidaysFromFirebase().then(() => {
-                renderTable();
-                renderCalendar();
-                updateDatalists();
-                updateFilterDropdowns();
-            });
+            const lista = _toAppointmentList(snapshot.val());
+            setAppointments(lista, agendaId);
+            localStorage.setItem(agenda.lsKey, JSON.stringify(lista));
+            console.log(`Agenda '${agendaId}': ${lista.length} registros carregados do Firebase.`);
         })
         .catch(error => {
-            console.error("Erro ao carregar do Firebase:", error);
-            // Apenas usar localStorage como último recurso, mas não salvar nele
-            const localData = localStorage.getItem('respiroLamicData');
+            console.error(`Erro ao carregar agenda '${agendaId}' do Firebase:`, error);
+            const localData = localStorage.getItem(agenda.lsKey);
             if (localData) {
-                appointments = JSON.parse(localData);
-                appointments = appointments.map(app => {
-                    if(!app.status) {
-                        app.status = app.chkConcluido ? 'Concluído' : 'Agendado';
-                    }
-                    return app;
-                });
-                
-                // Tentar sincronizar dados locais com Firebase quando possível
-                setTimeout(() => {
-                    saveAppointmentsToFirebase();
-                }, 1000);
-                
-                return loadHolidaysFromFirebase().then(() => {
-                    renderTable();
-                    renderCalendar();
-                    updateDatalists();
-                    updateFilterDropdowns();
-                });
-                
-                console.warn("Usando dados locais temporariamente. Tentando sincronizar com Firebase...");
-            } else {
-                console.error("Nenhum dado encontrado localmente.");
+                try {
+                    setAppointments(_toAppointmentList(JSON.parse(localData)), agendaId);
+                    console.warn(`Agenda '${agendaId}': usando backup local temporariamente.`);
+                } catch (e) {
+                    console.error('Backup local inválido:', e);
+                }
             }
         });
 }
 
-function saveAppointmentsToFirebase() {
-    // Converter array para objeto com IDs como chaves para melhor sincronização
-    const appointmentsObject = {};
-    appointments.forEach(app => {
-        appointmentsObject[app.id] = app;
-    });
-    
-    return database.ref('appointments').set(appointmentsObject)
+// Carrega todas as agendas (os cards da tela inicial precisam dos dados de todas)
+function loadAppointmentsFromFirebase() {
+    return Promise.all(AGENDA_IDS.map(loadAgendaFromFirebase))
+        .then(() => loadHolidaysFromFirebase())
         .then(() => {
-            console.log("Agendamentos salvos com sucesso no Firebase");
-            // Atualizar localStorage APENAS como backup dos dados do Firebase
-            localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
+            renderHomeCards();
+            renderTable();
+            renderCalendar();
+            updateDatalists();
+            updateFilterDropdowns();
+        });
+}
+
+// GRAVAÇÃO
+function saveAppointmentsToFirebase(agendaId) {
+    const id = agendaId || currentAgendaId;
+    const agenda = getAgenda(id);
+    const lista = appointmentsDe(id);
+
+    const obj = {};
+    lista.forEach(app => obj[app.id] = app);
+
+    return _appointmentsRef(id).set(obj)
+        .then(() => {
+            console.log(`Agenda '${id}': agendamentos salvos no Firebase.`);
+            localStorage.setItem(agenda.lsKey, JSON.stringify(lista));
         })
         .catch(error => {
-            console.error("Erro ao salvar no Firebase:", error);
-            // NÃO salvar no localStorage automaticamente para evitar conflitos
-            // Apenas salvar se for fallback crítico
+            console.error(`Erro ao salvar agenda '${id}' no Firebase:`, error);
             if (!navigator.onLine) {
-                localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
-                console.warn("Offline: Dados salvos temporariamente no localStorage.");
+                localStorage.setItem(agenda.lsKey, JSON.stringify(lista));
+                console.warn('Offline: dados salvos temporariamente no localStorage.');
             } else {
                 showNotification("Erro ao sincronizar com Firebase. Verifique sua conexão.", "error");
             }
-            throw error; // Propagar erro para tratamento acima
+            throw error;
         });
 }
 
-// Função para forçar sincronização do localStorage com Firebase
+// Sobe o backup local caso o Firebase esteja vazio (ex.: primeiro acesso após falha)
 function syncLocalStorageToFirebase() {
-    const localData = localStorage.getItem('respiroLamicData');
-    if (localData) {
+    AGENDA_IDS.forEach(id => {
+        const agenda = getAgenda(id);
+        const localData = localStorage.getItem(agenda.lsKey);
+        if (!localData) return;
         try {
-            const localAppointments = JSON.parse(localData);
-            database.ref('appointments').once('value')
-                .then(snapshot => {
-                    const firebaseData = snapshot.val();
-                    const firebaseAppointments = firebaseData ? Object.values(firebaseData) : [];
-                    
-                    // Se Firebase está vazio, usar dados locais
-                    if (firebaseAppointments.length === 0 && localAppointments.length > 0) {
-                        appointments = localAppointments;
-                        return saveAppointmentsToFirebase();
-                    }
-                    // Se Firebase tem dados, manter como prioridade
-                    else if (firebaseAppointments.length > 0) {
-                        appointments = firebaseAppointments;
-                        localStorage.setItem('respiroLamicData', JSON.stringify(appointments));
-                        console.log("Firebase tem prioridade. Dados locais ignorados.");
-                    }
-                });
+            const locais = JSON.parse(localData);
+            if (!locais.length) return;
+            _appointmentsRef(id).once('value').then(snapshot => {
+                const remotos = _toAppointmentList(snapshot.val());
+                if (remotos.length === 0) {
+                    setAppointments(locais, id);
+                    saveAppointmentsToFirebase(id);
+                } else {
+                    localStorage.setItem(agenda.lsKey, JSON.stringify(remotos));
+                }
+            });
         } catch (error) {
-            console.error("Erro ao sincronizar localStorage com Firebase:", error);
+            console.error(`Erro ao sincronizar backup local da agenda '${id}':`, error);
         }
-    }
+    });
 }

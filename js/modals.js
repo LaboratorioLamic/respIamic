@@ -29,24 +29,29 @@ function cancelPastDate() {
 function openRecordModal() {
     document.getElementById('record-form').reset();
     document.getElementById('reg-id').value = '';
+    applyAgendaConfig();
     const histBtnNew = document.getElementById('btn-record-history');
     histBtnNew.classList.add('hidden');
     histBtnNew.classList.remove('flex');
     
     // Reseta Checklist
-    document.getElementById('chk-orientacao-val').value = 'false';
-    document.getElementById('chk-anexo-val').value = 'false';
-    updateCheckUI('orientacao', false);
-    updateCheckUI('anexo', false);
-    
+    resetChecklistUI({});
+
     // Reseta Status e Comentários
     document.getElementById('reg-status').value = 'Agendado';
     toggleCancelado();
     
     // Oculta campo metano inicialmente
     updateSubstratos();
-    
-    document.getElementById('modal-title').innerText = "Novo Agendamento";
+    calculateTimes();
+
+    // Padrão de endereço: Juazeiro do Norte / CE (editável)
+    if (temCampo('endereco', currentAgenda())) {
+        document.getElementById('reg-cidade').value = 'JUAZEIRO DO NORTE';
+        document.getElementById('reg-estado').value = 'CE';
+    }
+
+    document.getElementById('modal-title').innerText = `Novo Agendamento — ${currentAgenda().nome}`;
     document.getElementById('modal-record').classList.add('active');
 }
 
@@ -55,13 +60,38 @@ function openRecordModalWithDate(dateStr, hora) {
     // Aceita dd/mm/aaaa (modal de detalhes do dia) ou aaaa-mm-dd (visão semanal)
     const iso = dateStr.includes('/') ? dateStr.split('/').reverse().join('-') : dateStr;
     document.getElementById('reg-data').value = iso;
-    if (hora) {
-        document.getElementById('reg-hora-inicio').value = hora;
+
+    // Sem horário informado, sugere o primeiro slot livre do dia (agendas com grade fixa)
+    const horaFinal = hora || primeiroSlotLivre(iso);
+    if (horaFinal) {
+        document.getElementById('reg-hora-inicio').value = horaFinal;
         calculateTimes();
     }
 }
 
+// Primeiro horário da grade ainda não ocupado no dia (percorre todos os turnos)
+function primeiroSlotLivre(iso) {
+    const agenda = currentAgenda();
+    if (!agenda.slotMin) return null;
+    const [y, m, d] = iso.split('-').map(Number);
+    const slots = slotsAgenda(new Date(y, m - 1, d).getDay(), agenda);
+    const ocupados = new Set(
+        appointments.filter(a => a.data === iso && a.status !== 'Cancelado').map(a => a.horaInicio)
+    );
+    const livre = slots.map(minToTime).find(h => !ocupados.has(h));
+    return livre || null;
+}
+
+// Etiqueta de faixa etária usada nos cards do dia
+function _faixaBadgeDia(app, agenda) {
+    if (app.status === 'Concluído' || app.status === 'Cancelado') return '';
+    const t = FAIXA_ETARIA_TEMA[faixaEtariaDe(app, agenda)];
+    return t ? `[${t.rotulo}]` : '';
+}
+
 function openDayDetails(dateStr) {
+    const agenda = currentAgenda();
+    const cores = agendaCores(agenda);
     const dayApps = appointments.filter(a => a.data === dateStr).sort((a,b) => a.horaInicio.localeCompare(b.horaInicio));
     document.getElementById('day-details-date').innerText = dateStr.split('-').reverse().join('/');
     const list = document.getElementById('day-appointments-list');
@@ -78,7 +108,7 @@ function openDayDetails(dateStr) {
         
         let bgClass = 'bg-slate-50 border-slate-200';
         let textColor = 'text-slate-500';
-        let accentColor = app.exame === 'TRESP' ? 'bg-blue-600' : 'bg-emerald-600';
+        let accentColor = accentDoAgendamento(app, agenda);
         let overdueBadge = '';
         
         // Verifica se agendamento está atrasado
@@ -100,17 +130,17 @@ function openDayDetails(dateStr) {
         } else if (app.status === 'Concluído') {
             bgClass = 'bg-green-50 border-green-200';
             textColor = 'text-green-700';
-        } else if (app.idade < 12) {
-            bgClass = 'bg-orange-50 border-orange-200';
-            textColor = 'text-orange-700';
+        } else if (FAIXA_ETARIA_TEMA[faixaEtariaDe(app, agenda)]) {
+            const t = FAIXA_ETARIA_TEMA[faixaEtariaDe(app, agenda)];
+            bgClass = `${t.bg} ${t.border}`;
+            textColor = t.text;
         } else {
-            // Agendado normal (adulto) - volta para cor azul padrão
-            bgClass = 'bg-blue-50 border-blue-200';
-            textColor = 'text-blue-700';
-            accentColor = app.exame === 'TRESP' ? 'bg-blue-600' : 'bg-emerald-600';
+            // Agendado normal — cor da agenda
+            bgClass = `${cores.bg} ${cores.border}`;
+            textColor = cores.text;
         }
-        
-        const isChecklistComplete = app.chkOrientacao && app.chkAnexo;
+
+        const isChecklistComplete = agenda.checklist.every(item => !!app[CHECKLIST_ITENS[item].chave]);
         let checklistBadge;
         if (app.status === 'Em andamento') {
             // Para "Em andamento", não mostra aviso de checklist incompleto
@@ -131,12 +161,19 @@ function openDayDetails(dateStr) {
             <div class="flex justify-between items-start pl-2">
                 <div>
                     <div class="font-black ${app.status === 'Cancelado' ? 'text-slate-400 line-through' : 'text-navy-900'} text-sm uppercase">${app.horaInicio} - ${app.horaFim} | ${app.paciente} (${app.idade} anos)</div>
-                    <div class="text-[10px] font-black ${textColor} uppercase">${app.exame} | ${app.substrato}${app.metano === 'Sim' ? ' (metano)' : ''} ${app.idade < 12 && app.status !== 'Concluído' && app.status !== 'Cancelado' ? '[INFANTIL]' : ''}</div>
+                    <div class="text-[10px] font-black ${textColor} uppercase">${
+                        temCampo('exame', agenda)
+                            ? `${app.exame} | ${app.substrato}${app.metano === 'Sim' ? ' (metano)' : ''}`
+                            : temCampo('endereco', agenda)
+                                ? `${[app.logradouro, app.numero].filter(Boolean).join(', ')}${app.bairro ? ' — ' + app.bairro : ''}`
+                                : (temCampo('abstinencia', agenda) && app.abstinencia != null ? `Abstinência: ${app.abstinencia} dia(s)` : agenda.nome)
+                    } ${_faixaBadgeDia(app, agenda)}</div>
+                    ${temCampo('pontoReferencia', agenda) && app.pontoReferencia ? `<div class="text-[10px] font-bold text-slate-500 mt-1"><i class="fas fa-location-dot mr-1"></i>${app.pontoReferencia}</div>` : ''}
                 </div>
             </div>
             <div class="pl-2 pt-3 border-t border-slate-200 mt-3 flex justify-between items-center">
                 <div class="flex flex-col">
-                    <span class="text-[10px] font-bold text-slate-500">👤 ${formatAtendenteName(app.atendente)}</span>
+                    <span class="text-[10px] font-bold text-slate-500">👤 ${formatAtendenteName(app.atendente)}${temCampo('coletador', agenda) && app.coletador ? ` · 🚗 ${formatAtendenteName(app.coletador)}` : ''}</span>
                     ${app.status === 'Em andamento' 
                         ? '<span class="text-[10px] font-bold text-purple-600 mt-0.5">🔄 Em andamento</span>' 
                         : `<span class="text-[10px] font-bold text-slate-500 mt-0.5">Pedido: ${app.pedido}</span>`
@@ -160,7 +197,8 @@ function openDayDetails(dateStr) {
     const activeApps = dayApps.filter(a => a.status !== 'Cancelado');
     const scheduleBtn = document.querySelector('button[onclick*="openRecordModalWithDate"]');
     if (scheduleBtn) {
-        if (activeApps.length >= 3) {
+        const [_y, _m, _d] = dateStr.split('-').map(Number);
+        if (activeApps.length >= limiteDoDia(new Date(_y, _m - 1, _d).getDay(), agenda)) {
             scheduleBtn.style.display = 'none';
         } else {
             scheduleBtn.style.display = 'block';
@@ -299,27 +337,39 @@ function setupHolidaysRealtimeListener() {
 function editRecord(id) {
     const app = appointments.find(a => a.id == id);
     if(!app) return;
+    applyAgendaConfig();
     document.getElementById('reg-id').value = app.id;
     document.getElementById('reg-data').value = app.data;
     document.getElementById('reg-hora-inicio').value = app.horaInicio;
     document.getElementById('reg-paciente').value = app.paciente ? app.paciente.toUpperCase() : '';
     document.getElementById('reg-idade').value = app.idade;
     document.getElementById('reg-contato').value = app.contato;
-    document.getElementById('reg-exame').value = app.exame;
+    document.getElementById('reg-exame').value = app.exame || '';
     updateSubstratos();
-    document.getElementById('reg-metano').value = app.metano || '';
-    document.getElementById('reg-substrato').value = app.substrato;
+    document.getElementById('reg-metano').value = app.metano || 'Não';
+    document.getElementById('reg-substrato').value = app.substrato || '';
+    document.getElementById('reg-abstinencia').value = app.abstinencia != null ? app.abstinencia : '';
+    document.getElementById('reg-cep').value = app.cep || '';
+    document.getElementById('reg-logradouro').value = app.logradouro || '';
+    document.getElementById('reg-numero').value = app.numero || '';
+    document.getElementById('reg-complemento').value = app.complemento || '';
+    document.getElementById('reg-bairro').value = app.bairro || '';
+    document.getElementById('reg-cidade').value = app.cidade || '';
+    document.getElementById('reg-estado').value = app.estado || '';
+    document.getElementById('reg-ponto-referencia').value = app.pontoReferencia || '';
+    document.getElementById('reg-coletador').value = app.coletador || '';
     document.getElementById('reg-duracao').value = app.duracao;
     document.getElementById('reg-hora-fim').value = app.horaFim;
     document.getElementById('reg-pedido').value = app.pedido;
     document.getElementById('reg-atendente').value = app.atendente;
     
     // Restaura Checklist
-    document.getElementById('chk-orientacao-val').value = app.chkOrientacao ? 'true' : 'false';
-    document.getElementById('chk-anexo-val').value = app.chkAnexo ? 'true' : 'false';
-    updateCheckUI('orientacao', app.chkOrientacao);
-    updateCheckUI('anexo', app.chkAnexo);
-    
+    resetChecklistUI({
+        orientacao: !!app.chkOrientacao,
+        anexo: !!app.chkAnexo,
+        endereco: !!app.chkEndereco
+    });
+
     // Restaura Status
     document.getElementById('reg-status').value = app.status;
     document.getElementById('reg-comentarios').value = app.comentarios || '';
@@ -336,7 +386,7 @@ function editRecord(id) {
         document.getElementById('reg-motivo-perda').value = app.motivoPerda;
     }
     
-    document.getElementById('modal-title').innerText = "Editar Agendamento";
+    document.getElementById('modal-title').innerText = `Editar Agendamento — ${currentAgenda().nome}`;
     const histBtn = document.getElementById('btn-record-history');
     histBtn.classList.remove('hidden');
     histBtn.classList.add('flex');
@@ -387,7 +437,7 @@ function confirmDeleteRecord() {
     if (!id) return;
 
     const deleted = appointments.find(a => a.id === id);
-    appointments = appointments.filter(a => a.id !== id);
+    setAppointments(appointments.filter(a => a.id !== id));
     if (deleted) addAuditLog('delete', deleted);
 
     saveAppointmentsToFirebase()
@@ -413,7 +463,7 @@ function openObsModal(id) {
 
 function saveObservation() {
     const id = document.getElementById('obs-id').value;
-    appointments = appointments.map(a => a.id == id ? {...a, comentarios: document.getElementById('obs-text').value} : a);
+    setAppointments(appointments.map(a => a.id == id ? {...a, comentarios: document.getElementById('obs-text').value} : a));
     saveAppointmentsToFirebase();
     closeModals(); renderTable();
 }

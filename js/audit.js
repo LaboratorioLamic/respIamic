@@ -11,6 +11,15 @@ const _auditFields = [
     { key: 'exame',      label: 'Exame',        fmt: v => v || '—' },
     { key: 'substrato',  label: 'Substrato',    fmt: v => v || '—' },
     { key: 'metano',     label: 'Metano',       fmt: v => v || '—' },
+    { key: 'abstinencia',label: 'Abstinência',  fmt: v => v != null && v !== '' ? `${v} dia(s)` : '—' },
+    { key: 'logradouro', label: 'Logradouro',   fmt: v => v || '—' },
+    { key: 'numero',     label: 'Número',       fmt: v => v || '—' },
+    { key: 'complemento',label: 'Complemento',  fmt: v => v || '—' },
+    { key: 'bairro',     label: 'Bairro',       fmt: v => v || '—' },
+    { key: 'cidade',     label: 'Cidade',       fmt: v => v || '—' },
+    { key: 'cep',        label: 'CEP',          fmt: v => v || '—' },
+    { key: 'pontoReferencia', label: 'Ponto de referência', fmt: v => v || '—' },
+    { key: 'coletador',  label: 'Coletador',    fmt: v => v || '—' },
     { key: 'status',     label: 'Status',       fmt: v => v || '—' },
     { key: 'atendente',  label: 'Atendente',    fmt: v => v || '—' },
     { key: 'pedido',     label: 'Pedido',       fmt: v => v || '—' },
@@ -31,17 +40,25 @@ function addAuditLog(action, record, oldRecord) {
     // Não registrar edição se nenhum campo rastreado mudou
     if (action === 'edit' && changes.length === 0) return;
 
+    const agendaDoRegistro = getAgenda(record.agendaId || currentAgendaId);
+    const detalheExame = agendaDoRegistro.campos.exame
+        ? `${record.exame || ''} | ${record.substrato || ''}`
+        : agendaDoRegistro.campos.endereco
+            ? `${agendaDoRegistro.nome} | ${[record.logradouro, record.numero].filter(Boolean).join(', ')}`
+            : agendaDoRegistro.nome;
+
     const entry = {
         id: Date.now(),
         timestamp: new Date().toISOString(),
         action,
+        agendaId: agendaDoRegistro.id,
         appointmentId: record.id,
         paciente: record.paciente || '—',
         data: record.data || '',
         atendente: record.atendente || '',
         user: currentUser?.username || 'sistema',
         userFullName: currentUser?.fullName || '',
-        details: `${record.exame || ''} | ${record.substrato || ''} | ${record.horaInicio || ''}–${record.horaFim || ''}`,
+        details: `${detalheExame} | ${record.horaInicio || ''}–${record.horaFim || ''}`,
         changes
     };
     auditLog.unshift(entry);

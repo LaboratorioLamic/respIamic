@@ -1,4 +1,4 @@
-// Indicadores e gráficos
+// Indicadores e gráficos (dirigidos pela config da agenda)
 
 // INDICADORES & FILTROS
 function toggleIndFilters() {
@@ -24,7 +24,16 @@ function filterIndData() {
     });
 }
 
+// Destrói um gráfico existente antes de recriá-lo
+function _resetChart(chave) {
+    if (charts[chave]) { charts[chave].destroy(); charts[chave] = null; }
+}
+
+const MESES_CURTOS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
 function renderIndicadores() {
+    const agenda = currentAgenda();
+    const cores = agendaCores(agenda);
     const indData = filterIndData();
 
     const tresp = indData.filter(a => a.exame === 'TRESP');
@@ -33,63 +42,93 @@ function renderIndicadores() {
     const andamento = indData.filter(a => a.status === 'Em andamento');
     const pendentes = indData.filter(a => a.status === 'Agendado');
     const cancelados = indData.filter(a => a.status === 'Cancelado');
-    
-    document.getElementById('kpi-total').innerText = indData.length;
-    document.getElementById('kpi-tresp').innerText = tresp.length;
-    document.getElementById('kpi-tsbac').innerText = tsbac.length;
-    document.getElementById('kpi-concluidos').innerText = concluidos.length;
-    document.getElementById('kpi-andamento').innerText = andamento.length;
-    document.getElementById('kpi-pendentes').innerText = pendentes.length;
-    document.getElementById('kpi-cancelados').innerText = cancelados.length;
 
-    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-    
-    // Gráfico de Barras Mensal
-    const monthlyData = new Array(12).fill(0);
-    indData.forEach(a => monthlyData[new Date(a.data + 'T12:00:00').getMonth()]++);
+    const setKpi = (id, valor) => { const el = document.getElementById(id); if (el) el.innerText = valor; };
+    setKpi('kpi-total', indData.length);
+    setKpi('kpi-tresp', tresp.length);
+    setKpi('kpi-tsbac', tsbac.length);
+    setKpi('kpi-concluidos', concluidos.length);
+    setKpi('kpi-andamento', andamento.length);
+    setKpi('kpi-pendentes', pendentes.length);
+    setKpi('kpi-cancelados', cancelados.length);
 
-    if(charts.bar) charts.bar.destroy();
-    charts.bar = new Chart(document.getElementById('chart-bar-monthly'), {
-        type: 'bar',
-        data: { labels: months, datasets: [{ label: 'Volume Total', data: monthlyData, backgroundColor: '#1e40af' }] }
-    });
+    const usa = nome => agenda.charts.includes(nome);
 
-    // Gráfico de Linha - Volume de Exames por Tipo
-    const trespData = new Array(12).fill(0);
-    const tsbacData = new Array(12).fill(0);
-    
-    // Contar exames por mês
-    indData.forEach(a => {
-        const month = new Date(a.data + 'T12:00:00').getMonth();
-        if (a.exame === 'TRESP') trespData[month]++;
-        if (a.exame === 'TSBAC') tsbacData[month]++;
-    });
+    // Volume mensal
+    if (usa('barMensal')) {
+        const monthlyData = new Array(12).fill(0);
+        indData.forEach(a => monthlyData[new Date(a.data + 'T12:00:00').getMonth()]++);
+        _resetChart('bar');
+        charts.bar = new Chart(document.getElementById('chart-bar-monthly'), {
+            type: 'bar',
+            data: { labels: MESES_CURTOS, datasets: [{ label: 'Volume Total', data: monthlyData, backgroundColor: cores.chart }] }
+        });
+    } else {
+        _resetChart('bar');
+    }
 
-    if(charts.line) charts.line.destroy();
-    charts.line = new Chart(document.getElementById('chart-line-trend'), {
-        type: 'line',
-        data: { 
-            labels: months, 
-            datasets: [
-                { label: 'TRESP', data: trespData, borderColor: '#3b82f6', backgroundColor: '#3b82f6', tension: 0.3 },
-                { label: 'TSBAC', data: tsbacData, borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.3 }
-            ] 
-        }
-    });
+    // Tendência por tipo de exame
+    if (usa('linhaTipo')) {
+        const trespData = new Array(12).fill(0);
+        const tsbacData = new Array(12).fill(0);
+        indData.forEach(a => {
+            const month = new Date(a.data + 'T12:00:00').getMonth();
+            if (a.exame === 'TRESP') trespData[month]++;
+            if (a.exame === 'TSBAC') tsbacData[month]++;
+        });
+        _resetChart('line');
+        charts.line = new Chart(document.getElementById('chart-line-trend'), {
+            type: 'line',
+            data: {
+                labels: MESES_CURTOS,
+                datasets: [
+                    { label: 'TRESP', data: trespData, borderColor: '#3b82f6', backgroundColor: '#3b82f6', tension: 0.3 },
+                    { label: 'TSBAC', data: tsbacData, borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.3 }
+                ]
+            }
+        });
+    } else {
+        _resetChart('line');
+    }
 
-    // Gráfico Donut - Exames
-    if(charts.donutE) charts.donutE.destroy();
-    charts.donutE = new Chart(document.getElementById('chart-donut-exame'), {
-        type: 'doughnut',
-        data: { labels: ['TRESP', 'TSBAC'], datasets: [{ data: [tresp.length, tsbac.length], backgroundColor: ['#3b82f6', '#10b981'] }] }
-    });
+    // Donut por tipo de exame
+    if (usa('donutExame')) {
+        _resetChart('donutE');
+        charts.donutE = new Chart(document.getElementById('chart-donut-exame'), {
+            type: 'doughnut',
+            data: { labels: ['TRESP', 'TSBAC'], datasets: [{ data: [tresp.length, tsbac.length], backgroundColor: ['#3b82f6', '#10b981'] }] }
+        });
+    } else {
+        _resetChart('donutE');
+    }
 
-    // Gráfico Donut - Substratos
-    if(charts.donutS) charts.donutS.destroy();
-    const subMap = {};
-    indData.forEach(a => subMap[a.substrato] = (subMap[a.substrato] || 0) + 1);
-    charts.donutS = new Chart(document.getElementById('chart-donut-substrato'), {
-        type: 'doughnut',
-        data: { labels: Object.keys(subMap), datasets: [{ data: Object.values(subMap), backgroundColor: ['#6366f1', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#8b5cf6'] }] }
-    });
+    // Donut de substratos
+    if (usa('donutSubstrato')) {
+        const subMap = {};
+        indData.forEach(a => { if (a.substrato) subMap[a.substrato] = (subMap[a.substrato] || 0) + 1; });
+        _resetChart('donutS');
+        charts.donutS = new Chart(document.getElementById('chart-donut-substrato'), {
+            type: 'doughnut',
+            data: { labels: Object.keys(subMap), datasets: [{ data: Object.values(subMap), backgroundColor: ['#6366f1', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#8b5cf6'] }] }
+        });
+    } else {
+        _resetChart('donutS');
+    }
+
+    // Donut de status (agendas sem tipos de exame)
+    if (usa('donutStatus')) {
+        _resetChart('donutStatus');
+        charts.donutStatus = new Chart(document.getElementById('chart-donut-status'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Agendado', 'Em andamento', 'Concluído', 'Cancelado'],
+                datasets: [{
+                    data: [pendentes.length, andamento.length, concluidos.length, cancelados.length],
+                    backgroundColor: ['#f59e0b', '#8b5cf6', '#22c55e', '#ef4444']
+                }]
+            }
+        });
+    } else {
+        _resetChart('donutStatus');
+    }
 }
