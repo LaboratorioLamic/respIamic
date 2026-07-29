@@ -158,6 +158,8 @@ function duplicateRecord() {
     campos.forEach(id => { const el = document.getElementById(id); if (el) valores[id] = el.value; });
     // A marca de localidade distante acompanha o endereço copiado
     const distante = temCampo('endereco') && document.getElementById('reg-distante').checked;
+    // As demais pessoas da visita também vêm junto
+    const acompanhantes = temCampo('multiPaciente') ? lerAcompanhantes() : [];
 
     closeModals();
 
@@ -172,5 +174,6 @@ function duplicateRecord() {
             document.getElementById('reg-distante').checked = distante;
             atualizarDistanteUI();
         }
+        acompanhantes.forEach(a => adicionarAcompanhante(a));
     }, 150);
 }

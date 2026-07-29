@@ -31,7 +31,7 @@ const AGENDAS = {
         duracao: { tipo: 'porExame', porExame: { TRESP: 180, TSBAC: 120 } },
 
         // Campos do formulário
-        campos: { exame: true, substrato: true, metano: true, idade: true, pedido: true, abstinencia: false, endereco: false, pontoReferencia: false, coletador: false },
+        campos: { exame: true, substrato: true, metano: true, idade: true, pedido: true, abstinencia: false, endereco: false, pontoReferencia: false, coletador: false, multiPaciente: false },
         faixaEtaria: ['infantil'],       // realces etários usados por esta agenda
         substratos: { TRESP: ['Lactose', 'Frutose', 'Sorbitol', 'Sacarose', 'D-Xilose', 'Frutano'], TSBAC: ['Lactulose', 'Glicose'] },
 
@@ -67,7 +67,7 @@ const AGENDAS = {
 
         duracao: { tipo: 'fixa', fixaMin: 30 },
 
-        campos: { exame: false, substrato: false, metano: false, idade: true, pedido: true, abstinencia: true, endereco: false, pontoReferencia: false, coletador: false },
+        campos: { exame: false, substrato: false, metano: false, idade: true, pedido: true, abstinencia: true, endereco: false, pontoReferencia: false, coletador: false, multiPaciente: false },
         faixaEtaria: [],                    // não se aplica
         substratos: {},
 
@@ -104,7 +104,7 @@ const AGENDAS = {
 
         duracao: { tipo: 'fixa', fixaMin: 60 },
 
-        campos: { exame: false, substrato: false, metano: false, idade: true, pedido: true, abstinencia: false, endereco: true, pontoReferencia: true, coletador: true },
+        campos: { exame: false, substrato: false, metano: false, idade: true, pedido: true, abstinencia: false, endereco: true, pontoReferencia: true, coletador: true, multiPaciente: true },
         faixaEtaria: ['rn', 'infantil'],
         substratos: {},
 

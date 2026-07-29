@@ -98,6 +98,9 @@ function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
         record.estado      = document.getElementById('reg-estado').value.trim().toUpperCase();
         record.distante    = document.getElementById('reg-distante').checked;
     }
+    if (temCampo('multiPaciente', agenda)) {
+        record.acompanhantes = lerAcompanhantes();
+    }
     if (temCampo('pontoReferencia', agenda)) {
         record.pontoReferencia = document.getElementById('reg-ponto-referencia').value.trim();
     }

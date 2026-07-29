@@ -57,6 +57,7 @@ function openRecordModal() {
 
     // Modo criação — zera a lista de anexos e a zona de upload
     clearAnexosUpload('reg');
+    limparAcompanhantes();
 
     // Reseta Status e Comentários
     document.getElementById('reg-status').value = 'Agendado';
@@ -186,7 +187,8 @@ function openDayDetails(dateStr) {
             </div>
             <div class="flex justify-between items-start pl-2">
                 <div>
-                    <div class="font-black ${app.status === 'Cancelado' ? 'text-slate-400 line-through' : 'text-navy-900'} text-sm uppercase">${app.horaInicio} - ${app.horaFim} | ${app.paciente} (${idadeLabel(app.idade)})</div>
+                    <div class="font-black ${app.status === 'Cancelado' ? 'text-slate-400 line-through' : 'text-navy-900'} text-sm uppercase">${app.horaInicio} - ${app.horaFim} | ${app.paciente} (${idadeLabel(app.idade)})${extraPacientesLabel(app) ? `<span class="ml-1.5 px-1.5 py-0.5 rounded-full bg-navy-900 text-white text-[9px] align-middle" title="${nomesPacientes(app).join(', ')}">${extraPacientesLabel(app)}</span>` : ''}</div>
+                    ${extraPacientesLabel(app) ? `<div class="text-[10px] font-bold text-slate-500 mt-0.5"><i class="fas fa-users mr-1"></i>${(app.acompanhantes || []).map(a => `${a.nome}${a.idade != null ? ` (${idadeLabel(a.idade)})` : ''}`).join(' · ')}</div>` : ''}
                     <div class="text-[10px] font-black ${textColor} uppercase">${
                         temCampo('exame', agenda)
                             ? `${app.exame} | ${app.substrato}${app.metano === 'Sim' ? ' (metano)' : ''}`
@@ -370,6 +372,7 @@ function editRecord(id) {
     document.getElementById('reg-hora-inicio').value = app.horaInicio;
     document.getElementById('reg-paciente').value = app.paciente ? app.paciente.toUpperCase() : '';
     document.getElementById('reg-idade').value = app.idade;
+    carregarAcompanhantes(app);
     document.getElementById('reg-contato').value = app.contato;
     document.getElementById('reg-exame').value = app.exame || '';
     updateSubstratos();

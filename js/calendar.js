@@ -369,7 +369,9 @@ function renderWeekView() {
             const idade = idadeLabel(a.idade);
             const nomeExibido = dividindo ? abreviarNome(a.paciente) : a.paciente;
             const distante = temCampo('endereco', agenda) && a.distante;
-            const tooltip = `${a.horaInicio} – ${a.horaFim} | ${a.paciente}${idade ? ` (${idade})` : ''}\n${detalhe}${distante ? '\n⚠ Localidade distante' : ''}\nStatus: ${a.status}\nAtendente: ${formatAtendenteName(a.atendente)}`;
+            const extras = extraPacientesLabel(a);
+            const listaNomes = extras ? `\nPacientes: ${nomesPacientes(a).join(', ')}` : '';
+            const tooltip = `${a.horaInicio} – ${a.horaFim} | ${a.paciente}${idade ? ` (${idade})` : ''}${listaNomes}\n${detalhe}${distante ? '\n⚠ Localidade distante' : ''}\nStatus: ${a.status}\nAtendente: ${formatAtendenteName(a.atendente)}`;
 
             return `<div class="week-event ${theme.bg} ${theme.border} ${theme.canceled ? 'week-event-canceled' : ''} ${distante ? 'card-distante' : ''}"
                 style="top:${top}px;height:${height}px;left:calc(${leftPct}% + 2px);width:calc(${width}% - 5px)"
@@ -381,7 +383,7 @@ function renderWeekView() {
                         <span>${a.horaInicio}${compact || dividindo ? '' : ` – ${a.horaFim}`}</span>
                         ${idade ? `<span class="week-event-idade">${idade}</span>` : ''}
                     </div>
-                    <div class="week-event-name">${nomeExibido}</div>
+                    <div class="week-event-name">${nomeExibido}${extras ? `<span class="week-event-extras" title="${totalPacientes(a)} pacientes nesta visita">${extras}</span>` : ''}</div>
                     ${compact ? '' : `<div class="week-event-meta ${theme.text}">${distante ? `<i class="fas ${DISTANTE_TEMA.icon} ${DISTANTE_TEMA.text} mr-1" title="Localidade distante"></i>` : ''}${detalhe}${theme.faixa ? ` · ${FAIXA_ETARIA_TEMA[theme.faixa].rotulo}` : ''}</div>`}
                 </div>
                 ${theme.overdue ? '<span class="week-event-badge"><i class="fas fa-exclamation-triangle"></i></span>' : ''}

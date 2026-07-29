@@ -265,6 +265,18 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+/* "+n" — pacientes adicionais atendidos na mesma visita */
+.week-event-extras {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--brand-900);
+    color: #fff;
+    font-size: 8px;
+    font-weight: 900;
+    vertical-align: middle;
+}
 .week-event-meta {
     font-size: 9px;
     font-weight: 700;

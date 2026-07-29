@@ -19,6 +19,8 @@ const _auditFields = [
     { key: 'cidade',     label: 'Cidade',       fmt: v => v || '—' },
     { key: 'cep',        label: 'CEP',          fmt: v => v || '—' },
     { key: 'distante',   label: 'Localidade distante', fmt: v => v ? 'Sim' : 'Não' },
+    { key: 'acompanhantes', label: 'Outros pacientes',
+      fmt: v => (v || []).length ? v.map(a => a.nome).join(', ') : '—' },
     { key: 'pontoReferencia', label: 'Ponto de referência', fmt: v => v || '—' },
     { key: 'coletador',  label: 'Coletador',    fmt: v => v || '—' },
     { key: 'status',     label: 'Status',       fmt: v => v || '—' },
@@ -31,10 +33,12 @@ function addAuditLog(action, record, oldRecord) {
     const changes = [];
     if (action === 'edit' && oldRecord) {
         for (const f of _auditFields) {
-            const oldVal = String(oldRecord[f.key] ?? '');
-            const newVal = String(record[f.key] ?? '');
+            // Compara pelo valor já formatado — campos de lista (acompanhantes)
+            // não sobrevivem a um String() cru.
+            const oldVal = f.fmt(oldRecord[f.key]);
+            const newVal = f.fmt(record[f.key]);
             if (oldVal !== newVal) {
-                changes.push({ label: f.label, oldVal: f.fmt(oldRecord[f.key]), newVal: f.fmt(record[f.key]) });
+                changes.push({ label: f.label, oldVal, newVal });
             }
         }
     }

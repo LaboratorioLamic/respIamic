@@ -270,6 +270,9 @@ function viewRecord(id) {
     if (temCampo('endereco', agenda) && app.distante) {
         selosHtml += `<span class="view-selo ${DISTANTE_TEMA.bg} ${DISTANTE_TEMA.text}"><i class="fas ${DISTANTE_TEMA.icon}"></i> ${DISTANTE_TEMA.rotulo}</span>`;
     }
+    if (temCampo('multiPaciente', agenda) && (app.acompanhantes || []).length) {
+        selosHtml += `<span class="view-selo bg-slate-100 text-slate-700"><i class="fas fa-users"></i> ${totalPacientes(app)} pacientes</span>`;
+    }
     selos.innerHTML = selosHtml;
 
     // ── Corpo — cada bloco existe só se a agenda usar aqueles campos
@@ -287,6 +290,16 @@ function viewRecord(id) {
         + _vwContato(app.contato);
     if (temCampo('pedido', agenda)) paciente += _vwCampo('Nº do Pedido', app.pedido);
     html += _vwBloco('Paciente', 'fa-user', paciente);
+
+    // Demais pessoas atendidas na mesma visita
+    if (temCampo('multiPaciente', agenda) && (app.acompanhantes || []).length) {
+        const linhas = app.acompanhantes.map((a, i) =>
+            _vwCampo(`Paciente ${i + 2}`,
+                `${a.nome}${a.idade != null ? ` · ${idadeLabel(a.idade)}` : ''}${a.pedido ? ` · Pedido ${a.pedido}` : ''}`,
+                { largo: true })
+        ).join('');
+        html += _vwBloco(`Outros pacientes na visita (${app.acompanhantes.length})`, 'fa-users', linhas);
+    }
 
     // Bloco do exame — só nas agendas que têm exame/substrato/abstinência
     let exame = '';
