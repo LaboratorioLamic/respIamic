@@ -175,7 +175,8 @@ function _vwEndereco(app) {
 
     return _vwCampo('Endereço', linha, { largo: true })
         + _vwCampo('Cidade', cidade)
-        + _vwCampo('CEP', app.cep);
+        + _vwCampo('CEP', app.cep)
+        + (app.distante ? _vwCampo('Localidade', 'Distante', { classe: DISTANTE_TEMA.text }) : '');
 }
 
 // Texto de busca do mapa — mesma montagem usada no formulário, porém a partir
@@ -266,6 +267,9 @@ function viewRecord(id) {
     if (faixa) {
         selosHtml += `<span class="view-selo ${faixa.bg} ${faixa.text}"><i class="fas fa-child"></i> ${faixa.rotulo}</span>`;
     }
+    if (temCampo('endereco', agenda) && app.distante) {
+        selosHtml += `<span class="view-selo ${DISTANTE_TEMA.bg} ${DISTANTE_TEMA.text}"><i class="fas ${DISTANTE_TEMA.icon}"></i> ${DISTANTE_TEMA.rotulo}</span>`;
+    }
     selos.innerHTML = selosHtml;
 
     // ── Corpo — cada bloco existe só se a agenda usar aqueles campos
@@ -279,7 +283,7 @@ function viewRecord(id) {
     );
 
     let paciente = _vwCampo('Nome', app.paciente)
-        + _vwCampo('Idade', app.idade != null && app.idade !== '' ? `${app.idade} anos` : '')
+        + _vwCampo('Idade', idadeLabel(app.idade))
         + _vwContato(app.contato);
     if (temCampo('pedido', agenda)) paciente += _vwCampo('Nº do Pedido', app.pedido);
     html += _vwBloco('Paciente', 'fa-user', paciente);

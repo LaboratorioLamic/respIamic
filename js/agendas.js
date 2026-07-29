@@ -97,6 +97,8 @@ const AGENDAS = {
         janela: { 6: [[420, 660]], default: [[420, 660], [780, 1020]] },
         slotMin: 60,                        // 60 min entre um paciente e outro
         slotUnico: true,
+        limiteSlot: 3,                      // até 3 endereços distintos por horário
+        agrupaPorEndereco: true,            // pacientes do mesmo endereço não consomem vaga extra
         limiteDia: 'slots',                 // 8 seg–sex, 4 no sábado
         semana: { startHour: 7, endHour: 17 },
 
@@ -176,6 +178,13 @@ function faixaEtariaDe(app, agenda) {
     return 'adulto';
 }
 
+// Realce dos endereços marcados como distantes (logística de deslocamento).
+// Usa violeta em vez do roxo `purple`, já reservado ao status "Em andamento".
+const DISTANTE_TEMA = {
+    bg: 'bg-violet-50', border: 'border-violet-300', text: 'text-violet-700',
+    badge: 'bg-violet-600', icon: 'fa-road-circle-exclamation', rotulo: 'DISTANTE'
+};
+
 const FAIXA_ETARIA_TEMA = {
     rn:       { bg: 'bg-fuchsia-50', border: 'border-fuchsia-200', text: 'text-fuchsia-700', badge: 'bg-fuchsia-500', rotulo: 'RN' },
     infantil: { bg: 'bg-orange-50',  border: 'border-orange-200',  text: 'text-orange-700',  badge: 'bg-orange-500',  rotulo: 'INFANTIL' }
@@ -229,10 +238,73 @@ function slotsAgenda(dayOfWeek, agenda) {
     return slots;
 }
 
-// Limite de agendamentos ativos no dia — número fixo ou derivado da grade
+// ── ENDEREÇO E LOTAÇÃO DO HORÁRIO ───────────────────────────
+// Chave de comparação de endereço: logradouro + nº + bairro + cidade.
+// O complemento fica de fora de propósito — apartamentos e blocos diferentes
+// do mesmo prédio contam como UM endereço, que é o caso real da coleta domiciliar.
+function chaveEndereco(app) {
+    const partes = [app.logradouro, app.numero, app.bairro, app.cidade].map(v => normalizeStr(v));
+    return partes.every(p => !p) ? '' : partes.join('|');
+}
+
+function mesmoEndereco(a, b) {
+    const ka = chaveEndereco(a);
+    return !!ka && ka === chaveEndereco(b);
+}
+
+// Quantas vagas o horário já consome: agendamentos do mesmo endereço contam
+// como um só. Sem `agrupaPorEndereco`, cada agendamento vale uma vaga.
+function vagasOcupadasNoSlot(lista, agenda) {
+    const ag = agenda || currentAgenda();
+    if (!ag.agrupaPorEndereco) return lista.length;
+    const chaves = new Set();
+    let semEndereco = 0;
+    lista.forEach(a => {
+        const k = chaveEndereco(a);
+        if (k) chaves.add(k); else semEndereco++;
+    });
+    return chaves.size + semEndereco;
+}
+
+// Vagas consumidas no DIA — soma a lotação de cada horário. O agrupamento por
+// endereço vale dentro do mesmo horário: o mesmo endereço em turnos diferentes
+// são duas visitas e ocupam duas vagas.
+function vagasOcupadasNoDia(lista, agenda) {
+    const ag = agenda || currentAgenda();
+    if (!ag.agrupaPorEndereco) return lista.length;
+    const porHora = new Map();
+    lista.forEach(a => {
+        if (!porHora.has(a.horaInicio)) porHora.set(a.horaInicio, []);
+        porHora.get(a.horaInicio).push(a);
+    });
+    let total = 0;
+    porHora.forEach(doSlot => { total += vagasOcupadasNoSlot(doSlot, ag); });
+    return total;
+}
+
+// Um horário aceita mais um agendamento? Retorna true se ainda há vaga OU se o
+// candidato repete um endereço já marcado naquele horário (carona, sem vaga extra).
+function slotAceita(candidato, lista, agenda) {
+    const ag = agenda || currentAgenda();
+    const limite = limiteDoSlot(ag);
+    if (limite == null) return true;
+    if (ag.agrupaPorEndereco && candidato && lista.some(a => mesmoEndereco(a, candidato))) return true;
+    return vagasOcupadasNoSlot(lista, ag) < limite;
+}
+
+// Vagas por horário — `limiteSlot` quando definido, 1 nas agendas de slot único,
+// e sem teto por horário nas agendas de horário livre.
+function limiteDoSlot(agenda) {
+    const ag = agenda || currentAgenda();
+    if (ag.limiteSlot) return ag.limiteSlot;
+    return ag.slotUnico ? 1 : null;
+}
+
+// Limite de vagas ativas no dia — número fixo ou derivado da grade.
+// Com `limiteSlot`, cada horário da grade comporta mais de um endereço.
 function limiteDoDia(dayOfWeek, agenda) {
     const ag = agenda || currentAgenda();
-    if (ag.limiteDia === 'slots') return slotsAgenda(dayOfWeek, ag).length;
+    if (ag.limiteDia === 'slots') return slotsAgenda(dayOfWeek, ag).length * (limiteDoSlot(ag) || 1);
     return ag.limiteDia;
 }
 

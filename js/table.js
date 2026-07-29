@@ -85,7 +85,7 @@ function renderTable() {
                 <div class="font-bold text-slate-700 uppercase text-xs flex items-center gap-2 ${isCanceled ? 'line-through' : ''}">
                     ${app.paciente} ${isOverdue ? '<span class="bg-red-600 text-white text-[8px] px-1 rounded"><i class="fas fa-exclamation-triangle mr-1"></i>ATRASADO</span>' : ''} ${temaFaixa && !isComplete && !isCanceled ? `<span class="${temaFaixa.badge} text-white text-[8px] px-1 rounded">${temaFaixa.rotulo}</span>` : ''}
                 </div>
-                <div class="text-[10px] text-slate-400 font-bold">${app.idade} ano${app.idade === 1 ? '' : 's'}</div>
+                <div class="text-[10px] text-slate-400 font-bold">${idadeLabel(app.idade)}</div>
             </td>
             <td class="p-5 ${temCampo('exame', agenda) ? '' : 'hidden'}">
                 <span class="px-2 py-1 rounded text-[9px] font-black uppercase border ${exameColor}">${app.exame || '—'}</span>
@@ -97,6 +97,7 @@ function renderTable() {
             <td class="p-5 ${temCampo('endereco', agenda) ? '' : 'hidden'}">
                 <div class="font-bold text-slate-700 text-xs">${[app.logradouro, app.numero].filter(Boolean).join(', ') || '—'}${app.complemento ? ` <span class="text-slate-400 font-normal">(${app.complemento})</span>` : ''}</div>
                 <div class="text-[10px] text-slate-400 font-bold uppercase">${[app.bairro, app.cidade].filter(Boolean).join(' · ')}</div>
+                ${app.distante ? `<div class="mt-1"><span class="inline-flex items-center gap-1 ${DISTANTE_TEMA.badge} text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase"><i class="fas ${DISTANTE_TEMA.icon}"></i>${DISTANTE_TEMA.rotulo}</span></div>` : ''}
                 ${app.pontoReferencia ? `<div class="text-[10px] text-slate-400 mt-0.5"><i class="fas fa-location-dot mr-1"></i>${app.pontoReferencia}</div>` : ''}
             </td>
             <td class="p-5 ${temCampo('coletador', agenda) ? '' : 'hidden'}">

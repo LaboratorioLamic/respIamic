@@ -209,13 +209,16 @@ function renderMonthView() {
         }).join('');
         const canceledX = canceledApps.map(() => '<div class="h-2 w-2 rounded-full bg-red-500 flex items-center justify-center text-white text-[10px] font-black">×</div>').join('');
         const holidayIcon = isHoliday ? '<div class="absolute top-1 right-1 text-red-400"><i class="fas fa-calendar-times text-xs"></i></div>' : '';
+        // Aviso de deslocamento — o dia tem ao menos uma coleta em localidade distante
+        const distanteIcon = !isHoliday && temCampo('endereco', agenda) && dayApps.some(a => a.distante)
+            ? `<div class="absolute top-1 right-1 ${DISTANTE_TEMA.text}" title="Há coleta em localidade distante"><i class="fas ${DISTANTE_TEMA.icon} text-xs"></i></div>` : '';
         const isToday = calendarDate.getTime() === today.getTime();
 
         body.innerHTML += `<div onclick="${clickAction}" class="calendar-day p-3 h-24 border rounded-2xl flex flex-col items-center group relative ${boxClass} ${isToday ? 'calendar-day-today' : ''}">
-            ${holidayIcon}
+            ${holidayIcon}${distanteIcon}
             <span class="font-black text-sm ${textColor}">${day}</span>
             <div class="mt-2 flex gap-1 justify-center flex-wrap">${dots}${canceledX}</div>
-            ${dayApps.length && !isHoliday ? `<span class="text-[8px] font-black uppercase tracking-wider mt-auto text-slate-500">${dayApps.length}/${limiteDia} Vagas</span>` : ''}
+            ${dayApps.length && !isHoliday ? `<span class="text-[8px] font-black uppercase tracking-wider mt-auto text-slate-500">${vagasOcupadasNoDia(dayApps, agenda)}/${limiteDia} Vagas</span>` : ''}
             ${isHoliday ? '<span class="text-[8px] font-black uppercase tracking-wider mt-auto text-red-400">Feriado</span>' : ''}
         </div>`;
     }
@@ -247,7 +250,9 @@ function renderWeekView() {
         const dateStr = toDateStr(d);
         const isToday = d.getTime() === today.getTime();
         const isHoliday = !!holidays[dateStr];
-        const activeCount = appointments.filter(a => a.data === dateStr && a.status !== 'Cancelado').length;
+        // Vagas consumidas — agendamentos do mesmo endereço dividem uma vaga
+        const activeCount = vagasOcupadasNoDia(
+            appointments.filter(a => a.data === dateStr && a.status !== 'Cancelado'), agenda);
 
         const isClosed = !agenda.dias.includes(d.getDay());
 
@@ -298,24 +303,37 @@ function renderWeekView() {
         const startWindows = allowedStartWindow(d.getDay());
         const diaApps = appointments.filter(a => a.data === dateStr && a.status !== 'Cancelado');
         const activeCount = diaApps.length;
-        const dayOpen = startWindows.length > 0 && !isHoliday && !isPastDate && activeCount < limiteDoDia(d.getDay(), agenda);
-        const ocupados = new Set(diaApps.map(a => a.horaInicio));
+        const dayOpen = startWindows.length > 0 && !isHoliday && !isPastDate
+            && vagasOcupadasNoDia(diaApps, agenda) < limiteDoDia(d.getDay(), agenda);
 
-        // Slots de fundo
+        // Slots de fundo (+ botões de encaixe, renderizados acima dos cards)
         let slots = '';
+        let addBtns = '';
         for (let m = viewStart; m < viewEnd; m += slotMin) {
             const faixa = faixaDoMinuto(m, startWindows);
             const inWindow = !!faixa;
             // Alinhamento é relativo ao início da faixa (turno) em que o minuto cai
             const alinhado = !agenda.slotMin || !faixa || (m - faixa[0]) % agenda.slotMin === 0;
             const hora = minToTime(m);
-            const livre = !agenda.slotUnico || !ocupados.has(hora);
+            // Horário disponível: ainda cabe um endereço novo na lotação do slot
+            const livre = !agenda.slotUnico
+                || slotAceita(null, diaApps.filter(a => a.horaInicio === hora), agenda);
             const selectable = dayOpen && inWindow && alinhado && livre;
+            const top = ((m - viewStart) / 60) * WEEK_HOUR_PX;
             slots += `<div class="week-slot ${m % 60 === 0 ? 'week-slot-hour' : ''} ${inWindow ? 'week-slot-open' : 'week-slot-closed'} ${selectable ? 'week-slot-selectable' : ''}"
-                style="top:${((m - viewStart) / 60) * WEEK_HOUR_PX}px;height:${(slotMin / 60) * WEEK_HOUR_PX}px"
+                style="top:${top}px;height:${(slotMin / 60) * WEEK_HOUR_PX}px"
                 ${selectable ? `onclick="openRecordModalWithDate('${dateStr}','${hora}')" title="Agendar às ${hora}"` : ''}>
                 ${selectable ? '<span class="week-slot-plus"><i class="fas fa-plus"></i></span>' : ''}
             </div>`;
+
+            // Horário já ocupado e com vaga sobrando: os cards cobrem a célula,
+            // então o encaixe ganha um "+" próprio acima deles.
+            if (selectable && diaApps.some(a => a.horaInicio === hora)) {
+                addBtns += `<button type="button" class="week-slot-add"
+                    style="top:${top + 3}px"
+                    onclick="event.stopPropagation(); openRecordModalWithDate('${dateStr}','${hora}')"
+                    title="Encaixar outro agendamento às ${hora}"><i class="fas fa-plus"></i></button>`;
+            }
         }
 
         // Eventos do dia, com layout de sobreposição
@@ -345,17 +363,26 @@ function renderWeekView() {
                 : temCampo('endereco', agenda)
                     ? [a.logradouro, a.numero].filter(Boolean).join(', ') || agenda.nome
                     : (temCampo('abstinencia', agenda) && a.abstinencia != null ? `Abstinência: ${a.abstinencia} dia(s)` : agenda.nome);
-            const tooltip = `${a.horaInicio} – ${a.horaFim} | ${a.paciente} (${a.idade} anos)\n${detalhe}\nStatus: ${a.status}\nAtendente: ${formatAtendenteName(a.atendente)}`;
+            // Dividindo o horário com outro paciente, o card fica estreito:
+            // encurta o nome para primeiro nome + iniciais.
+            const dividindo = ev.cols > 1;
+            const idade = idadeLabel(a.idade);
+            const nomeExibido = dividindo ? abreviarNome(a.paciente) : a.paciente;
+            const distante = temCampo('endereco', agenda) && a.distante;
+            const tooltip = `${a.horaInicio} – ${a.horaFim} | ${a.paciente}${idade ? ` (${idade})` : ''}\n${detalhe}${distante ? '\n⚠ Localidade distante' : ''}\nStatus: ${a.status}\nAtendente: ${formatAtendenteName(a.atendente)}`;
 
-            return `<div class="week-event ${theme.bg} ${theme.border} ${theme.canceled ? 'week-event-canceled' : ''}"
+            return `<div class="week-event ${theme.bg} ${theme.border} ${theme.canceled ? 'week-event-canceled' : ''} ${distante ? 'card-distante' : ''}"
                 style="top:${top}px;height:${height}px;left:calc(${leftPct}% + 2px);width:calc(${width}% - 5px)"
                 onclick="event.stopPropagation(); viewRecord(${a.id})"
                 title="${tooltip.replace(/"/g, '&quot;')}">
                 <span class="week-event-accent ${theme.accent}"></span>
                 <div class="week-event-body">
-                    <div class="week-event-time ${theme.text}">${a.horaInicio}${compact ? '' : ` – ${a.horaFim}`}</div>
-                    <div class="week-event-name">${a.paciente}</div>
-                    ${compact ? '' : `<div class="week-event-meta ${theme.text}">${detalhe}${theme.faixa ? ` · ${FAIXA_ETARIA_TEMA[theme.faixa].rotulo}` : ''}</div>`}
+                    <div class="week-event-time ${theme.text}">
+                        <span>${a.horaInicio}${compact || dividindo ? '' : ` – ${a.horaFim}`}</span>
+                        ${idade ? `<span class="week-event-idade">${idade}</span>` : ''}
+                    </div>
+                    <div class="week-event-name">${nomeExibido}</div>
+                    ${compact ? '' : `<div class="week-event-meta ${theme.text}">${distante ? `<i class="fas ${DISTANTE_TEMA.icon} ${DISTANTE_TEMA.text} mr-1" title="Localidade distante"></i>` : ''}${detalhe}${theme.faixa ? ` · ${FAIXA_ETARIA_TEMA[theme.faixa].rotulo}` : ''}</div>`}
                 </div>
                 ${theme.overdue ? '<span class="week-event-badge"><i class="fas fa-exclamation-triangle"></i></span>' : ''}
             </div>`;
@@ -372,7 +399,7 @@ function renderWeekView() {
         }
 
         colsHtml += `<div class="week-col ${isToday ? 'week-col-today' : ''} ${isHoliday || !startWindows.length ? 'week-col-off' : ''}" style="height:${colHeight}px">
-            ${slots}${events}${nowLine}
+            ${slots}${events}${addBtns}${nowLine}
         </div>`;
     }
 

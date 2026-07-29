@@ -96,6 +96,7 @@ function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
         record.bairro      = document.getElementById('reg-bairro').value.trim().toUpperCase();
         record.cidade      = document.getElementById('reg-cidade').value.trim().toUpperCase();
         record.estado      = document.getElementById('reg-estado').value.trim().toUpperCase();
+        record.distante    = document.getElementById('reg-distante').checked;
     }
     if (temCampo('pontoReferencia', agenda)) {
         record.pontoReferencia = document.getElementById('reg-ponto-referencia').value.trim();

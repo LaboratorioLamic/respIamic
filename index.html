@@ -744,10 +744,13 @@
 
                 <!-- ══ ENDEREÇO DA COLETA (agendas domiciliares) ══ -->
                 <div class="col-span-1 md:col-span-4 hidden" data-agenda-campo="endereco">
-                    <div class="bg-amber-50/60 p-5 rounded-2xl border border-amber-200">
+                    <div id="reg-endereco-box" class="bg-amber-50/60 p-5 rounded-2xl border border-amber-200 transition-colors duration-200">
                         <div class="flex items-center gap-2 mb-4">
-                            <i class="fas fa-house-medical text-amber-600"></i>
+                            <i id="reg-endereco-icone" class="fas fa-house-medical text-amber-600"></i>
                             <label class="text-[11px] font-black text-slate-700 uppercase tracking-wider">Endereço da Coleta</label>
+                            <span id="reg-distante-selo" class="hidden items-center gap-1.5 ml-1 px-2 py-1 rounded-full bg-violet-600 text-white text-[9px] font-black uppercase tracking-wide">
+                                <i class="fas fa-road-circle-exclamation"></i> Localidade distante
+                            </span>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
                             <div class="md:col-span-3">
@@ -800,16 +803,26 @@
                             </div>
                         </div>
 
-                        <div class="mt-4">
-                            <button type="button" id="btn-mapa-toggle" onclick="toggleMapaEndereco()"
-                                class="group inline-flex items-center gap-2.5 pl-3.5 pr-4 py-2.5 bg-amber-600 hover:bg-amber-700 active:scale-95 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
-                                <i class="fas fa-map-location-dot text-white text-sm transition-transform duration-300 group-hover:scale-125 group-hover:-rotate-6"></i>
-                                <span id="btn-mapa-label" class="text-[11px] font-black text-white uppercase tracking-wide">Ver no mapa</span>
-                                <i class="fas fa-chevron-down text-white text-[10px] transition-transform duration-300"></i>
-                            </button>
-                            <div id="mapa-endereco-container" class="hidden mt-3 rounded-xl overflow-hidden border border-amber-200 shadow-sm">
-                                <iframe id="mapa-endereco-iframe" class="w-full h-64 border-0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                        <div class="mt-4 flex flex-wrap items-start justify-between gap-3">
+                            <div class="flex-1 min-w-[220px]">
+                                <button type="button" id="btn-mapa-toggle" onclick="toggleMapaEndereco()"
+                                    class="group inline-flex items-center gap-2.5 pl-3.5 pr-4 py-2.5 bg-amber-600 hover:bg-amber-700 active:scale-95 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                                    <i class="fas fa-map-location-dot text-white text-sm transition-transform duration-300 group-hover:scale-125 group-hover:-rotate-6"></i>
+                                    <span id="btn-mapa-label" class="text-[11px] font-black text-white uppercase tracking-wide">Ver no mapa</span>
+                                    <i class="fas fa-chevron-down text-white text-[10px] transition-transform duration-300"></i>
+                                </button>
+                                <div id="mapa-endereco-container" class="hidden mt-3 rounded-xl overflow-hidden border border-amber-200 shadow-sm">
+                                    <iframe id="mapa-endereco-iframe" class="w-full h-64 border-0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                                </div>
                             </div>
+                            <label id="reg-distante-label" for="reg-distante"
+                                class="inline-flex items-center gap-2 cursor-pointer select-none pl-3 pr-3.5 py-2.5 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-violet-300 transition-all duration-200"
+                                title="Marque quando o endereço fica em localidade distante (deslocamento maior)">
+                                <input type="checkbox" id="reg-distante" onchange="atualizarDistanteUI()"
+                                    class="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500 cursor-pointer">
+                                <i id="reg-distante-icone" class="fas fa-road-circle-exclamation text-slate-300 text-sm transition-colors duration-200"></i>
+                                <span id="reg-distante-texto" class="text-[11px] font-black text-slate-500 uppercase tracking-wide transition-colors duration-200">Distante</span>
+                            </label>
                         </div>
                     </div>
                 </div>

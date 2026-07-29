@@ -46,16 +46,24 @@ function validateAppointment(dataObj) {
         a.data === dataObj.data && a.id !== dataObj.id && a.status !== 'Cancelado'
     );
 
-    // Um paciente por slot
+    // Lotação do horário — nas agendas que agrupam por endereço, vários pacientes
+    // do MESMO endereço dividem uma única vaga (a coleta é a mesma visita).
     if (agenda.slotUnico && dataObj.status !== 'Cancelado') {
-        if (doDia.some(a => a.horaInicio === dataObj.horaInicio)) {
-            return `Já existe um agendamento às ${dataObj.horaInicio}. Escolha outro horário.`;
+        const noSlot = doDia.filter(a => a.horaInicio === dataObj.horaInicio);
+        if (!slotAceita(dataObj, noSlot, agenda)) {
+            const limiteSlot = limiteDoSlot(agenda);
+            return limiteSlot > 1
+                ? `O horário das ${dataObj.horaInicio} já tem ${limiteSlot} endereços. Só é possível encaixar mais um agendamento se for no mesmo endereço de um dos existentes.`
+                : `Já existe um agendamento às ${dataObj.horaInicio}. Escolha outro horário.`;
         }
     }
 
-    // Limite diário
+    // Limite diário — conta vagas (endereços), não agendamentos
     const limite = limiteDoDia(dayOfWeek, agenda);
-    if (doDia.length >= limite && dataObj.status !== 'Cancelado') {
+    const vagasDia = vagasOcupadasNoDia(doDia, agenda);
+    const jaTemEndereco = agenda.agrupaPorEndereco
+        && doDia.some(a => a.horaInicio === dataObj.horaInicio && mesmoEndereco(a, dataObj));
+    if (vagasDia >= limite && !jaTemEndereco && dataObj.status !== 'Cancelado') {
         return `Limite diário alcançado (Máx ${limite} ativos).`;
     }
 

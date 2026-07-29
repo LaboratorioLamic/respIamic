@@ -18,6 +18,7 @@ const _auditFields = [
     { key: 'bairro',     label: 'Bairro',       fmt: v => v || '—' },
     { key: 'cidade',     label: 'Cidade',       fmt: v => v || '—' },
     { key: 'cep',        label: 'CEP',          fmt: v => v || '—' },
+    { key: 'distante',   label: 'Localidade distante', fmt: v => v ? 'Sim' : 'Não' },
     { key: 'pontoReferencia', label: 'Ponto de referência', fmt: v => v || '—' },
     { key: 'coletador',  label: 'Coletador',    fmt: v => v || '—' },
     { key: 'status',     label: 'Status',       fmt: v => v || '—' },

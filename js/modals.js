@@ -70,6 +70,8 @@ function openRecordModal() {
     if (temCampo('endereco', currentAgenda())) {
         document.getElementById('reg-cidade').value = 'JUAZEIRO DO NORTE';
         document.getElementById('reg-estado').value = 'CE';
+        document.getElementById('reg-distante').checked = false;
+        atualizarDistanteUI();
     }
 
     document.getElementById('modal-title').innerText = `Novo Agendamento — ${currentAgenda().nome}`;
@@ -96,10 +98,10 @@ function primeiroSlotLivre(iso) {
     if (!agenda.slotMin) return null;
     const [y, m, d] = iso.split('-').map(Number);
     const slots = slotsAgenda(new Date(y, m - 1, d).getDay(), agenda);
-    const ocupados = new Set(
-        appointments.filter(a => a.data === iso && a.status !== 'Cancelado').map(a => a.horaInicio)
+    const doDia = appointments.filter(a => a.data === iso && a.status !== 'Cancelado');
+    const livre = slots.map(minToTime).find(h =>
+        slotAceita(null, doDia.filter(a => a.horaInicio === h), agenda)
     );
-    const livre = slots.map(minToTime).find(h => !ocupados.has(h));
     return livre || null;
 }
 
@@ -172,8 +174,11 @@ function openDayDetails(dateStr) {
                 : '<div class="h-8 w-8 rounded-md border border-slate-200 bg-slate-50 text-slate-400 flex items-center justify-center shadow-sm" title="Checklist Incompleto"><i class="fas fa-clipboard-list"></i></div>';
         }
         
+        // Localidade distante — contorno de destaque sem perder a cor do status
+        const distanteClass = temCampo('endereco', agenda) && app.distante ? 'card-distante' : '';
+
         return `
-        <div class="border rounded-xl p-4 ${bgClass} relative overflow-hidden">
+        <div class="border rounded-xl p-4 ${bgClass} ${distanteClass} relative overflow-hidden">
             <div class="absolute left-0 top-0 bottom-0 w-1.5 ${accentColor}"></div>
             ${overdueBadge}
             <div class="absolute right-4 ${isOverdue ? 'top-8' : 'top-4'}">
@@ -181,7 +186,7 @@ function openDayDetails(dateStr) {
             </div>
             <div class="flex justify-between items-start pl-2">
                 <div>
-                    <div class="font-black ${app.status === 'Cancelado' ? 'text-slate-400 line-through' : 'text-navy-900'} text-sm uppercase">${app.horaInicio} - ${app.horaFim} | ${app.paciente} (${app.idade} anos)</div>
+                    <div class="font-black ${app.status === 'Cancelado' ? 'text-slate-400 line-through' : 'text-navy-900'} text-sm uppercase">${app.horaInicio} - ${app.horaFim} | ${app.paciente} (${idadeLabel(app.idade)})</div>
                     <div class="text-[10px] font-black ${textColor} uppercase">${
                         temCampo('exame', agenda)
                             ? `${app.exame} | ${app.substrato}${app.metano === 'Sim' ? ' (metano)' : ''}`
@@ -189,6 +194,7 @@ function openDayDetails(dateStr) {
                                 ? `${[app.logradouro, app.numero].filter(Boolean).join(', ')}${app.bairro ? ' — ' + app.bairro : ''}`
                                 : (temCampo('abstinencia', agenda) && app.abstinencia != null ? `Abstinência: ${app.abstinencia} dia(s)` : agenda.nome)
                     } ${_faixaBadgeDia(app, agenda)}</div>
+                    ${temCampo('endereco', agenda) && app.distante ? `<div class="mt-1"><span class="inline-flex items-center gap-1 ${DISTANTE_TEMA.badge} text-white text-[8px] font-black px-1.5 py-0.5 rounded"><i class="fas ${DISTANTE_TEMA.icon}"></i>${DISTANTE_TEMA.rotulo}</span></div>` : ''}
                     ${temCampo('pontoReferencia', agenda) && app.pontoReferencia ? `<div class="text-[10px] font-bold text-slate-500 mt-1"><i class="fas fa-location-dot mr-1"></i>${app.pontoReferencia}</div>` : ''}
                 </div>
             </div>
@@ -219,7 +225,7 @@ function openDayDetails(dateStr) {
     const scheduleBtn = document.querySelector('button[onclick*="openRecordModalWithDate"]');
     if (scheduleBtn) {
         const [_y, _m, _d] = dateStr.split('-').map(Number);
-        if (activeApps.length >= limiteDoDia(new Date(_y, _m - 1, _d).getDay(), agenda)) {
+        if (vagasOcupadasNoDia(activeApps, agenda) >= limiteDoDia(new Date(_y, _m - 1, _d).getDay(), agenda)) {
             scheduleBtn.style.display = 'none';
         } else {
             scheduleBtn.style.display = 'block';
@@ -377,6 +383,8 @@ function editRecord(id) {
     document.getElementById('reg-bairro').value = app.bairro || '';
     document.getElementById('reg-cidade').value = app.cidade || '';
     document.getElementById('reg-estado').value = app.estado || '';
+    document.getElementById('reg-distante').checked = !!app.distante;
+    atualizarDistanteUI();
     document.getElementById('reg-ponto-referencia').value = app.pontoReferencia || '';
     document.getElementById('reg-coletador').value = app.coletador || '';
     document.getElementById('reg-duracao').value = app.duracao;

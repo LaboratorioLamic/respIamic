@@ -24,7 +24,9 @@ function agendaStats(agendaId) {
 
     // Capacidade do dia corrente (varia por dia em agendas com limiteDia: 'slots')
     const capacidade = limiteDoDia(new Date().getDay(), agenda);
-    const ocupacao = capacidade ? Math.min(100, Math.round((doDia.length / capacidade) * 100)) : 0;
+    const ocupacao = capacidade
+        ? Math.min(100, Math.round((vagasOcupadasNoDia(doDia, agenda) / capacidade) * 100))
+        : 0;
 
     return {
         hoje: doDia.length,

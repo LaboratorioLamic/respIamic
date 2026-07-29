@@ -16,6 +16,24 @@ function formatAtendenteName(fullName) {
     return `${parts[0]} ${parts[1]}`;
 }
 
+// Rótulo de idade. O cadastro guarda só anos inteiros, então bebês entram como
+// 0 — nesse caso mostramos "< 1 ano" em vez do confuso "0 anos".
+function idadeLabel(idade) {
+    const n = Number(idade);
+    if (idade === null || idade === undefined || idade === '' || isNaN(n)) return '';
+    if (n <= 0) return '< 1 ano';
+    return `${n} ${n === 1 ? 'ano' : 'anos'}`;
+}
+
+// Nome encurtado para cards estreitos: mantém o primeiro nome e reduz o resto a
+// iniciais ("MARIA VALENTINA OLIVEIRA LIMA" → "MARIA V. O. L.").
+function abreviarNome(nome) {
+    const partes = String(nome || '').trim().split(/\s+/).filter(Boolean);
+    if (partes.length <= 1) return partes[0] || '';
+    const iniciais = partes.slice(1).map(p => `${p[0].toUpperCase()}.`).join(' ');
+    return `${partes[0]} ${iniciais}`;
+}
+
 // CÁLCULOS DE HORÁRIO — a duração vem da configuração da agenda ativa
 function calculateTimes() {
     const agenda = currentAgenda();
@@ -239,6 +257,43 @@ function toggleMapaEndereco() {
     container.classList.remove('hidden');
     label.textContent = 'Ocultar mapa';
     chevron.style.transform = 'rotate(180deg)';
+}
+
+// MARCA "DISTANTE" — realça a caixa de endereço quando o local exige deslocamento maior
+function atualizarDistanteUI() {
+    const chk = document.getElementById('reg-distante');
+    if (!chk) return;
+    const ativo = chk.checked;
+
+    const box = document.getElementById('reg-endereco-box');
+    const icone = document.getElementById('reg-endereco-icone');
+    const selo = document.getElementById('reg-distante-selo');
+    const label = document.getElementById('reg-distante-label');
+    const chkIcone = document.getElementById('reg-distante-icone');
+    const chkTexto = document.getElementById('reg-distante-texto');
+
+    box.classList.toggle('bg-amber-50/60', !ativo);
+    box.classList.toggle('border-amber-200', !ativo);
+    box.classList.toggle('bg-violet-50', ativo);
+    box.classList.toggle('border-violet-300', ativo);
+
+    icone.classList.toggle('fa-house-medical', !ativo);
+    icone.classList.toggle('text-amber-600', !ativo);
+    icone.classList.toggle('fa-road-circle-exclamation', ativo);
+    icone.classList.toggle('text-violet-600', ativo);
+
+    selo.classList.toggle('hidden', !ativo);
+    selo.classList.toggle('inline-flex', ativo);
+
+    label.classList.toggle('border-slate-200', !ativo);
+    label.classList.toggle('bg-white', !ativo);
+    label.classList.toggle('border-violet-400', ativo);
+    label.classList.toggle('bg-violet-100', ativo);
+
+    chkIcone.classList.toggle('text-slate-300', !ativo);
+    chkIcone.classList.toggle('text-violet-600', ativo);
+    chkTexto.classList.toggle('text-slate-500', !ativo);
+    chkTexto.classList.toggle('text-violet-700', ativo);
 }
 
 // BUSCA DE ENDEREÇO POR CEP (ViaCEP) — preenche logradouro/bairro/cidade automaticamente
