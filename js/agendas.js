@@ -105,7 +105,7 @@ const AGENDAS = {
         duracao: { tipo: 'fixa', fixaMin: 60 },
 
         campos: { exame: false, substrato: false, metano: false, idade: true, pedido: true, abstinencia: false, endereco: true, pontoReferencia: true, coletador: true, multiPaciente: true },
-        faixaEtaria: ['rn', 'infantil'],
+        faixaEtaria: ['rn', 'infantil', 'adolescente', 'adulto'],
         substratos: {},
 
         checklist: ['orientacao', 'endereco', 'anexo'],
@@ -113,7 +113,7 @@ const AGENDAS = {
 
         kpis: ['total', 'concluidos', 'andamento', 'pendentes', 'cancelados'],
         charts: ['barMensal', 'donutStatus'],
-        legenda: ['agendado', 'cancelado', 'concluido', 'atrasado', 'andamento', 'rn', 'infantil']
+        legenda: ['cancelado', 'concluido', 'atrasado', 'andamento', 'rn', 'infantil', 'adolescente', 'adulto']
     }
 };
 
@@ -168,13 +168,15 @@ function temChecklist(nome, agenda) {
 }
 
 // ── FAIXA ETÁRIA ────────────────────────────────────────────
-// Retorna 'rn', 'infantil' ou 'adulto', respeitando os realces que a agenda usa.
+// Retorna 'rn', 'infantil', 'adolescente' ou 'adulto', respeitando os realces
+// que a agenda usa. 'adulto' só vira realce próprio nas agendas que o declaram.
 function faixaEtariaDe(app, agenda) {
     const ag = agenda || currentAgenda();
     const idade = Number(app.idade);
     if (isNaN(idade)) return 'adulto';
     if (idade < 1 && ag.faixaEtaria.includes('rn')) return 'rn';
     if (idade < 12 && ag.faixaEtaria.includes('infantil')) return 'infantil';
+    if (idade < 18 && ag.faixaEtaria.includes('adolescente')) return 'adolescente';
     return 'adulto';
 }
 
@@ -186,9 +188,19 @@ const DISTANTE_TEMA = {
 };
 
 const FAIXA_ETARIA_TEMA = {
-    rn:       { bg: 'bg-fuchsia-50', border: 'border-fuchsia-200', text: 'text-fuchsia-700', badge: 'bg-fuchsia-500', rotulo: 'RN' },
-    infantil: { bg: 'bg-orange-50',  border: 'border-orange-200',  text: 'text-orange-700',  badge: 'bg-orange-500',  rotulo: 'INFANTIL' }
+    rn:          { bg: 'bg-fuchsia-50', border: 'border-fuchsia-200', text: 'text-fuchsia-700', badge: 'bg-fuchsia-500', rotulo: 'RN' },
+    infantil:    { bg: 'bg-orange-50',  border: 'border-orange-200',  text: 'text-orange-700',  badge: 'bg-orange-500',  rotulo: 'INFANTIL' },
+    adolescente: { bg: 'bg-amber-50',   border: 'border-amber-200',   text: 'text-amber-700',   badge: 'bg-amber-500',   rotulo: 'ADOLESCENTE' },
+    adulto:      { bg: 'bg-blue-50',    border: 'border-blue-200',    text: 'text-blue-700',    badge: 'bg-blue-500',    rotulo: 'ADULTO' }
 };
+
+// Tema de realce da faixa — só existe se a agenda declarar aquela faixa,
+// senão o agendamento cai na cor padrão da agenda.
+function temaFaixaEtaria(app, agenda) {
+    const ag = agenda || currentAgenda();
+    const faixa = faixaEtariaDe(app, ag);
+    return ag.faixaEtaria.includes(faixa) ? FAIXA_ETARIA_TEMA[faixa] : null;
+}
 
 // ── JANELA HORÁRIA ──────────────────────────────────────────
 // Retorna a LISTA de faixas [inicioMin, fimMin] de horários de INÍCIO

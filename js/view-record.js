@@ -247,7 +247,7 @@ function viewRecord(id) {
 
     const atrasado = _vwAtrasado(app);
     const tema = VIEW_STATUS_TEMA[app.status] || VIEW_STATUS_TEMA['Agendado'];
-    const faixa = FAIXA_ETARIA_TEMA[faixaEtariaDe(app, agenda)];
+    const faixa = temaFaixaEtaria(app, agenda);
 
     // ── Cabeçalho
     document.getElementById('view-agenda-nome').textContent = agenda.nome;
@@ -271,7 +271,8 @@ function viewRecord(id) {
         selosHtml += `<span class="view-selo ${DISTANTE_TEMA.bg} ${DISTANTE_TEMA.text}"><i class="fas ${DISTANTE_TEMA.icon}"></i> ${DISTANTE_TEMA.rotulo}</span>`;
     }
     if (temCampo('multiPaciente', agenda) && (app.acompanhantes || []).length) {
-        selosHtml += `<span class="view-selo bg-slate-100 text-slate-700"><i class="fas fa-users"></i> ${totalPacientes(app)} pacientes</span>`;
+        const r = resumoPacientes(app);
+        selosHtml += `<span class="view-selo bg-slate-100 text-slate-700"><i class="fas fa-users"></i> ${r.concluidos}/${r.total} concluídos</span>`;
     }
     selos.innerHTML = selosHtml;
 
@@ -293,11 +294,13 @@ function viewRecord(id) {
 
     // Demais pessoas atendidas na mesma visita
     if (temCampo('multiPaciente', agenda) && (app.acompanhantes || []).length) {
-        const linhas = app.acompanhantes.map((a, i) =>
-            _vwCampo(`Paciente ${i + 2}`,
-                `${a.nome}${a.idade != null ? ` · ${idadeLabel(a.idade)}` : ''}${a.pedido ? ` · Pedido ${a.pedido}` : ''}`,
-                { largo: true })
-        ).join('');
+        const linhas = app.acompanhantes.map((a, i) => {
+            const st = statusPaciente(a);
+            const cor = st === 'Concluído' ? 'text-green-600' : st === 'Cancelado' ? 'text-slate-400' : 'text-amber-600';
+            return _vwCampo(`Paciente ${i + 2}`,
+                `${a.nome}${a.idade != null ? ` · ${idadeLabel(a.idade)}` : ''}${a.pedido ? ` · Pedido ${a.pedido}` : ''} · ${st}`,
+                { largo: true, classe: cor });
+        }).join('');
         html += _vwBloco(`Outros pacientes na visita (${app.acompanhantes.length})`, 'fa-users', linhas);
     }
 
@@ -341,6 +344,13 @@ function viewRecord(id) {
     // Barra superior na cor da agenda ativa
     const barra = document.getElementById('view-barra-agenda');
     if (barra) barra.className = `view-barra ${cores.accent}`;
+
+    // Conclusão direta — agenda já encerrada (concluída ou cancelada) não conclui
+    const btnConcluir = document.getElementById('view-btn-concluir');
+    if (btnConcluir) {
+        const encerrada = app.status === 'Cancelado' || app.status === 'Concluído';
+        btnConcluir.style.display = encerrada ? 'none' : '';
+    }
 
     // Excluir só para administradores, como no restante do sistema
     const btnExcluir = document.getElementById('view-btn-excluir');

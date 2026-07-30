@@ -100,6 +100,19 @@ function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
     }
     if (temCampo('multiPaciente', agenda)) {
         record.acompanhantes = lerAcompanhantes();
+        // Concluir pela tela de edição encerra a visita inteira; a conclusão
+        // fracionada é feita pelo botão "Concluir Agenda" da visualização.
+        if (statusVal === 'Concluído') {
+            record.acompanhantes = record.acompanhantes.map(a =>
+                statusPaciente(a) === 'Cancelado' ? a : { ...a, status: 'Concluído' });
+        } else if (statusVal !== 'Cancelado') {
+            record.status = statusDerivadoDaVisita(record);
+            record.chkConcluido = record.status === 'Concluído';
+        } else {
+            // Cancelar a visita cancela todo mundo que ainda estava pendente
+            record.acompanhantes = record.acompanhantes.map(a =>
+                statusPaciente(a) === 'Concluído' ? a : { ...a, status: 'Cancelado' });
+        }
     }
     if (temCampo('pontoReferencia', agenda)) {
         record.pontoReferencia = document.getElementById('reg-ponto-referencia').value.trim();

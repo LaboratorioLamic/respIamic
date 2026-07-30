@@ -103,8 +103,8 @@ function getAppointmentTheme(app, isPastDate) {
     if (app.status === 'Concluído') return { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', accent: 'bg-green-600' };
 
     const faixa = faixaEtariaDe(app, agenda);
-    if (FAIXA_ETARIA_TEMA[faixa]) {
-        const t = FAIXA_ETARIA_TEMA[faixa];
+    const t = temaFaixaEtaria(app, agenda);
+    if (t) {
         return { bg: t.bg, border: t.border, text: t.text, accent, faixa };
     }
     return { bg: cores.bg, border: cores.border, text: cores.text, accent };
@@ -129,7 +129,9 @@ function renderMonthView() {
 
         // Exclui os cancelados da contagem de lotação do dia
         const dayApps = appointments.filter(a => a.data === dateStr && a.status !== 'Cancelado');
-        const faixaDestaque = ['rn', 'infantil'].find(f => dayApps.some(a => faixaEtariaDe(a, agenda) === f));
+        const faixaDestaque = ['rn', 'infantil', 'adolescente', 'adulto']
+            .filter(f => agenda.faixaEtaria.includes(f))
+            .find(f => dayApps.some(a => faixaEtariaDe(a, agenda) === f));
         const limiteDia = limiteDoDia(dateObj.getDay(), agenda);
 
         // Verifica se há agendamentos cancelados no dia
@@ -383,7 +385,7 @@ function renderWeekView() {
                         <span>${a.horaInicio}${compact || dividindo ? '' : ` – ${a.horaFim}`}</span>
                         ${idade ? `<span class="week-event-idade">${idade}</span>` : ''}
                     </div>
-                    <div class="week-event-name">${nomeExibido}${extras ? `<span class="week-event-extras" title="${totalPacientes(a)} pacientes nesta visita">${extras}</span>` : ''}</div>
+                    <div class="week-event-name"><span class="week-event-nome-texto">${nomeExibido}</span>${extras ? `<span class="week-event-extras" title="${totalPacientes(a)} pacientes nesta visita">${extras}</span>` : ''}</div>
                     ${compact ? '' : `<div class="week-event-meta ${theme.text}">${distante ? `<i class="fas ${DISTANTE_TEMA.icon} ${DISTANTE_TEMA.text} mr-1" title="Localidade distante"></i>` : ''}${detalhe}${theme.faixa ? ` · ${FAIXA_ETARIA_TEMA[theme.faixa].rotulo}` : ''}</div>`}
                 </div>
                 ${theme.overdue ? '<span class="week-event-badge"><i class="fas fa-exclamation-triangle"></i></span>' : ''}

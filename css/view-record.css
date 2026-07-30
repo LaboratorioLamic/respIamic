@@ -381,6 +381,15 @@
 
 .view-btn-editar:hover { background: #2563eb; }
 
+.view-btn-concluir {
+    flex: 1;
+    background: #16a34a;
+    color: #fff;
+    border-color: #16a34a;
+}
+
+.view-btn-concluir:hover { background: #15803d; }
+
 .view-btn-excluir {
     background: #fef2f2;
     color: #dc2626;

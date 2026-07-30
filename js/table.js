@@ -40,8 +40,7 @@ function renderTable() {
 
     body.innerHTML = '';
     pageData.forEach(app => {
-        const faixa = faixaEtariaDe(app, agenda);
-        const temaFaixa = FAIXA_ETARIA_TEMA[faixa];
+        const temaFaixa = temaFaixaEtaria(app, agenda);
         const isCanceled = app.status === 'Cancelado';
         const isComplete = app.status === 'Concluído';
         const isChecklistComplete = agenda.checklist.every(item => !!app[CHECKLIST_ITENS[item].chave]);
@@ -83,7 +82,7 @@ function renderTable() {
             </td>
             <td class="p-5">
                 <div class="font-bold text-slate-700 uppercase text-xs flex items-center gap-2 ${isCanceled ? 'line-through' : ''}">
-                    ${app.paciente} ${extraPacientesLabel(app) ? `<span class="bg-navy-900 text-white text-[8px] px-1.5 rounded-full" title="${nomesPacientes(app).join(', ')}">${extraPacientesLabel(app)}</span>` : ''} ${isOverdue ? '<span class="bg-red-600 text-white text-[8px] px-1 rounded"><i class="fas fa-exclamation-triangle mr-1"></i>ATRASADO</span>' : ''} ${temaFaixa && !isComplete && !isCanceled ? `<span class="${temaFaixa.badge} text-white text-[8px] px-1 rounded">${temaFaixa.rotulo}</span>` : ''}
+                    ${app.paciente} ${extraPacientesLabel(app) ? `<span class="bg-navy-900 text-white text-[8px] px-1.5 rounded-full" title="${nomesPacientes(app).join(', ')}">${extraPacientesLabel(app)}</span><span class="bg-slate-200 text-slate-700 text-[8px] px-1.5 rounded-full" title="Pacientes concluídos">${progressoPacientesLabel(app)}</span>` : ''}${isOverdue ? '<span class="bg-red-600 text-white text-[8px] px-1 rounded"><i class="fas fa-exclamation-triangle mr-1"></i>ATRASADO</span>' : ''} ${temaFaixa && !isComplete && !isCanceled ? `<span class="${temaFaixa.badge} text-white text-[8px] px-1 rounded">${temaFaixa.rotulo}</span>` : ''}
                 </div>
                 <div class="text-[10px] text-slate-400 font-bold">${idadeLabel(app.idade)}</div>
             </td>

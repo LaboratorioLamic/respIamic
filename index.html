@@ -298,6 +298,10 @@
                             <div class="h-3 w-3 rounded border border-orange-300 bg-orange-50"></div>
                             <span>Infantil</span>
                         </div>
+                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="adolescente">
+                            <div class="h-3 w-3 rounded border border-amber-200 bg-amber-50"></div>
+                            <span>Adolescente</span>
+                        </div>
                         <div class="flex items-center gap-1 hidden" data-agenda-legenda="rn">
                             <div class="h-3 w-3 rounded border border-fuchsia-300 bg-fuchsia-50"></div>
                             <span>Recém-nascido</span>
@@ -650,6 +654,9 @@
             <div id="view-corpo" class="view-corpo"></div>
 
             <div class="view-footer">
+                <button type="button" id="view-btn-concluir" onclick="abrirConcluirVisita()" class="view-btn view-btn-concluir">
+                    <i class="fas fa-check-double"></i> Concluir Agenda
+                </button>
                 <button type="button" onclick="editFromView()" class="view-btn view-btn-editar">
                     <i class="fas fa-pen-to-square"></i> Editar Agendamento
                 </button>
@@ -658,6 +665,37 @@
                 </button>
                 <button type="button" onclick="closeViewRecord()" class="view-btn view-btn-fechar">
                     Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conclusão da visita — permite concluir só parte dos pacientes -->
+    <div id="modal-concluir-visita" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[130] justify-center items-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden border border-white/20 my-auto">
+            <div class="bg-green-600 p-6 text-white">
+                <h3 class="font-black uppercase tracking-tight text-lg"><i class="fas fa-check-double mr-2"></i>Concluir Agenda</h3>
+                <p id="concluir-resumo" class="text-[10px] text-green-100 font-bold uppercase tracking-widest mt-1">—</p>
+            </div>
+
+            <div class="p-6 space-y-3">
+                <p class="text-[11px] font-bold text-slate-500">
+                    Marque quem foi atendido. Pacientes desmarcados continuam pendentes e a visita fica em andamento.
+                </p>
+                <div id="concluir-aviso-checklist" class="hidden text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 rounded-xl p-3"></div>
+                <div id="concluir-lista" class="flex flex-col gap-2 max-h-72 overflow-y-auto"></div>
+                <button type="button" onclick="marcarTodosConcluirVisita()"
+                    class="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-navy-900">
+                    <i class="fas fa-list-check mr-1"></i>Marcar todos
+                </button>
+            </div>
+
+            <div class="view-footer">
+                <button type="button" onclick="confirmarConcluirVisita()" class="view-btn view-btn-concluir">
+                    <i class="fas fa-check"></i> Confirmar Conclusão
+                </button>
+                <button type="button" onclick="fecharConcluirVisita()" class="view-btn view-btn-fechar">
+                    Cancelar
                 </button>
             </div>
         </div>
@@ -868,7 +906,7 @@
                     <div id="atendente-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
                 </div>
                 <div class="col-span-1 md:col-span-1">
-                    <label class="block text-[10px] font-black text-blue-500 uppercase mb-2">Status do Teste *</label>
+                    <label class="block text-[10px] font-black text-blue-500 uppercase mb-2">Status da Agenda *</label>
                     <select id="reg-status" required onchange="toggleCancelado()" class="w-full border border-blue-200 bg-blue-50 rounded-xl py-2.5 px-3 shadow-sm font-black text-blue-800">
                         <option value="Agendado">Agendado</option>
                         <option value="Em andamento">Em andamento</option>
@@ -1743,6 +1781,7 @@
     <script src="js/calendar.js"></script>
     <script src="js/modals.js"></script>
     <script src="js/view-record.js"></script>
+    <script src="js/concluir-visita.js"></script>
     <script src="js/backup.js"></script>
 
     <!-- ── Bootstrap ──────────────────────────────────────────────── -->

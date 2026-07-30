@@ -109,7 +109,7 @@ function primeiroSlotLivre(iso) {
 // Etiqueta de faixa etária usada nos cards do dia
 function _faixaBadgeDia(app, agenda) {
     if (app.status === 'Concluído' || app.status === 'Cancelado') return '';
-    const t = FAIXA_ETARIA_TEMA[faixaEtariaDe(app, agenda)];
+    const t = temaFaixaEtaria(app, agenda);
     return t ? `[${t.rotulo}]` : '';
 }
 
@@ -154,8 +154,8 @@ function openDayDetails(dateStr) {
         } else if (app.status === 'Concluído') {
             bgClass = 'bg-green-50 border-green-200';
             textColor = 'text-green-700';
-        } else if (FAIXA_ETARIA_TEMA[faixaEtariaDe(app, agenda)]) {
-            const t = FAIXA_ETARIA_TEMA[faixaEtariaDe(app, agenda)];
+        } else if (temaFaixaEtaria(app, agenda)) {
+            const t = temaFaixaEtaria(app, agenda);
             bgClass = `${t.bg} ${t.border}`;
             textColor = t.text;
         } else {
@@ -188,7 +188,7 @@ function openDayDetails(dateStr) {
             <div class="flex justify-between items-start pl-2">
                 <div>
                     <div class="font-black ${app.status === 'Cancelado' ? 'text-slate-400 line-through' : 'text-navy-900'} text-sm uppercase">${app.horaInicio} - ${app.horaFim} | ${app.paciente} (${idadeLabel(app.idade)})${extraPacientesLabel(app) ? `<span class="ml-1.5 px-1.5 py-0.5 rounded-full bg-navy-900 text-white text-[9px] align-middle" title="${nomesPacientes(app).join(', ')}">${extraPacientesLabel(app)}</span>` : ''}</div>
-                    ${extraPacientesLabel(app) ? `<div class="text-[10px] font-bold text-slate-500 mt-0.5"><i class="fas fa-users mr-1"></i>${(app.acompanhantes || []).map(a => `${a.nome}${a.idade != null ? ` (${idadeLabel(a.idade)})` : ''}`).join(' · ')}</div>` : ''}
+                    ${extraPacientesLabel(app) ? `<div class="text-[10px] font-bold text-slate-500 mt-0.5"><i class="fas fa-users mr-1"></i>${(app.acompanhantes || []).map(a => `${a.nome}${a.idade != null ? ` (${idadeLabel(a.idade)})` : ''} <span class="${statusPaciente(a) === 'Concluído' ? 'text-green-600' : statusPaciente(a) === 'Cancelado' ? 'text-slate-400' : 'text-amber-600'}">[${statusPaciente(a)}]</span>`).join(' · ')}</div>` : ''}
                     <div class="text-[10px] font-black ${textColor} uppercase">${
                         temCampo('exame', agenda)
                             ? `${app.exame} | ${app.substrato}${app.metano === 'Sim' ? ' (metano)' : ''}`

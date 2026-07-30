@@ -255,20 +255,28 @@
     opacity: .75;
     white-space: nowrap;
 }
+/* O nome trunca, mas o "+n" fica sempre visível ao lado dele */
 .week-event-name {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     font-size: 11px;
     font-weight: 900;
     color: var(--brand-900);
     line-height: 1.2;
     margin-top: 1px;
+    min-width: 0;
+}
+.week-event-nome-texto {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    min-width: 0;
 }
 /* "+n" — pacientes adicionais atendidos na mesma visita */
 .week-event-extras {
     display: inline-block;
-    margin-left: 4px;
+    flex: none;
     padding: 0 4px;
     border-radius: 999px;
     background: var(--brand-900);
