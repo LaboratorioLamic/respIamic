@@ -25,3 +25,17 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--brand-accent); 
 thead th { position: relative; }
 tbody tr { transition: background-color .15s ease; }
 tbody tr:hover { background-color: rgba(61,124,240,.045); }
+
+/* ── NOME FORA DA LISTA OFICIAL ─────────────────────────────
+   Atendente e coletador são campos de "digite para pesquisar e selecione":
+   enquanto o texto não corresponder a um nome da lista, o campo fica marcado.
+   O valor digitado é preservado para a pessoa ver o que precisa corrigir. */
+.campo-nome-invalido {
+    border-color: #f87171 !important;
+    background-color: #fef2f2;
+}
+
+.campo-nome-invalido:focus {
+    box-shadow: 0 0 0 4px rgba(248, 113, 113, .25) !important;
+    border-color: #ef4444 !important;
+}

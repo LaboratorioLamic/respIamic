@@ -45,18 +45,35 @@ function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
     const pacienteInput = document.getElementById('reg-paciente').value.trim();
     document.getElementById('reg-paciente').value = pacienteInput.toUpperCase();
     
-    // Validação rigorosa do Atendente se a lista existir
-    if (atendentesList.length > 0 && !atendentesList.includes(atendenteInput.toUpperCase())) {
-        const caseSensitiveMatch = atendentesList.find(a => a.toUpperCase() === atendenteInput.toUpperCase());
-        if (caseSensitiveMatch) {
-            document.getElementById('reg-atendente').value = caseSensitiveMatch; 
-        } else {
-            showNotification("ATENDENTE INVÁLIDO. O nome inserido não corresponde a nenhum atendente da lista obrigatória.", "error");
+    const agenda = currentAgenda();
+
+    // Atendente e coletador são campos de "pesquisar e selecionar": só aceitam
+    // nomes da lista oficial. `nomeOficialDe` devolve a grafia canônica (então
+    // um nome digitado com acento/caixa diferente é corrigido) ou null.
+    const atendenteOficial = nomeOficialDe(atendenteInput);
+    if (atendenteOficial === null) {
+        marcarCampoNomeValido('atendente', false);
+        document.getElementById('reg-atendente').focus();
+        showNotification(`ATENDENTE INVÁLIDO: "${atendenteInput}" não está na lista de atendentes. Digite para pesquisar e selecione um nome da lista.`, 'error');
+        return;
+    }
+    document.getElementById('reg-atendente').value = atendenteOficial;
+    marcarCampoNomeValido('atendente', true);
+
+    if (temCampo('coletador', agenda)) {
+        const coletadorInput = document.getElementById('reg-coletador').value.trim();
+        // Coletador não é obrigatório: vazio passa, preenchido tem que conferir.
+        const coletadorOficial = nomeOficialDe(coletadorInput);
+        if (coletadorOficial === null) {
+            marcarCampoNomeValido('coletador', false);
+            document.getElementById('reg-coletador').focus();
+            showNotification(`COLETADOR INVÁLIDO: "${coletadorInput}" não está na lista de atendentes. Digite para pesquisar e selecione um nome da lista.`, 'error');
             return;
         }
+        document.getElementById('reg-coletador').value = coletadorOficial;
+        marcarCampoNomeValido('coletador', true);
     }
 
-    const agenda = currentAgenda();
     const record = {
         id: id ? parseInt(id) : Date.now(),
         agendaId: agenda.id,
@@ -125,7 +142,9 @@ function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
         record.pontoReferencia = document.getElementById('reg-ponto-referencia').value.trim();
     }
     if (temCampo('coletador', agenda)) {
-        record.coletador = document.getElementById('reg-coletador').value.trim().toUpperCase();
+        // Já validado acima e normalizado para a grafia da lista oficial —
+        // um toUpperCase() aqui desfaria essa grafia.
+        record.coletador = document.getElementById('reg-coletador').value.trim();
     }
 
     // NOTA: O status "atrasado" é calculado dinamicamente nas funções de renderização

@@ -197,8 +197,17 @@ function filtrarAtendentes(campo, valor) {
         .filter(n => !termo || normalizeStr(n).includes(termo))
         .slice(0, 8);
 
+    // Nenhum nome bate com o que foi digitado: em vez de esconder o popover
+    // (deixando a pessoa sem pista do porquê o campo recusa o valor), explica
+    // que só nomes da lista valem.
     if (!nomes.length) {
-        popover.classList.add('hidden');
+        popover.innerHTML = `
+            <p class="px-3 py-2 text-[11px] font-bold text-slate-400">
+                ${atendentesList.length
+                    ? 'Nenhum atendente encontrado. Só nomes da lista são aceitos.'
+                    : 'Lista de atendentes indisponível no momento.'}
+            </p>`;
+        popover.classList.remove('hidden');
         return;
     }
 
@@ -214,6 +223,47 @@ function filtrarAtendentes(campo, valor) {
 function selecionarAtendente(campo, nome) {
     document.getElementById(`reg-${campo}`).value = nome;
     document.getElementById(`${campo}-popover`).classList.add('hidden');
+    marcarCampoNomeValido(campo, true);
+}
+
+// ── VALIDAÇÃO DE NOME DA LISTA OFICIAL ──────────────────────
+// Atendente e coletador só aceitam nomes da lista de atendentes: o campo é
+// "digite para pesquisar e selecionar", não texto livre. Digitar um nome
+// parcial ou inexistente e sair do campo não pode virar um registro salvo.
+//
+// Retorna o nome canônico (com a grafia da lista) ou null se não houver
+// correspondência exata. Sem lista carregada, aceita o que veio — não dá para
+// validar contra nada, e bloquear deixaria o formulário inutilizável offline.
+function nomeOficialDe(valor) {
+    const bruto = String(valor ?? '').trim();
+    if (!bruto) return '';
+    if (!atendentesList.length) return bruto;
+    return atendentesList.find(a => normalizeStr(a) === normalizeStr(bruto)) || null;
+}
+
+// Realce visual do campo — vermelho enquanto o nome não confere
+function marcarCampoNomeValido(campo, valido) {
+    const el = document.getElementById(`reg-${campo}`);
+    if (!el) return;
+    el.classList.toggle('campo-nome-invalido', !valido);
+}
+
+// Conferência ao sair do campo: corrige a grafia para a da lista quando o nome
+// existe, e sinaliza o erro quando não existe. Não apaga o que a pessoa
+// digitou — quem escreveu precisa ver o que estava errado para corrigir.
+function conferirNomeOficial(campo) {
+    const el = document.getElementById(`reg-${campo}`);
+    if (!el) return;
+    const bruto = el.value.trim();
+    if (!bruto) { marcarCampoNomeValido(campo, true); return; }
+
+    const oficial = nomeOficialDe(bruto);
+    if (oficial) {
+        el.value = oficial;
+        marcarCampoNomeValido(campo, true);
+    } else {
+        marcarCampoNomeValido(campo, false);
+    }
 }
 
 // MAPA DO ENDEREÇO — embed do Google Maps sem API key (busca por texto)

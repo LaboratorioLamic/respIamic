@@ -936,7 +936,7 @@
                     <input type="text" id="reg-coletador" placeholder="Quem realizará a coleta..." autocomplete="off"
                         oninput="filtrarAtendentes('coletador', this.value)"
                         onfocus="filtrarAtendentes('coletador', this.value)"
-                        onblur="fecharSugestoesTardio('coletador')"
+                        onblur="fecharSugestoesTardio('coletador'); conferirNomeOficial('coletador')"
                         class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm uppercase placeholder-slate-400">
                     <div id="coletador-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
                 </div>
@@ -950,7 +950,7 @@
                     <input type="text" id="reg-atendente" required placeholder="Busque ou selecione..." autocomplete="off"
                         oninput="filtrarAtendentes('atendente', this.value)"
                         onfocus="filtrarAtendentes('atendente', this.value)"
-                        onblur="fecharSugestoesTardio('atendente')"
+                        onblur="fecharSugestoesTardio('atendente'); conferirNomeOficial('atendente')"
                         class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm uppercase placeholder-slate-400">
                     <div id="atendente-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
                 </div>

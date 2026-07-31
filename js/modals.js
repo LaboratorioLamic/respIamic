@@ -62,6 +62,10 @@ function openRecordModal() {
     // Reseta Status e Comentários
     document.getElementById('reg-status').value = 'Agendado';
     toggleCancelado();
+
+    // Limpa o realce de nome inválido de uma tentativa anterior
+    marcarCampoNomeValido('atendente', true);
+    marcarCampoNomeValido('coletador', true);
     
     // Oculta campo metano inicialmente
     updateSubstratos();
@@ -406,7 +410,12 @@ function editRecord(id) {
     document.getElementById('reg-hora-fim').value = app.horaFim;
     document.getElementById('reg-pedido').value = app.pedido;
     document.getElementById('reg-atendente').value = app.atendente;
-    
+
+    // Registros antigos podem ter nome fora da lista atual (atendente desligado,
+    // por exemplo): marca na abertura para o erro ficar visível antes de salvar.
+    conferirNomeOficial('atendente');
+    if (temCampo('coletador', currentAgenda())) conferirNomeOficial('coletador');
+
     // Modo edição — carrega os anexos já vinculados
     restoreAnexosUpload('reg', app.anexos || []);
 
