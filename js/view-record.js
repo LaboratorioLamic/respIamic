@@ -57,6 +57,29 @@ function _vwBloco(titulo, icone, conteudo) {
         </section>`;
 }
 
+// Cartão neutro de um paciente da visita: nome e dados em cinza, com o
+// status isolado num balão próprio na cor que o representa.
+function _vwPacienteCard(a, ordem) {
+    const st = statusPaciente(a);
+    const tema = VIEW_STATUS_TEMA[st] || VIEW_STATUS_TEMA['Agendado'];
+
+    const meta = [];
+    if (a.idade != null) meta.push(idadeLabel(a.idade));
+    if (a.pedido) meta.push(`Pedido ${a.pedido}`);
+
+    return `
+        <div class="view-paciente-card">
+            <div class="view-paciente-info">
+                <span class="view-paciente-ordem">Paciente ${ordem}</span>
+                <span class="view-paciente-nome">${_vwEscape(a.nome || '—')}</span>
+                ${meta.length ? `<span class="view-paciente-meta">${_vwEscape(meta.join(' · '))}</span>` : ''}
+            </div>
+            <span class="view-paciente-status ${tema.bg} ${tema.texto}">
+                <i class="fas ${tema.icon}"></i> ${_vwEscape(st)}
+            </span>
+        </div>`;
+}
+
 // Contato com atalho direto para o WhatsApp e cópia do número
 function _vwContato(contato) {
     if (!contato) return '';
@@ -298,17 +321,9 @@ function viewRecord(id) {
 
     // Demais pessoas atendidas na mesma visita
     if (temCampo('multiPaciente', agenda) && (app.acompanhantes || []).length) {
-        const linhas = app.acompanhantes.map((a, i) => {
-            const st = statusPaciente(a);
-            const cor = st === 'Concluído' ? 'text-green-600'
-                      : st === 'Ausente'   ? 'text-amber-700 font-black'
-                      : st === 'Cancelado' ? 'text-slate-400'
-                      : 'text-amber-600';
-            return _vwCampo(`Paciente ${i + 2}`,
-                `${a.nome}${a.idade != null ? ` · ${idadeLabel(a.idade)}` : ''}${a.pedido ? ` · Pedido ${a.pedido}` : ''} · ${st}`,
-                { largo: true, classe: cor });
-        }).join('');
-        html += _vwBloco(`Outros pacientes na visita (${app.acompanhantes.length})`, 'fa-users', linhas);
+        const linhas = app.acompanhantes.map((a, i) => _vwPacienteCard(a, i + 2)).join('');
+        html += _vwBloco(`Outros pacientes na visita (${app.acompanhantes.length})`, 'fa-users',
+            `<div class="view-pacientes">${linhas}</div>`);
     }
 
     // Bloco do exame — só nas agendas que têm exame/substrato/abstinência
