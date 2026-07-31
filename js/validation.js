@@ -42,8 +42,10 @@ function validateAppointment(dataObj) {
         return `Os agendamentos desta agenda ocorrem de ${agenda.slotMin} em ${agenda.slotMin} minutos. Escolha um horário válido da grade.`;
     }
 
+    // Ocupação do dia: só o cancelamento devolve a vaga. Uma ausência mantém o
+    // horário consumido — a vaga foi perdida pela falta e não é reaproveitada.
     const doDia = appointments.filter(a =>
-        a.data === dataObj.data && a.id !== dataObj.id && a.status !== 'Cancelado'
+        a.data === dataObj.data && a.id !== dataObj.id && !vagaLiberada(a.status)
     );
 
     // Lotação do horário — nas agendas que agrupam por endereço, vários pacientes

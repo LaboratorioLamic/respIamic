@@ -19,12 +19,13 @@ const VIEW_STATUS_TEMA = {
     'Agendado':     { bg: 'bg-blue-50',   texto: 'text-blue-700',   ponto: 'bg-blue-500',   icon: 'fa-calendar-check' },
     'Em andamento': { bg: 'bg-purple-50', texto: 'text-purple-700', ponto: 'bg-purple-500', icon: 'fa-spinner' },
     'Concluído':    { bg: 'bg-green-50',  texto: 'text-green-700',  ponto: 'bg-green-500',  icon: 'fa-circle-check' },
+    'Ausente':      { bg: 'bg-amber-50',  texto: 'text-amber-800',  ponto: 'bg-amber-500',  icon: 'fa-user-xmark' },
     'Cancelado':    { bg: 'bg-slate-100', texto: 'text-slate-500',  ponto: 'bg-slate-400',  icon: 'fa-ban' }
 };
 
 // Um agendamento não concluído/cancelado cuja data já passou aparece como atrasado
 function _vwAtrasado(app) {
-    if (app.status === 'Concluído' || app.status === 'Cancelado') return false;
+    if (pacienteEncerrado(app.status)) return false;
     if (!app.data) return false;
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
@@ -299,7 +300,10 @@ function viewRecord(id) {
     if (temCampo('multiPaciente', agenda) && (app.acompanhantes || []).length) {
         const linhas = app.acompanhantes.map((a, i) => {
             const st = statusPaciente(a);
-            const cor = st === 'Concluído' ? 'text-green-600' : st === 'Cancelado' ? 'text-slate-400' : 'text-amber-600';
+            const cor = st === 'Concluído' ? 'text-green-600'
+                      : st === 'Ausente'   ? 'text-amber-700 font-black'
+                      : st === 'Cancelado' ? 'text-slate-400'
+                      : 'text-amber-600';
             return _vwCampo(`Paciente ${i + 2}`,
                 `${a.nome}${a.idade != null ? ` · ${idadeLabel(a.idade)}` : ''}${a.pedido ? ` · Pedido ${a.pedido}` : ''} · ${st}`,
                 { largo: true, classe: cor });
@@ -348,12 +352,14 @@ function viewRecord(id) {
     const barra = document.getElementById('view-barra-agenda');
     if (barra) barra.className = `view-barra ${cores.accent}`;
 
-    // Conclusão direta — agenda já encerrada (concluída ou cancelada) não conclui
+    // Conclusão e ausência só fazem sentido enquanto houver paciente pendente.
+    // Numa visita totalmente encerrada os dois botões somem.
+    const pendentes = resumoPacientes(app).pendentes;
     const btnConcluir = document.getElementById('view-btn-concluir');
-    if (btnConcluir) {
-        const encerrada = app.status === 'Cancelado' || app.status === 'Concluído';
-        btnConcluir.style.display = encerrada ? 'none' : '';
-    }
+    if (btnConcluir) btnConcluir.style.display = pendentes ? '' : 'none';
+
+    const btnAusente = document.getElementById('view-btn-ausente');
+    if (btnAusente) btnAusente.style.display = pendentes ? '' : 'none';
 
     // Excluir só para administradores, como no restante do sistema
     const btnExcluir = document.getElementById('view-btn-excluir');
@@ -372,6 +378,14 @@ function editFromView() {
 function closeViewRecord() {
     _viewRecordId = null;
     document.getElementById('modal-view-record').classList.remove('active');
+}
+
+// Rastreabilidade do agendamento aberto — atalho do ícone de relógio no
+// cabeçalho. Diferente de openAppointmentHistory(), que lê o id do formulário
+// de edição, aqui o id vem da própria visualização.
+function openViewRecordHistory() {
+    if (_viewRecordId == null) return;
+    openHistoryModal({ type: 'appointment', id: _viewRecordId });
 }
 
 // Excluir direto da visualização (mantém a confirmação padrão do sistema)

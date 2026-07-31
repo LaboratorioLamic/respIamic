@@ -43,6 +43,7 @@ function renderTable() {
         const temaFaixa = temaFaixaEtaria(app, agenda);
         const isCanceled = app.status === 'Cancelado';
         const isComplete = app.status === 'Concluído';
+        const isAbsent   = app.status === 'Ausente';
         const isChecklistComplete = agenda.checklist.every(item => !!app[CHECKLIST_ITENS[item].chave]);
         
         // Verifica se agendamento está atrasado
@@ -51,10 +52,12 @@ function renderTable() {
         const [year, month, day] = app.data.split('-').map(Number);
         const appointmentDate = new Date(year, month - 1, day);
         appointmentDate.setHours(0, 0, 0, 0);
-        const isOverdue = appointmentDate < today && !isComplete && !isCanceled;
-        
+        // Ausente já é desfecho: não conta como atrasado
+        const isOverdue = appointmentDate < today && !pacienteEncerrado(app.status);
+
         let rowClass = 'hover:bg-slate-50';
         if (isOverdue) rowClass = 'bg-red-50 hover:bg-red-100';
+        else if (isAbsent) rowClass = 'bg-amber-50 hover:bg-amber-100';
         else if (isCanceled) rowClass = 'opacity-60 bg-slate-50';
         else if (isComplete) rowClass = 'bg-green-50 hover:bg-green-100';
         else if (temaFaixa) rowClass = `${temaFaixa.bg} hover:brightness-95`;
@@ -67,7 +70,8 @@ function renderTable() {
         
         const statusIcon = isOverdue ? '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-red-100 text-red-600" title="Atrasado"><i class="fas fa-exclamation-triangle"></i></div>' :
                            app.status === 'Concluído' ? '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-green-100 text-green-600" title="Concluído"><i class="fas fa-check-double"></i></div>' : 
-                           app.status === 'Cancelado' ? '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-red-100 text-red-600" title="Cancelado"><i class="fas fa-ban"></i></div>' : 
+                           app.status === 'Ausente' ? '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-amber-100 text-amber-700" title="Paciente ausente"><i class="fas fa-user-xmark"></i></div>' :
+                           app.status === 'Cancelado' ? '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-red-100 text-red-600" title="Cancelado"><i class="fas fa-ban"></i></div>' :
                            app.status === 'Em andamento' ? '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-purple-100 text-purple-600" title="Em andamento"><i class="fas fa-spinner"></i></div>' :
                            '<div class="h-8 w-8 mx-auto rounded-full flex items-center justify-center bg-yellow-100 text-yellow-600" title="Agendado"><i class="fas fa-clock"></i></div>';
         

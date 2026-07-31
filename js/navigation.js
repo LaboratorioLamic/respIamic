@@ -57,6 +57,9 @@ function selectAgenda(agendaId, tab) {
         updateDatalists();
         updateFilterDropdowns();
         renderTable();
+        // A rastreabilidade é por agenda: sem isso o painel continuaria
+        // mostrando o movimento da aba anterior.
+        renderTraceability();
     }
     switchTab(destino);
 }

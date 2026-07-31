@@ -330,20 +330,56 @@
 }
 
 /* ── REMARCAR ARRASTANDO ────────────────────────────────────
-   Cards ativos podem ser levados para outro horário/dia da grade. */
-.week-event-movivel { cursor: grab; }
+   Clicar e segurar suspende o card, que segue o cursor até ser solto em outro
+   horário/dia da grade. */
+.week-event-movivel {
+    cursor: grab;
+    /* O arrasto é por Pointer Events: sem isso o navegador rouba o gesto para
+       seleção de texto (mouse) ou scroll da grade (toque). */
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
 .week-event-movivel:active { cursor: grabbing; }
 
+/* Pressionado, ainda não levantado — afunda de leve para dar retorno imediato */
+.week-event-pressing {
+    transform: scale(.97);
+    filter: brightness(.97);
+}
+
+/* O card original fica no lugar, apagado, marcando a origem do movimento */
 .week-event-dragging {
-    opacity: .45;
+    opacity: .28;
     transform: none;
+    filter: grayscale(.4);
+}
+
+/* Cópia suspensa que acompanha o cursor */
+.week-event-ghost {
+    position: fixed;
+    z-index: 1000;
+    margin: 0;
+    pointer-events: none;
+    cursor: grabbing;
+    opacity: .95;
+    transform: scale(1.03) rotate(-1deg);
+    box-shadow: 0 18px 34px -12px rgba(14, 22, 40, .65);
+    transition: none;
 }
 
 /* Durante o arrasto os cards param de capturar o mouse, senão cobririam os
-   slots e o drop nunca chegaria ao alvo embaixo deles. */
+   slots e o alvo embaixo deles nunca seria encontrado. */
 .week-dragging .week-event,
 .week-dragging .week-slot-add,
 .week-dragging .week-now { pointer-events: none; }
+
+/* Enquanto o card está suspenso, nada de selecionar texto pela página */
+.week-dragging-body {
+    cursor: grabbing;
+    -webkit-user-select: none;
+    user-select: none;
+}
 
 /* Horários que aceitam o card ganham destaque enquanto se arrasta */
 .week-dragging .week-slot-drop {
@@ -391,6 +427,27 @@
     color: #fff;
     font-size: 7px;
     box-shadow: 0 1px 3px rgba(22, 101, 52, .45);
+}
+
+/* Ausente — mesmo selo circular do concluído, em âmbar de alerta. A cor de
+   fundo do card sozinha se confunde com a faixa etária infantil em cards
+   pequenos, então o ícone é o que realmente sinaliza a falta. */
+.week-event-absent .week-event-body { padding-right: 14px; }
+.week-event-absent .week-event-name { color: #92400e; }
+.week-event-badge-absent {
+    top: 50%;
+    right: 3px;
+    transform: translateY(-50%);
+    width: 13px;
+    height: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #f59e0b;
+    color: #fff;
+    font-size: 7px;
+    box-shadow: 0 1px 3px rgba(146, 64, 14, .45);
 }
 
 .week-now {

@@ -13,8 +13,9 @@ function saveRecord(e) {
     const itensAtivos = agenda.checklist;
     const faltando = itensAtivos.filter(item => !valores[item]);
 
-    // Em "Em andamento" e "Cancelado", o checklist não é obrigatório
-    if (statusVal === 'Em andamento' || statusVal === 'Cancelado') {
+    // Em "Em andamento", "Cancelado" e "Ausente" o checklist não é obrigatório —
+    // no ausente o atendimento não chegou a acontecer, não há o que conferir.
+    if (statusVal === 'Em andamento' || statusVal === 'Cancelado' || statusVal === 'Ausente') {
         resetChecklistUI({});
         proceedWithSave(id, atendenteInput, {}, statusVal);
         return;
@@ -105,6 +106,12 @@ function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
         if (statusVal === 'Concluído') {
             record.acompanhantes = record.acompanhantes.map(a =>
                 statusPaciente(a) === 'Cancelado' ? a : { ...a, status: 'Concluído' });
+        } else if (statusVal === 'Ausente') {
+            // Marcar a visita inteira como ausente: quem já foi atendido ou
+            // cancelado mantém seu desfecho; o resto passa a ausente. Sem isso,
+            // statusDerivadoDaVisita reverteria o status logo em seguida.
+            record.acompanhantes = record.acompanhantes.map(a =>
+                pacienteEncerrado(statusPaciente(a)) ? a : { ...a, status: 'Ausente' });
         } else if (statusVal !== 'Cancelado') {
             record.status = statusDerivadoDaVisita(record);
             record.chkConcluido = record.status === 'Concluído';

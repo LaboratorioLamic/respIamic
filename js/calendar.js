@@ -95,9 +95,13 @@ function getAppointmentTheme(app, isPastDate) {
     const agenda = currentAgenda();
     const cores = agendaCores(agenda);
     const accent = accentDoAgendamento(app, agenda);
-    const isOverdue = isPastDate && app.status !== 'Concluído' && app.status !== 'Cancelado';
+    // Ausente já é um desfecho: não vira "atrasado" quando a data passa.
+    const isOverdue = isPastDate && !pacienteEncerrado(app.status);
 
     if (isOverdue) return { bg: 'bg-red-50', border: 'border-red-300', text: 'text-red-700', accent: 'bg-red-600', overdue: true };
+    // Ausente — âmbar de alerta, distinto do vermelho de atrasado (que ainda
+    // pode ser resolvido) e do cinza apagado do cancelado.
+    if (app.status === 'Ausente') return { bg: 'bg-amber-50', border: 'border-amber-400', text: 'text-amber-800', accent: 'bg-amber-500', absent: true };
     if (app.status === 'Cancelado') return { bg: 'bg-slate-100', border: 'border-slate-200', text: 'text-slate-400', accent: 'bg-slate-400', canceled: true };
     if (app.status === 'Em andamento') return { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700', accent: 'bg-purple-600' };
     // Concluído: além do verde, ganha um selo de check no card. A cor sozinha
@@ -311,9 +315,33 @@ function renderWeekView() {
             && vagasOcupadasNoDia(diaApps, agenda) < limiteDoDia(d.getDay(), agenda);
 
         // Slots de fundo (+ botões de encaixe, renderizados acima dos cards)
+        // A grade é montada em duas camadas: os minutos "cegos" (fora de qualquer
+        // turno) só pintam o fundo fechado, enquanto cada turno gera seus próprios
+        // horários ancorados em faixa[0]. Sem essa âncora, um turno que não começa
+        // num múltiplo de slotMin a partir de viewStart nunca produzia um minuto
+        // alinhado — e o dia inteiro ficava sem alvo de arrastar-e-soltar.
         let slots = '';
         let addBtns = '';
+
+        const minutosDaGrade = [];
         for (let m = viewStart; m < viewEnd; m += slotMin) {
+            if (!faixaDoMinuto(m, startWindows)) minutosDaGrade.push(m);
+        }
+        startWindows.forEach(([ini, fim]) => {
+            const passo = agenda.slotMin || slotMin;
+            for (let m = Math.max(ini, viewStart); m <= Math.min(fim, viewEnd - 1); m += passo) {
+                minutosDaGrade.push(m);
+            }
+        });
+        // Um minuto pode vir das duas camadas (ex.: turno alinhado ao viewStart);
+        // sem deduplicar, dois slots iguais se sobrepõem e o de baixo rouba o drop.
+        const minutosUnicos = [...new Set(minutosDaGrade)].sort((a, b) => a - b);
+
+        for (let idx = 0; idx < minutosUnicos.length; idx++) {
+            const m = minutosUnicos[idx];
+            // Cada slot vai até o próximo horário da grade, para os alvos ladrilharem
+            // a coluna sem sobrepor — turnos podem ter passo diferente do fundo.
+            const fimDoSlot = Math.min(minutosUnicos[idx + 1] ?? viewEnd, viewEnd);
             const faixa = faixaDoMinuto(m, startWindows);
             const inWindow = !!faixa;
             // Alinhamento é relativo ao início da faixa (turno) em que o minuto cai
@@ -330,9 +358,8 @@ function renderWeekView() {
             const dropOk = inWindow && alinhado && !isHoliday && startWindows.length > 0;
 
             slots += `<div class="week-slot ${m % 60 === 0 ? 'week-slot-hour' : ''} ${inWindow ? 'week-slot-open' : 'week-slot-closed'} ${selectable ? 'week-slot-selectable' : ''} ${dropOk ? 'week-slot-drop' : ''}"
-                style="top:${top}px;height:${(slotMin / 60) * WEEK_HOUR_PX}px"
-                ${dropOk ? `data-drop-data="${dateStr}" data-drop-hora="${hora}"
-                    ondragover="weekDragOver(event)" ondragleave="weekDragLeave(event)" ondrop="weekDrop(event)"` : ''}
+                style="top:${top}px;height:${(Math.max(fimDoSlot - m, 1) / 60) * WEEK_HOUR_PX}px"
+                ${dropOk ? `data-drop-data="${dateStr}" data-drop-hora="${hora}"` : ''}
                 ${selectable ? `onclick="openRecordModalWithDate('${dateStr}','${hora}')" title="Agendar às ${hora}"` : ''}>
                 ${selectable ? '<span class="week-slot-plus"><i class="fas fa-plus"></i></span>' : ''}
             </div>`;
@@ -388,14 +415,19 @@ function renderWeekView() {
             const tooltip = `${a.horaInicio} – ${a.horaFim} | ${a.paciente}${idade ? ` (${idade})` : ''}${listaNomes}\n${detalhe}${distante ? '\n⚠ Localidade distante' : ''}\nStatus: ${a.status}\nAtendente: ${formatAtendenteName(a.atendente)}`;
 
             // Remarcar arrastando: só faz sentido em quem ainda vai acontecer.
-            // Concluídos e cancelados ficam fixos para não reescrever histórico.
-            const movivel = a.status !== 'Concluído' && a.status !== 'Cancelado';
+            // Encerrados (concluído, cancelado, ausente) ficam fixos para não
+            // reescrever histórico — remarcar uma falta é criar outro agendamento.
+            const movivel = !pacienteEncerrado(a.status);
 
-            return `<div class="week-event ${theme.bg} ${theme.border} ${tight ? 'week-event-tight' : ''} ${theme.done ? 'week-event-done' : ''} ${theme.canceled ? 'week-event-canceled' : ''} ${distante ? 'card-distante' : ''} ${movivel ? 'week-event-movivel' : ''}"
+            return `<div class="week-event ${theme.bg} ${theme.border} ${tight ? 'week-event-tight' : ''} ${theme.done ? 'week-event-done' : ''} ${theme.absent ? 'week-event-absent' : ''} ${theme.canceled ? 'week-event-canceled' : ''} ${distante ? 'card-distante' : ''} ${movivel ? 'week-event-movivel' : ''}"
                 style="top:${top}px;height:${height}px;left:calc(${leftPct}% + 2px);width:calc(${width}% - 5px)"
-                ${movivel ? `draggable="true" data-app-id="${a.id}" ondragstart="weekDragStart(event, ${a.id})" ondragend="weekDragEnd(event)"` : ''}
-                onclick="event.stopPropagation(); viewRecord(${a.id})"
-                title="${(tooltip + (movivel ? '\n↔ Arraste para remarcar' : '')).replace(/"/g, '&quot;')}">
+                ${movivel
+                    // Card móvel: o clique é resolvido no pointerup (clique curto
+                    // abre o registro, pressão longa vira arrasto), então NÃO leva
+                    // onclick próprio — senão abriria o registro ao soltar o card.
+                    ? `data-app-id="${a.id}" onpointerdown="event.stopPropagation(); weekPointerDown(event, ${a.id})"`
+                    : `onclick="event.stopPropagation(); viewRecord(${a.id})"`}
+                title="${(tooltip + (movivel ? '\n↔ Segure para mover e remarcar' : '')).replace(/"/g, '&quot;')}">
                 <span class="week-event-accent ${theme.accent}"></span>
                 <div class="week-event-body">
                     <div class="week-event-time ${theme.text}">
@@ -406,6 +438,7 @@ function renderWeekView() {
                     ${compact ? '' : `<div class="week-event-meta ${theme.text}">${distante ? `<i class="fas ${DISTANTE_TEMA.icon} ${DISTANTE_TEMA.text} mr-1" title="Localidade distante"></i>` : ''}${detalhe}${theme.faixa ? ` · ${FAIXA_ETARIA_TEMA[theme.faixa].rotulo}` : ''}</div>`}
                 </div>
                 ${theme.overdue ? '<span class="week-event-badge"><i class="fas fa-exclamation-triangle"></i></span>' : ''}
+                ${theme.absent ? '<span class="week-event-badge week-event-badge-absent" title="Paciente ausente"><i class="fas fa-user-xmark"></i></span>' : ''}
                 ${theme.done ? '<span class="week-event-badge week-event-badge-done" title="Concluído"><i class="fas fa-check"></i></span>' : ''}
             </div>`;
         }).join('');
@@ -429,56 +462,159 @@ function renderWeekView() {
 }
 
 // ── REMARCAR ARRASTANDO (visão semanal) ─────────────────────
-// Solta o card em outro horário/dia da grade. O destino passa pela mesma
-// validateAppointment() do formulário, então as regras de dia atendido, turno,
-// alinhamento da grade, lotação do horário e limite diário valem igual.
-let _weekDragId = null;
+// Clicar e segurar "suspende" o card, que passa a seguir o cursor até ser solto
+// em outro horário/dia da grade. O destino passa pela mesma validateAppointment()
+// do formulário, então as regras de dia atendido, turno, alinhamento da grade,
+// lotação do horário e limite diário valem igual.
+//
+// Implementado com Pointer Events em vez do drag-and-drop nativo do HTML5: o
+// nativo não tem gesto de "segurar para levantar", não dá feedback de card
+// suspenso e não funciona no toque. Aqui o mesmo código serve mouse e toque.
+const WEEK_HOLD_MS = 180;   // tempo segurando até o card levantar
+const WEEK_MOVE_TOL = 6;    // px de folga antes de considerar que houve arrasto
 
-function weekDragStart(e, id) {
-    _weekDragId = id;
-    // Enquanto arrasta, os cards deixam de capturar o mouse — senão eles
-    // cobririam os slots e o drop nunca chegaria ao alvo embaixo.
+let _weekDrag = null;       // arrasto em curso
+let _weekHold = null;       // pressão aguardando virar arrasto
+
+// Início da pressão no card. Ainda não é arrasto: só agenda o "levantar".
+function weekPointerDown(e, id) {
+    // Só botão principal; toque e caneta entram normalmente.
+    if (e.button != null && e.button !== 0) return;
+
+    const card = e.currentTarget;
+    cancelWeekHold();
+
+    _weekHold = {
+        id,
+        card,
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        // Deslocamento do cursor dentro do card, para ele não "pular" ao levantar
+        grabX: e.clientX - card.getBoundingClientRect().left,
+        grabY: e.clientY - card.getBoundingClientRect().top,
+        moved: false,
+        timer: setTimeout(() => startWeekDrag(), WEEK_HOLD_MS)
+    };
+
+    card.classList.add('week-event-pressing');
+
+    document.addEventListener('pointermove', weekPointerMove, { passive: false });
+    document.addEventListener('pointerup', weekPointerUp);
+    document.addEventListener('pointercancel', weekPointerUp);
+}
+
+// Levanta o card: vira um "fantasma" que segue o cursor.
+function startWeekDrag() {
+    if (!_weekHold) return;
+    const { id, card, grabX, grabY } = _weekHold;
+    if (_weekHold.timer) clearTimeout(_weekHold.timer);
+
+    const rect = card.getBoundingClientRect();
+    const ghost = card.cloneNode(true);
+    ghost.classList.add('week-event-ghost');
+    ghost.classList.remove('week-event-pressing');
+    ghost.style.width = `${rect.width}px`;
+    ghost.style.height = `${rect.height}px`;
+    ghost.style.left = `${rect.left}px`;
+    ghost.style.top = `${rect.top}px`;
+    document.body.appendChild(ghost);
+
+    card.classList.remove('week-event-pressing');
+    card.classList.add('week-event-dragging');
     document.getElementById('week-canvas')?.classList.add('week-dragging');
-    e.currentTarget.classList.add('week-event-dragging');
-    if (e.dataTransfer) {
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', String(id));
+    document.body.classList.add('week-dragging-body');
+
+    _weekDrag = { id, card, ghost, grabX, grabY, alvo: null };
+    _weekHold = { ..._weekHold, timer: null };
+}
+
+function weekPointerMove(e) {
+    if (_weekDrag) {
+        // Impede o scroll por toque enquanto o card está suspenso
+        e.preventDefault();
+        const { ghost, grabX, grabY } = _weekDrag;
+        ghost.style.left = `${e.clientX - grabX}px`;
+        ghost.style.top = `${e.clientY - grabY}px`;
+        realcarAlvo(e.clientX, e.clientY);
+        return;
+    }
+
+    if (!_weekHold) return;
+    // Antes de levantar, sair da tolerância significa scroll/clique arrastado:
+    // desiste da pressão para não sequestrar o gesto do usuário.
+    const dx = Math.abs(e.clientX - _weekHold.startX);
+    const dy = Math.abs(e.clientY - _weekHold.startY);
+    if (dx > WEEK_MOVE_TOL || dy > WEEK_MOVE_TOL) {
+        _weekHold.moved = true;
+        cancelWeekHold();
+        limparListeners();
     }
 }
 
-function weekDragEnd(e) {
-    _weekDragId = null;
+// Slot sob o cursor, ignorando o fantasma que viaja junto com ele
+function slotSobCursor(x, y) {
+    const ghost = _weekDrag?.ghost;
+    if (ghost) ghost.style.visibility = 'hidden';
+    const el = document.elementFromPoint(x, y);
+    if (ghost) ghost.style.visibility = '';
+    return el?.closest?.('.week-slot-drop') || null;
+}
+
+function realcarAlvo(x, y) {
+    const alvo = slotSobCursor(x, y);
+    if (alvo === _weekDrag.alvo) return;
+    _weekDrag.alvo?.classList.remove('week-slot-dropover');
+    alvo?.classList.add('week-slot-dropover');
+    _weekDrag.alvo = alvo;
+}
+
+function weekPointerUp(e) {
+    const arrasto = _weekDrag;
+    const segurando = _weekHold;
+    limparListeners();
+
+    if (!arrasto) {
+        // Soltou antes de levantar: era um clique comum, abre o registro.
+        cancelWeekHold();
+        if (segurando && !segurando.moved) viewRecord(segurando.id);
+        return;
+    }
+
+    const alvo = slotSobCursor(e.clientX, e.clientY);
+    encerrarWeekDrag();
+
+    if (!alvo) return;
+    const { dropData, dropHora } = alvo.dataset;
+    if (!dropData || !dropHora) return;
+
+    remarcarAgendamento(arrasto.id, dropData, dropHora);
+}
+
+function encerrarWeekDrag() {
+    if (!_weekDrag) return;
+    _weekDrag.ghost.remove();
+    _weekDrag.card.classList.remove('week-event-dragging');
+    _weekDrag.alvo?.classList.remove('week-slot-dropover');
+    _weekDrag = null;
+    _weekHold = null;
     document.getElementById('week-canvas')?.classList.remove('week-dragging');
-    e.currentTarget.classList.remove('week-event-dragging');
+    document.body.classList.remove('week-dragging-body');
     document.querySelectorAll('.week-slot-dropover')
         .forEach(el => el.classList.remove('week-slot-dropover'));
 }
 
-function weekDragOver(e) {
-    if (_weekDragId === null) return;
-    e.preventDefault();
-    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-    e.currentTarget.classList.add('week-slot-dropover');
+function cancelWeekHold() {
+    if (!_weekHold) return;
+    if (_weekHold.timer) clearTimeout(_weekHold.timer);
+    _weekHold.card.classList.remove('week-event-pressing');
+    if (!_weekDrag) _weekHold = null;
 }
 
-function weekDragLeave(e) {
-    e.currentTarget.classList.remove('week-slot-dropover');
-}
-
-function weekDrop(e) {
-    e.preventDefault();
-    e.currentTarget.classList.remove('week-slot-dropover');
-
-    const id = _weekDragId ?? (e.dataTransfer && e.dataTransfer.getData('text/plain'));
-    _weekDragId = null;
-    document.getElementById('week-canvas')?.classList.remove('week-dragging');
-    if (id === null || id === '') return;
-
-    const novaData = e.currentTarget.dataset.dropData;
-    const novaHora = e.currentTarget.dataset.dropHora;
-    if (!novaData || !novaHora) return;
-
-    remarcarAgendamento(id, novaData, novaHora);
+function limparListeners() {
+    document.removeEventListener('pointermove', weekPointerMove);
+    document.removeEventListener('pointerup', weekPointerUp);
+    document.removeEventListener('pointercancel', weekPointerUp);
 }
 
 // Move um agendamento para outra data/horário, validando como se fosse edição
@@ -486,6 +622,13 @@ function remarcarAgendamento(id, novaData, novaHora) {
     const atual = appointments.find(a => a.id == id);
     if (!atual) return;
     if (atual.data === novaData && atual.horaInicio === novaHora) return;
+
+    // O alvo de feriado nem é renderizado, mas a grade pode estar defasada se o
+    // feriado chegou pelo Firebase durante o arrasto — checa de novo no drop.
+    if (holidays[novaData]) {
+        showNotification('Não é possível remarcar para um feriado.', 'error');
+        return;
+    }
 
     const agenda = currentAgenda();
     // Recalcula o fim mantendo a duração do agendamento

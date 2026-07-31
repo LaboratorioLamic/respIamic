@@ -42,6 +42,7 @@ function renderIndicadores() {
     const andamento = indData.filter(a => a.status === 'Em andamento');
     const pendentes = indData.filter(a => a.status === 'Agendado');
     const cancelados = indData.filter(a => a.status === 'Cancelado');
+    const ausentes = indData.filter(a => a.status === 'Ausente');
 
     const setKpi = (id, valor) => { const el = document.getElementById(id); if (el) el.innerText = valor; };
     setKpi('kpi-total', indData.length);
@@ -121,10 +122,12 @@ function renderIndicadores() {
         charts.donutStatus = new Chart(document.getElementById('chart-donut-status'), {
             type: 'doughnut',
             data: {
-                labels: ['Agendado', 'Em andamento', 'Concluído', 'Cancelado'],
+                labels: ['Agendado', 'Em andamento', 'Concluído', 'Ausente', 'Cancelado'],
                 datasets: [{
-                    data: [pendentes.length, andamento.length, concluidos.length, cancelados.length],
-                    backgroundColor: ['#f59e0b', '#8b5cf6', '#22c55e', '#ef4444']
+                    data: [pendentes.length, andamento.length, concluidos.length, ausentes.length, cancelados.length],
+                    // Âmbar do agendado puxado para laranja escuro no ausente,
+                    // para os dois não se confundirem no donut
+                    backgroundColor: ['#f59e0b', '#8b5cf6', '#22c55e', '#d97706', '#ef4444']
                 }]
             }
         });

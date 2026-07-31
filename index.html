@@ -644,6 +644,10 @@
                     class="absolute top-5 right-5 h-9 w-9 flex items-center justify-center rounded-full hover:bg-white/10 transition-all">
                     <i class="fas fa-times text-lg"></i>
                 </button>
+                <button type="button" onclick="openViewRecordHistory()" title="Rastreabilidade deste agendamento"
+                    class="absolute top-5 right-16 h-9 w-9 flex items-center justify-center rounded-full hover:bg-white/10 transition-all">
+                    <i class="fas fa-clock text-lg"></i>
+                </button>
 
                 <p id="view-agenda-nome" class="view-agenda-nome">Agenda</p>
                 <h3 id="view-paciente" class="view-paciente">Paciente</h3>
@@ -654,17 +658,20 @@
             <div id="view-corpo" class="view-corpo"></div>
 
             <div class="view-footer">
-                <button type="button" id="view-btn-concluir" onclick="abrirConcluirVisita()" class="view-btn view-btn-concluir">
-                    <i class="fas fa-check-double"></i> Concluir Agenda
+                <button type="button" id="view-btn-concluir" onclick="abrirConcluirVisita()" class="view-btn view-btn-concluir" title="Concluir agenda">
+                    <i class="fas fa-check-double"></i> Concluir
                 </button>
-                <button type="button" onclick="editFromView()" class="view-btn view-btn-editar">
-                    <i class="fas fa-pen-to-square"></i> Editar Agendamento
+                <button type="button" id="view-btn-ausente" onclick="abrirAusenciaVisita()" class="view-btn view-btn-ausente" title="Registrar paciente ausente">
+                    <i class="fas fa-user-xmark"></i> Ausente
+                </button>
+                <button type="button" onclick="editFromView()" class="view-btn view-btn-editar" title="Editar agendamento">
+                    <i class="fas fa-pen-to-square"></i> Editar
                 </button>
                 <button type="button" id="view-btn-excluir" onclick="deleteFromView()" class="view-btn view-btn-excluir">
                     <i class="fas fa-trash"></i> Excluir
                 </button>
-                <button type="button" onclick="closeViewRecord()" class="view-btn view-btn-fechar">
-                    Fechar
+                <button type="button" onclick="closeViewRecord()" class="view-btn view-btn-fechar" title="Fechar">
+                    <i class="fas fa-xmark"></i> Fechar
                 </button>
             </div>
         </div>
@@ -694,8 +701,50 @@
                 <button type="button" onclick="confirmarConcluirVisita()" class="view-btn view-btn-concluir">
                     <i class="fas fa-check"></i> Confirmar Conclusão
                 </button>
-                <button type="button" onclick="fecharConcluirVisita()" class="view-btn view-btn-fechar">
-                    Cancelar
+                <button type="button" onclick="fecharConcluirVisita()" class="view-btn view-btn-fechar" title="Cancelar">
+                    <i class="fas fa-xmark"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ausência — marca quem faltou e registra a justificativa -->
+    <div id="modal-ausencia-visita" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[130] justify-center items-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden border border-white/20 my-auto">
+            <div class="bg-amber-500 p-6 text-white">
+                <h3 class="font-black uppercase tracking-tight text-lg"><i class="fas fa-user-xmark mr-2"></i>Paciente Ausente</h3>
+                <p id="ausencia-resumo" class="text-[10px] text-amber-50 font-bold uppercase tracking-widest mt-1">—</p>
+            </div>
+
+            <div class="p-6 space-y-3">
+                <p class="text-[11px] font-bold text-slate-500">
+                    Marque quem não compareceu. O horário continua ocupado na agenda — a vaga foi perdida pela falta.
+                </p>
+                <div id="ausencia-lista" class="flex flex-col gap-2 max-h-60 overflow-y-auto"></div>
+                <button type="button" onclick="marcarTodosAusenciaVisita()"
+                    class="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-navy-900">
+                    <i class="fas fa-list-check mr-1"></i>Marcar todos
+                </button>
+
+                <div>
+                    <label class="block text-[10px] font-black text-amber-600 uppercase mb-2">
+                        Justificativa da ausência
+                    </label>
+                    <textarea id="ausencia-comentario" rows="3" maxlength="500"
+                        placeholder="Descreva o motivo da falta (ex.: paciente não atendeu, endereço fechado, desistiu no local)…"
+                        class="w-full border border-amber-200 bg-amber-50/60 rounded-xl py-2.5 px-3 shadow-sm text-sm placeholder-slate-400"></textarea>
+                    <p class="text-[10px] font-bold text-slate-400 mt-1">
+                        Fica registrado nos comentários do agendamento e na rastreabilidade.
+                    </p>
+                </div>
+            </div>
+
+            <div class="view-footer">
+                <button type="button" onclick="confirmarAusenciaVisita()" class="view-btn view-btn-ausente">
+                    <i class="fas fa-user-xmark"></i> Confirmar Ausência
+                </button>
+                <button type="button" onclick="fecharAusenciaVisita()" class="view-btn view-btn-fechar" title="Cancelar">
+                    <i class="fas fa-xmark"></i> Cancelar
                 </button>
             </div>
         </div>
@@ -911,6 +960,7 @@
                         <option value="Agendado">Agendado</option>
                         <option value="Em andamento">Em andamento</option>
                         <option value="Concluído">Concluído</option>
+                        <option value="Ausente">Ausente</option>
                         <option value="Cancelado">Cancelado</option>
                     </select>
                 </div>
@@ -1782,6 +1832,7 @@
     <script src="js/modals.js"></script>
     <script src="js/view-record.js"></script>
     <script src="js/concluir-visita.js"></script>
+    <script src="js/ausencia-visita.js"></script>
     <script src="js/backup.js"></script>
 
     <!-- ── Bootstrap ──────────────────────────────────────────────── -->

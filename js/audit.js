@@ -24,6 +24,9 @@ const _auditFields = [
     { key: 'pontoReferencia', label: 'Ponto de referência', fmt: v => v || '—' },
     { key: 'coletador',  label: 'Coletador',    fmt: v => v || '—' },
     { key: 'status',     label: 'Status',       fmt: v => v || '—' },
+    // Comentários entram na auditoria porque carregam a justificativa da
+    // ausência — sem isso o motivo da falta não apareceria no histórico.
+    { key: 'comentarios',label: 'Comentários',  fmt: v => (v && String(v).trim()) || '—' },
     { key: 'atendente',  label: 'Atendente',    fmt: v => v || '—' },
     { key: 'pedido',     label: 'Pedido',       fmt: v => v || '—' },
     { key: 'idade',      label: 'Idade',        fmt: v => v != null ? String(v) : '—' },
@@ -180,16 +183,47 @@ function openHistoryModal(filter) {
     _openHistoryCommon();
 }
 
+// ── AGENDA DE ORIGEM DE UM REGISTRO ─────────────────────────
+// Entradas novas gravam `agendaId`. As antigas, não: para essas, a agenda é
+// inferida pelo agendamento correspondente. Quando nem isso resolve (registro
+// de agendamento já excluído), a entrada fica sem origem conhecida e não
+// aparece nas abas específicas.
+function _agendaDoLog(entry) {
+    if (entry.agendaId) return entry.agendaId;
+    if (entry.appointmentId != null) {
+        const app = appointments.find(a => a.id == entry.appointmentId);
+        if (app && app.agendaId) return app.agendaId;
+    }
+    return null;
+}
+
+// Ações globais por natureza (usuários, motivos de perda) não pertencem a
+// nenhuma agenda e por isso não entram no recorte por aba.
+function _logGlobalDeSistema(entry) {
+    return !!(entry.action && (entry.action.startsWith('user_') || entry.action.startsWith('motivo_')));
+}
+
 function getFilteredAuditLog() {
     let filtered = [...auditLog];
+    const isUserAction = e => e.action && e.action.startsWith('user_');
+
     if (historyFilter.type === 'global') {
-        filtered = filtered.filter(e => !(e.action && e.action.startsWith('user_')));
+        filtered = filtered.filter(e => !isUserAction(e));
     } else if (historyFilter.type === 'day') {
-        filtered = filtered.filter(e => e.data === historyFilter.date && !(e.action && e.action.startsWith('user_')));
+        filtered = filtered.filter(e => e.data === historyFilter.date && !isUserAction(e));
     } else if (historyFilter.type === 'appointment') {
-        filtered = filtered.filter(e => e.appointmentId === historyFilter.id && !(e.action && e.action.startsWith('user_')));
+        filtered = filtered.filter(e => e.appointmentId === historyFilter.id && !isUserAction(e));
     } else if (historyFilter.type === 'users') {
-        filtered = filtered.filter(e => e.action && e.action.startsWith('user_'));
+        filtered = filtered.filter(e => isUserAction(e));
+    }
+
+    // Cada aba tem rastreabilidade própria: o histórico de uma agenda não se
+    // mistura com o das outras. O filtro por agendamento já é específico o
+    // bastante, e as abas de usuários/motivos são globais.
+    const recorteDeAgenda = historyFilter.type === 'global' || historyFilter.type === 'day';
+    if (recorteDeAgenda) {
+        filtered = filtered.filter(e =>
+            !_logGlobalDeSistema(e) && _agendaDoLog(e) === currentAgendaId);
     }
     const monthInput = document.getElementById('history-month-filter');
     if (monthInput && monthInput.value) {
@@ -411,12 +445,15 @@ function renderTraceability() {
     if (!el) return;
     const now = new Date();
     const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const monthLogs = auditLog.filter(e => e.timestamp && e.timestamp.startsWith(monthPrefix));
+    // O painel também é por aba: mostra só o movimento da agenda ativa
+    const daAgenda = auditLog.filter(e =>
+        !_logGlobalDeSistema(e) && _agendaDoLog(e) === currentAgendaId);
+    const monthLogs = daAgenda.filter(e => e.timestamp && e.timestamp.startsWith(monthPrefix));
     document.getElementById('trace-created').innerText = monthLogs.filter(e => e.action === 'create').length;
     document.getElementById('trace-edited').innerText  = monthLogs.filter(e => e.action === 'edit').length;
     document.getElementById('trace-deleted').innerText = monthLogs.filter(e => e.action === 'delete').length;
 
-    const recent = auditLog.slice(0, 5);
+    const recent = daAgenda.slice(0, 5);
     const cfgMap = {
         create: { label: 'Criado',  dot: 'bg-emerald-500', icon: 'fa-plus-circle',  text: 'text-emerald-700' },
         edit:   { label: 'Editado', dot: 'bg-blue-500',    icon: 'fa-edit',          text: 'text-blue-700' },

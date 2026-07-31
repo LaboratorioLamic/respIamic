@@ -108,7 +108,7 @@ function primeiroSlotLivre(iso) {
 
 // Etiqueta de faixa etária usada nos cards do dia
 function _faixaBadgeDia(app, agenda) {
-    if (app.status === 'Concluído' || app.status === 'Cancelado') return '';
+    if (pacienteEncerrado(app.status)) return '';
     const t = temaFaixaEtaria(app, agenda);
     return t ? `[${t.rotulo}]` : '';
 }
@@ -136,13 +136,18 @@ function openDayDetails(dateStr) {
         let overdueBadge = '';
         
         // Verifica se agendamento está atrasado
-        const isOverdue = isPastDate && app.status !== 'Concluído' && app.status !== 'Cancelado';
-        
+        const isOverdue = isPastDate && !pacienteEncerrado(app.status);
+
         if (isOverdue) {
             bgClass = 'bg-red-50 border-red-300';
             textColor = 'text-red-700';
             accentColor = 'bg-red-600';
             overdueBadge = '<div class="absolute top-2 right-4 bg-red-600 text-white text-[8px] font-black px-2 py-1 rounded-full z-10"><i class="fas fa-exclamation-triangle mr-1"></i>ATRASADO</div>';
+        } else if (app.status === 'Ausente') {
+            bgClass = 'bg-amber-50 border-amber-400';
+            textColor = 'text-amber-800';
+            accentColor = 'bg-amber-500';
+            overdueBadge = '<div class="absolute top-2 right-4 bg-amber-500 text-white text-[8px] font-black px-2 py-1 rounded-full z-10"><i class="fas fa-user-xmark mr-1"></i>AUSENTE</div>';
         } else if (app.status === 'Cancelado') {
             bgClass = 'bg-slate-100 opacity-70 border-slate-200';
             textColor = 'text-slate-400 line-through';
@@ -170,6 +175,9 @@ function openDayDetails(dateStr) {
         if (app.status === 'Concluído') {
             // Selo próprio do concluído — não deixa confundir com "em andamento"
             checklistBadge = '<div class="h-8 w-8 rounded-md border border-green-300 bg-green-600 text-white flex items-center justify-center shadow-sm" title="Concluído"><i class="fas fa-check-double"></i></div>';
+        } else if (app.status === 'Ausente') {
+            // Ausência é desfecho: cobra checklist não faz sentido
+            checklistBadge = '<div class="h-8 w-8 rounded-md border border-amber-400 bg-amber-500 text-white flex items-center justify-center shadow-sm" title="Paciente ausente"><i class="fas fa-user-xmark"></i></div>';
         } else if (app.status === 'Em andamento') {
             // Para "Em andamento", não mostra aviso de checklist incompleto
             checklistBadge = '<div class="h-8 w-8 rounded-md border border-purple-200 bg-purple-50 text-purple-600 flex items-center justify-center shadow-sm" title="Em andamento"><i class="fas fa-spinner"></i></div>';

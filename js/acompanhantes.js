@@ -6,7 +6,26 @@ let _acompanhanteSeq = 0;
 
 // Status possíveis de cada paciente da visita — os mesmos do agendamento,
 // menos "Em andamento", que só faz sentido para a visita como um todo.
-const PACIENTE_STATUS = ['Agendado', 'Concluído', 'Cancelado'];
+const PACIENTE_STATUS = ['Agendado', 'Concluído', 'Cancelado', 'Ausente'];
+
+// ── ESTADOS ENCERRADOS ──────────────────────────────────────
+// Um paciente "encerrado" não será mais atendido nesta visita — não entra em
+// conclusão, não aparece como pendente e não deixa a visita em aberto.
+// "Ausente" (faltou / não compareceu) encerra tanto quanto "Cancelado".
+//
+// A diferença entre os dois está na LOTAÇÃO, não aqui: o cancelamento devolve a
+// vaga à agenda, enquanto a ausência a mantém consumida — o horário foi perdido
+// pela falta e não é reaproveitado. Por isso `vagaLiberada` só vale p/ cancelado.
+const STATUS_ENCERRADOS = ['Concluído', 'Cancelado', 'Ausente'];
+
+function pacienteEncerrado(status) {
+    return STATUS_ENCERRADOS.includes(status);
+}
+
+// O status devolve a vaga para a agenda? Só o cancelamento devolve.
+function vagaLiberada(status) {
+    return status === 'Cancelado';
+}
 
 // Linha de formulário de um acompanhante
 function _acompanhanteHtml(id, dados) {
@@ -138,22 +157,33 @@ function pacientesDaVisita(app) {
     ];
 }
 
-// Quantos pacientes da visita já foram encerrados (concluídos ou cancelados)
+// Quantos pacientes da visita já foram encerrados (concluídos, cancelados
+// ou ausentes) e quantos ainda estão pendentes de atendimento.
 function resumoPacientes(app) {
     const lista = pacientesDaVisita(app);
     return {
         total: lista.length,
         concluidos: lista.filter(p => p.status === 'Concluído').length,
         cancelados: lista.filter(p => p.status === 'Cancelado').length,
-        pendentes: lista.filter(p => p.status !== 'Concluído' && p.status !== 'Cancelado').length
+        ausentes: lista.filter(p => p.status === 'Ausente').length,
+        pendentes: lista.filter(p => !pacienteEncerrado(p.status)).length
     };
 }
 
 // Status do agendamento derivado dos pacientes: só fecha quando todos
 // encerraram; com parte encerrada a visita fica "Em andamento".
+//
+// Fechando a visita, a precedência entre os estados encerrados é:
+// Concluído > Ausente > Cancelado. Quem foi atendido domina (a visita
+// aconteceu); sem ninguém atendido, a falta domina o cancelamento, porque
+// houve deslocamento perdido — informação que o cancelamento apagaria.
 function statusDerivadoDaVisita(app) {
     const r = resumoPacientes(app);
-    if (r.pendentes === 0) return r.concluidos ? 'Concluído' : 'Cancelado';
-    if (r.concluidos || r.cancelados) return 'Em andamento';
+    if (r.pendentes === 0) {
+        if (r.concluidos) return 'Concluído';
+        if (r.ausentes) return 'Ausente';
+        return 'Cancelado';
+    }
+    if (r.concluidos || r.cancelados || r.ausentes) return 'Em andamento';
     return app.status || 'Agendado';
 }
