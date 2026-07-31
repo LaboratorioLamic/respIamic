@@ -241,13 +241,12 @@ function openDayDetails(dateStr) {
     // Oculta ou mostra o botão de agendar baseado no número de agendamentos ativos
     const activeApps = dayApps.filter(a => a.status !== 'Cancelado');
     const scheduleBtn = document.querySelector('button[onclick*="openRecordModalWithDate"]');
+    const scheduleFooter = document.getElementById('day-details-footer');
     if (scheduleBtn) {
         const [_y, _m, _d] = dateStr.split('-').map(Number);
-        if (vagasOcupadasNoDia(activeApps, agenda) >= limiteDoDia(new Date(_y, _m - 1, _d).getDay(), agenda)) {
-            scheduleBtn.style.display = 'none';
-        } else {
-            scheduleBtn.style.display = 'block';
-        }
+        const lotado = vagasOcupadasNoDia(activeApps, agenda) >= limiteDoDia(new Date(_y, _m - 1, _d).getDay(), agenda);
+        scheduleBtn.style.display = lotado ? 'none' : 'block';
+        if (scheduleFooter) scheduleFooter.style.display = lotado ? 'none' : 'block';
     }
 }
 
