@@ -296,12 +296,101 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+/* Cards muito baixos (30 min ≈ 25px): duas linhas não cabem e o nome ficava
+   cortado ao meio pelo overflow. Aqui horário e nome dividem uma linha só,
+   verticalmente centrada, e a idade some quando não há largura para ela. */
+.week-event-tight {
+    padding: 0 .35rem 0 .5rem;
+    display: flex;
+    align-items: center;
+}
+.week-event-tight .week-event-body {
+    display: flex;
+    align-items: baseline;
+    gap: .3rem;
+    width: 100%;
+}
+.week-event-tight .week-event-time {
+    flex: none;
+    display: block;
+}
+.week-event-tight .week-event-idade { display: none; }
+.week-event-tight .week-event-name {
+    margin-top: 0;
+    flex: 1 1 auto;
+    font-size: 10px;
+}
+
 .week-event-badge {
     position: absolute;
     top: 3px;
     right: 4px;
     font-size: 8px;
     color: #dc2626;
+}
+
+/* ── REMARCAR ARRASTANDO ────────────────────────────────────
+   Cards ativos podem ser levados para outro horário/dia da grade. */
+.week-event-movivel { cursor: grab; }
+.week-event-movivel:active { cursor: grabbing; }
+
+.week-event-dragging {
+    opacity: .45;
+    transform: none;
+}
+
+/* Durante o arrasto os cards param de capturar o mouse, senão cobririam os
+   slots e o drop nunca chegaria ao alvo embaixo deles. */
+.week-dragging .week-event,
+.week-dragging .week-slot-add,
+.week-dragging .week-now { pointer-events: none; }
+
+/* Horários que aceitam o card ganham destaque enquanto se arrasta */
+.week-dragging .week-slot-drop {
+    background: rgba(14, 165, 233, .07);
+    box-shadow: inset 0 0 0 1px rgba(14, 165, 233, .18);
+}
+
+.week-slot-dropover {
+    background: rgba(14, 165, 233, .22) !important;
+    box-shadow: inset 0 0 0 2px #0ea5e9 !important;
+}
+
+/* Mesmo listrado do card concluído, aplicado aos cards do modal do dia */
+.card-concluido {
+    background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(22, 163, 74, .1) 0 6px,
+        transparent 6px 13px
+    );
+}
+
+/* CONCLUÍDO — o verde sozinho se confundia com os outros status em cards
+   pequenos, então o card ganha também uma forma: selo de check no canto e um
+   leve listrado diagonal ao fundo (visível mesmo em daltonismo/monocromia). */
+.week-event-done {
+    background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(22, 163, 74, .11) 0 5px,
+        transparent 5px 11px
+    );
+}
+.week-event-done .week-event-body { padding-right: 14px; }
+.week-event-done .week-event-name { color: #15803d; }
+.week-event-badge-done {
+    top: 50%;
+    right: 3px;
+    transform: translateY(-50%);
+    width: 13px;
+    height: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #16a34a;
+    color: #fff;
+    font-size: 7px;
+    box-shadow: 0 1px 3px rgba(22, 101, 52, .45);
 }
 
 .week-now {

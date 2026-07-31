@@ -128,7 +128,10 @@ function _vwAnexos(app) {
         const estilo = `--anexo-cor: ${_ICON_CORES[familia] || _ICON_CORES.generico}; --anexo-delay: ${i * 40}ms;`;
 
         if (a.tipo === 'imagem') {
-            return `<button type="button" class="view-anexo-card" style="${estilo}" onclick="abrirImagemAnexo('${_vwEscape(a.fileId)}')">
+            // O título vai escapado também para aspas simples, senão um nome com
+            // apóstrofo quebraria o argumento do onclick.
+            const tituloJs = _vwEscape(a.titulo || '').replace(/'/g, '&#39;');
+            return `<button type="button" class="view-anexo-card" style="${estilo}" onclick="abrirImagemAnexo('${_vwEscape(a.fileId)}','${tituloJs}')">
                 <span class="view-anexo-icone">${icone}</span>
                 <span class="view-anexo-nome" title="${nome}">${nome}</span>
                 <i class="fas fa-eye view-anexo-seta"></i>

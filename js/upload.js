@@ -571,7 +571,7 @@ function renderAnexosList(ctx) {
             nomeEl = document.createElement('button');
             nomeEl.type = 'button';
             nomeEl.className = 'anexo-item-nome anexo-item-nome-btn';
-            nomeEl.onclick = () => abrirImagemAnexo(anexo.fileId);
+            nomeEl.onclick = () => abrirImagemAnexo(anexo.fileId, anexo.titulo);
         } else {
             nomeEl = document.createElement('a');
             nomeEl.className = 'anexo-item-nome';
@@ -611,8 +611,137 @@ function renderAnexosList(ctx) {
     });
 }
 
-// Abre a imagem guardada em /imgBlobs numa nova aba
-async function abrirImagemAnexo(blobId) {
+// Abre a imagem guardada em /imgBlobs num visualizador sobreposto (lightbox).
+// Fica na própria página, acima dos modais; clique no fundo ou Esc fecham.
+// Controles do lightbox aberto — preenchidos por _abrirImagemLightbox
+let _lightboxZoomIn = null, _lightboxZoomOut = null, _lightboxZoomReset = null;
+let _lightboxMoveHandler = null, _lightboxUpHandler = null;
+
+function _fecharImagemLightbox() {
+    const box = document.getElementById('img-lightbox');
+    if (!box) return;
+    document.removeEventListener('keydown', _lightboxKeyHandler);
+    if (_lightboxMoveHandler) window.removeEventListener('mousemove', _lightboxMoveHandler);
+    if (_lightboxUpHandler) window.removeEventListener('mouseup', _lightboxUpHandler);
+    _lightboxMoveHandler = _lightboxUpHandler = null;
+    _lightboxZoomIn = _lightboxZoomOut = _lightboxZoomReset = null;
+    box.remove();
+}
+
+function _lightboxKeyHandler(e) {
+    if (e.key === 'Escape') {
+        e.stopPropagation();
+        _fecharImagemLightbox();
+    } else if ((e.key === '+' || e.key === '=') && _lightboxZoomIn) {
+        e.preventDefault(); _lightboxZoomIn();
+    } else if (e.key === '-' && _lightboxZoomOut) {
+        e.preventDefault(); _lightboxZoomOut();
+    } else if (e.key === '0' && _lightboxZoomReset) {
+        e.preventDefault(); _lightboxZoomReset();
+    }
+}
+
+const _LIGHTBOX_ZOOM_MIN = 1;
+const _LIGHTBOX_ZOOM_MAX = 5;
+const _LIGHTBOX_ZOOM_PASSO = 0.5;
+const _LIGHTBOX_ZOOM_CLIQUE = 2;   // nível ao clicar na imagem sem zoom
+
+function _abrirImagemLightbox(dataUrl, titulo) {
+    _fecharImagemLightbox();
+
+    const box = document.createElement('div');
+    box.id = 'img-lightbox';
+    box.className = 'img-lightbox';
+    box.innerHTML = `
+        <div class="img-lightbox-barra">
+            <button type="button" class="img-lightbox-btn" data-lb="out" title="Diminuir (−)" aria-label="Diminuir zoom">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path><path d="M8 11h6"></path></svg>
+            </button>
+            <span class="img-lightbox-nivel" data-lb="nivel">100%</span>
+            <button type="button" class="img-lightbox-btn" data-lb="in" title="Aumentar (+)" aria-label="Aumentar zoom">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path><path d="M8 11h6"></path><path d="M11 8v6"></path></svg>
+            </button>
+            <button type="button" class="img-lightbox-btn img-lightbox-close" data-lb="close" title="Fechar (Esc)" aria-label="Fechar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+            </button>
+        </div>
+        <figure class="img-lightbox-figura">
+            <img class="img-lightbox-img" alt="${_escapeHtml(titulo || 'Anexo')}">
+            ${titulo ? `<figcaption class="img-lightbox-legenda">${_escapeHtml(titulo)}</figcaption>` : ''}
+        </figure>`;
+
+    const img = box.querySelector('.img-lightbox-img');
+    const nivelEl = box.querySelector('[data-lb="nivel"]');
+    img.src = dataUrl;
+
+    // Estado do zoom/deslocamento. O pan só existe com zoom > 1.
+    let zoom = 1, panX = 0, panY = 0;
+    let arrastando = false, moveu = false, iniX = 0, iniY = 0;
+
+    const aplicar = () => {
+        if (zoom <= 1) { panX = 0; panY = 0; }
+        img.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+        nivelEl.textContent = `${Math.round(zoom * 100)}%`;
+        box.classList.toggle('img-lightbox-zoomed', zoom > 1);
+    };
+
+    const setZoom = (valor) => {
+        zoom = Math.min(_LIGHTBOX_ZOOM_MAX, Math.max(_LIGHTBOX_ZOOM_MIN, Math.round(valor * 100) / 100));
+        aplicar();
+    };
+
+    _lightboxZoomIn = () => setZoom(zoom + _LIGHTBOX_ZOOM_PASSO);
+    _lightboxZoomOut = () => setZoom(zoom - _LIGHTBOX_ZOOM_PASSO);
+    _lightboxZoomReset = () => setZoom(1);
+
+    // Clique na imagem alterna aproximar/afastar; arrastar não conta como clique
+    img.addEventListener('click', e => {
+        e.stopPropagation();
+        if (moveu) { moveu = false; return; }
+        setZoom(zoom > 1 ? 1 : _LIGHTBOX_ZOOM_CLIQUE);
+    });
+
+    // Roda do mouse aproxima/afasta em cima da imagem
+    box.addEventListener('wheel', e => {
+        e.preventDefault();
+        setZoom(zoom + (e.deltaY < 0 ? _LIGHTBOX_ZOOM_PASSO : -_LIGHTBOX_ZOOM_PASSO));
+    }, { passive: false });
+
+    // Arrastar para navegar na imagem ampliada
+    img.addEventListener('mousedown', e => {
+        if (zoom <= 1) return;
+        e.preventDefault();
+        arrastando = true; moveu = false;
+        iniX = e.clientX - panX; iniY = e.clientY - panY;
+    });
+    window.addEventListener('mousemove', _lightboxMoveHandler = e => {
+        if (!arrastando) return;
+        panX = e.clientX - iniX; panY = e.clientY - iniY;
+        moveu = true;
+        aplicar();
+    });
+    window.addEventListener('mouseup', _lightboxUpHandler = () => { arrastando = false; });
+
+    box.addEventListener('click', e => {
+        const btn = e.target.closest('[data-lb]');
+        if (btn) {
+            e.stopPropagation();
+            if (btn.dataset.lb === 'in') _lightboxZoomIn();
+            else if (btn.dataset.lb === 'out') _lightboxZoomOut();
+            else _fecharImagemLightbox();
+            return;
+        }
+        // Só o clique no fundo fecha — imagem, legenda e barra não sobem até aqui
+        if (e.target === box) _fecharImagemLightbox();
+    });
+    box.querySelector('.img-lightbox-figura').addEventListener('click', e => e.stopPropagation());
+
+    document.body.appendChild(box);
+    aplicar();
+    document.addEventListener('keydown', _lightboxKeyHandler);
+}
+
+async function abrirImagemAnexo(blobId, titulo) {
     if (!blobId) return;
     try {
         const snap = await database.ref(`imgBlobs/${blobId}`).once('value');
@@ -621,17 +750,7 @@ async function abrirImagemAnexo(blobId) {
             _uploadToast('Imagem não encontrada no banco.', 'error');
             return;
         }
-        const aba = window.open();
-        if (!aba) {
-            _uploadToast('Permita pop-ups para visualizar a imagem.', 'warning');
-            return;
-        }
-        const img = aba.document.createElement('img');
-        img.src = val.data;
-        img.style.maxWidth = '100%';
-        aba.document.body.style.margin = '0';
-        aba.document.body.style.background = '#0f172a';
-        aba.document.body.appendChild(img);
+        _abrirImagemLightbox(val.data, titulo || val.titulo || '');
     } catch (err) {
         console.error('Erro ao abrir imagem:', err);
         _uploadToast('Não foi possível carregar a imagem.', 'error');

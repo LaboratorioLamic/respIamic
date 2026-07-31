@@ -100,7 +100,9 @@ function getAppointmentTheme(app, isPastDate) {
     if (isOverdue) return { bg: 'bg-red-50', border: 'border-red-300', text: 'text-red-700', accent: 'bg-red-600', overdue: true };
     if (app.status === 'Cancelado') return { bg: 'bg-slate-100', border: 'border-slate-200', text: 'text-slate-400', accent: 'bg-slate-400', canceled: true };
     if (app.status === 'Em andamento') return { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700', accent: 'bg-purple-600' };
-    if (app.status === 'Concluído') return { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', accent: 'bg-green-600' };
+    // Concluído: além do verde, ganha um selo de check no card. A cor sozinha
+    // ficava perto demais dos agendados/em andamento em cards pequenos.
+    if (app.status === 'Concluído') return { bg: 'bg-green-50', border: 'border-green-300', text: 'text-green-700', accent: 'bg-green-600', done: true };
 
     const faixa = faixaEtariaDe(app, agenda);
     const t = temaFaixaEtaria(app, agenda);
@@ -322,8 +324,15 @@ function renderWeekView() {
                 || slotAceita(null, diaApps.filter(a => a.horaInicio === hora), agenda);
             const selectable = dayOpen && inWindow && alinhado && livre;
             const top = ((m - viewStart) / 60) * WEEK_HOUR_PX;
-            slots += `<div class="week-slot ${m % 60 === 0 ? 'week-slot-hour' : ''} ${inWindow ? 'week-slot-open' : 'week-slot-closed'} ${selectable ? 'week-slot-selectable' : ''}"
+            // Alvo de arrastar-e-soltar: qualquer horário da grade dentro da
+            // janela do dia. A validação real (lotação, limite, etc.) roda no
+            // drop, reaproveitando as mesmas regras do formulário.
+            const dropOk = inWindow && alinhado && !isHoliday && startWindows.length > 0;
+
+            slots += `<div class="week-slot ${m % 60 === 0 ? 'week-slot-hour' : ''} ${inWindow ? 'week-slot-open' : 'week-slot-closed'} ${selectable ? 'week-slot-selectable' : ''} ${dropOk ? 'week-slot-drop' : ''}"
                 style="top:${top}px;height:${(slotMin / 60) * WEEK_HOUR_PX}px"
+                ${dropOk ? `data-drop-data="${dateStr}" data-drop-hora="${hora}"
+                    ondragover="weekDragOver(event)" ondragleave="weekDragLeave(event)" ondrop="weekDrop(event)"` : ''}
                 ${selectable ? `onclick="openRecordModalWithDate('${dateStr}','${hora}')" title="Agendar às ${hora}"` : ''}>
                 ${selectable ? '<span class="week-slot-plus"><i class="fas fa-plus"></i></span>' : ''}
             </div>`;
@@ -360,6 +369,9 @@ function renderWeekView() {
             const width = 100 / ev.cols;
             const leftPct = ev.col * width;
             const compact = height < 52;
+            // Card muito baixo (ex.: 30 min = 25px): não cabem duas linhas, então
+            // horário, idade e nome vão para uma única linha, sem corte vertical.
+            const tight = height < 34;
             const detalhe = temCampo('exame', agenda)
                 ? `${a.exame} · ${a.substrato}${a.metano === 'Sim' ? ' (metano)' : ''}`
                 : temCampo('endereco', agenda)
@@ -369,16 +381,21 @@ function renderWeekView() {
             // encurta o nome para primeiro nome + iniciais.
             const dividindo = ev.cols > 1;
             const idade = idadeLabel(a.idade);
-            const nomeExibido = dividindo ? abreviarNome(a.paciente) : a.paciente;
+            const nomeExibido = dividindo || tight ? abreviarNome(a.paciente) : a.paciente;
             const distante = temCampo('endereco', agenda) && a.distante;
             const extras = extraPacientesLabel(a);
             const listaNomes = extras ? `\nPacientes: ${nomesPacientes(a).join(', ')}` : '';
             const tooltip = `${a.horaInicio} – ${a.horaFim} | ${a.paciente}${idade ? ` (${idade})` : ''}${listaNomes}\n${detalhe}${distante ? '\n⚠ Localidade distante' : ''}\nStatus: ${a.status}\nAtendente: ${formatAtendenteName(a.atendente)}`;
 
-            return `<div class="week-event ${theme.bg} ${theme.border} ${theme.canceled ? 'week-event-canceled' : ''} ${distante ? 'card-distante' : ''}"
+            // Remarcar arrastando: só faz sentido em quem ainda vai acontecer.
+            // Concluídos e cancelados ficam fixos para não reescrever histórico.
+            const movivel = a.status !== 'Concluído' && a.status !== 'Cancelado';
+
+            return `<div class="week-event ${theme.bg} ${theme.border} ${tight ? 'week-event-tight' : ''} ${theme.done ? 'week-event-done' : ''} ${theme.canceled ? 'week-event-canceled' : ''} ${distante ? 'card-distante' : ''} ${movivel ? 'week-event-movivel' : ''}"
                 style="top:${top}px;height:${height}px;left:calc(${leftPct}% + 2px);width:calc(${width}% - 5px)"
+                ${movivel ? `draggable="true" data-app-id="${a.id}" ondragstart="weekDragStart(event, ${a.id})" ondragend="weekDragEnd(event)"` : ''}
                 onclick="event.stopPropagation(); viewRecord(${a.id})"
-                title="${tooltip.replace(/"/g, '&quot;')}">
+                title="${(tooltip + (movivel ? '\n↔ Arraste para remarcar' : '')).replace(/"/g, '&quot;')}">
                 <span class="week-event-accent ${theme.accent}"></span>
                 <div class="week-event-body">
                     <div class="week-event-time ${theme.text}">
@@ -389,6 +406,7 @@ function renderWeekView() {
                     ${compact ? '' : `<div class="week-event-meta ${theme.text}">${distante ? `<i class="fas ${DISTANTE_TEMA.icon} ${DISTANTE_TEMA.text} mr-1" title="Localidade distante"></i>` : ''}${detalhe}${theme.faixa ? ` · ${FAIXA_ETARIA_TEMA[theme.faixa].rotulo}` : ''}</div>`}
                 </div>
                 ${theme.overdue ? '<span class="week-event-badge"><i class="fas fa-exclamation-triangle"></i></span>' : ''}
+                ${theme.done ? '<span class="week-event-badge week-event-badge-done" title="Concluído"><i class="fas fa-check"></i></span>' : ''}
             </div>`;
         }).join('');
 
@@ -408,6 +426,92 @@ function renderWeekView() {
     }
 
     canvas.innerHTML = gutter + colsHtml;
+}
+
+// ── REMARCAR ARRASTANDO (visão semanal) ─────────────────────
+// Solta o card em outro horário/dia da grade. O destino passa pela mesma
+// validateAppointment() do formulário, então as regras de dia atendido, turno,
+// alinhamento da grade, lotação do horário e limite diário valem igual.
+let _weekDragId = null;
+
+function weekDragStart(e, id) {
+    _weekDragId = id;
+    // Enquanto arrasta, os cards deixam de capturar o mouse — senão eles
+    // cobririam os slots e o drop nunca chegaria ao alvo embaixo.
+    document.getElementById('week-canvas')?.classList.add('week-dragging');
+    e.currentTarget.classList.add('week-event-dragging');
+    if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', String(id));
+    }
+}
+
+function weekDragEnd(e) {
+    _weekDragId = null;
+    document.getElementById('week-canvas')?.classList.remove('week-dragging');
+    e.currentTarget.classList.remove('week-event-dragging');
+    document.querySelectorAll('.week-slot-dropover')
+        .forEach(el => el.classList.remove('week-slot-dropover'));
+}
+
+function weekDragOver(e) {
+    if (_weekDragId === null) return;
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    e.currentTarget.classList.add('week-slot-dropover');
+}
+
+function weekDragLeave(e) {
+    e.currentTarget.classList.remove('week-slot-dropover');
+}
+
+function weekDrop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('week-slot-dropover');
+
+    const id = _weekDragId ?? (e.dataTransfer && e.dataTransfer.getData('text/plain'));
+    _weekDragId = null;
+    document.getElementById('week-canvas')?.classList.remove('week-dragging');
+    if (id === null || id === '') return;
+
+    const novaData = e.currentTarget.dataset.dropData;
+    const novaHora = e.currentTarget.dataset.dropHora;
+    if (!novaData || !novaHora) return;
+
+    remarcarAgendamento(id, novaData, novaHora);
+}
+
+// Move um agendamento para outra data/horário, validando como se fosse edição
+function remarcarAgendamento(id, novaData, novaHora) {
+    const atual = appointments.find(a => a.id == id);
+    if (!atual) return;
+    if (atual.data === novaData && atual.horaInicio === novaHora) return;
+
+    const agenda = currentAgenda();
+    // Recalcula o fim mantendo a duração do agendamento
+    const duracao = Math.max(
+        1,
+        (timeToMin(atual.horaFim) ?? 0) - (timeToMin(atual.horaInicio) ?? 0)
+            || duracaoAgenda(atual.exame, agenda)
+    );
+    const novoFim = minToTime(timeToMin(novaHora) + duracao);
+
+    const candidato = { ...atual, data: novaData, horaInicio: novaHora, horaFim: novoFim };
+
+    const erro = validateAppointment(candidato);
+    if (erro) {
+        showNotification(erro === 'DATA_PASSADA'
+            ? 'Não é possível remarcar para uma data que já passou.'
+            : erro, 'error');
+        return;
+    }
+
+    setAppointments(appointments.map(a => a.id == id ? candidato : a));
+    saveAppointmentsToFirebase();
+    addAuditLog('edit', candidato, atual);
+    showNotification(
+        `${atual.paciente} remarcado para ${novaData.split('-').reverse().join('/')} às ${novaHora}.`, 'success');
+    renderTable(); renderCalendar(); updateFilterDropdowns();
 }
 
 // Distribui colunas para agendamentos que se sobrepõem no mesmo dia

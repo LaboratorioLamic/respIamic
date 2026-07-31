@@ -304,3 +304,122 @@
     background: var(--anexo-perigo);
     color: #fff;
 }
+
+/* ── VISUALIZADOR DE IMAGEM (LIGHTBOX) ──────────────────────
+   Abre sobre a página, acima dos modais. Clique no fundo, no X
+   ou Esc fecham — nada de abrir aba nova. */
+.img-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 9500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+    background: rgba(8, 13, 28, .92);
+    backdrop-filter: blur(6px);
+    cursor: zoom-out;
+    overflow: hidden;   /* imagem ampliada não gera barra de rolagem na página */
+    animation: imgLightboxIn .16s ease-out;
+}
+
+@keyframes imgLightboxIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.img-lightbox-figura {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .75rem;
+    max-width: 100%;
+    max-height: 100%;
+    margin: 0;
+    cursor: default;
+}
+
+/* Clique na imagem alterna aproximar/afastar; com zoom ativo ela pode ser
+   arrastada. O cursor de lupa indica qual dos dois o clique vai fazer. */
+.img-lightbox-img {
+    max-width: 100%;
+    max-height: calc(100vh - 8rem);
+    object-fit: contain;
+    border-radius: .75rem;
+    box-shadow: 0 30px 70px -25px rgba(0, 0, 0, .9);
+    background: #fff;
+    cursor: zoom-in;
+    transform-origin: center center;
+    transition: transform .18s ease-out;
+    user-select: none;
+    -webkit-user-drag: none;
+}
+
+.img-lightbox-zoomed .img-lightbox-img {
+    cursor: zoom-out;
+    transition: none;   /* durante o pan, seguir o mouse sem atraso */
+}
+
+.img-lightbox-legenda {
+    max-width: 100%;
+    color: rgba(255, 255, 255, .85);
+    font-size: .8rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+/* Barra de controles: lupas de aproximar/afastar, nível atual e fechar */
+.img-lightbox-barra {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .3rem .45rem;
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 999px;
+    background: rgba(15, 23, 42, .75);
+    backdrop-filter: blur(4px);
+    cursor: default;
+}
+
+.img-lightbox-btn {
+    width: 2.1rem;
+    height: 2.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, .22);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .08);
+    color: #fff;
+    cursor: pointer;
+    transition: background .15s ease, transform .15s ease;
+}
+
+.img-lightbox-btn svg { width: 1.05rem; height: 1.05rem; }
+
+.img-lightbox-btn:hover {
+    background: rgba(255, 255, 255, .22);
+    transform: scale(1.06);
+}
+
+.img-lightbox-close {
+    background: rgba(239, 68, 68, .22);
+    border-color: rgba(239, 68, 68, .45);
+}
+
+.img-lightbox-close:hover { background: rgba(239, 68, 68, .5); }
+
+.img-lightbox-nivel {
+    min-width: 3rem;
+    color: rgba(255, 255, 255, .9);
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-align: center;
+    user-select: none;
+}

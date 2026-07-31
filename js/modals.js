@@ -152,8 +152,9 @@ function openDayDetails(dateStr) {
             textColor = 'text-purple-700';
             accentColor = 'bg-purple-600';
         } else if (app.status === 'Concluído') {
-            bgClass = 'bg-green-50 border-green-200';
+            bgClass = 'bg-green-50 border-green-300 card-concluido';
             textColor = 'text-green-700';
+            accentColor = 'bg-green-600';
         } else if (temaFaixaEtaria(app, agenda)) {
             const t = temaFaixaEtaria(app, agenda);
             bgClass = `${t.bg} ${t.border}`;
@@ -166,7 +167,10 @@ function openDayDetails(dateStr) {
 
         const isChecklistComplete = agenda.checklist.every(item => !!app[CHECKLIST_ITENS[item].chave]);
         let checklistBadge;
-        if (app.status === 'Em andamento') {
+        if (app.status === 'Concluído') {
+            // Selo próprio do concluído — não deixa confundir com "em andamento"
+            checklistBadge = '<div class="h-8 w-8 rounded-md border border-green-300 bg-green-600 text-white flex items-center justify-center shadow-sm" title="Concluído"><i class="fas fa-check-double"></i></div>';
+        } else if (app.status === 'Em andamento') {
             // Para "Em andamento", não mostra aviso de checklist incompleto
             checklistBadge = '<div class="h-8 w-8 rounded-md border border-purple-200 bg-purple-50 text-purple-600 flex items-center justify-center shadow-sm" title="Em andamento"><i class="fas fa-spinner"></i></div>';
         } else {
