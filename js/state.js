@@ -29,8 +29,9 @@ let atendentesList = [];
 let motivosPerdaList = [];
 let currentDate = new Date();
 
-// Visão do calendário: 'month' (padrão) ou 'week'
-let calendarView = localStorage.getItem('respiroCalendarView') === 'week' ? 'week' : 'month';
+// Visão do calendário: 'week' (padrão) ou 'month'. Quem já escolheu mês
+// continua no mês — só a ausência de preferência salva cai no padrão semanal.
+let calendarView = localStorage.getItem('respiroCalendarView') === 'month' ? 'month' : 'week';
 let tablePage = 1;
 const itemsPerPage = 20;
 

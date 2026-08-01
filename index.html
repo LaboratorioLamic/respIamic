@@ -229,8 +229,8 @@
                     <button onclick="switchTab('dados')" title="Abrir tabela de agendamentos" aria-label="Abrir tabela de agendamentos" class="h-10 px-3 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-xl font-black uppercase tracking-[0.12em] text-[10px] flex items-center gap-1.5"><i class="fas fa-table-list text-[10px]"></i>Tabela</button>
                     <button onclick="openHistoryModal({type:'global'})" title="Rastreabilidade" class="h-10 w-10 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-xl flex items-center justify-center"><i class="fas fa-clock-rotate-left text-sm"></i></button>
                     <div class="h-10 flex items-center gap-1 rounded-xl bg-slate-100 p-1" role="tablist" aria-label="Modo de visualização">
-                        <button id="view-tab-month" role="tab" onclick="setCalendarView('month')" class="view-tab h-8 px-3 rounded-lg font-black uppercase tracking-[0.12em] text-[10px] flex items-center gap-1.5"><i class="fas fa-table-cells text-[10px]"></i>Mês</button>
                         <button id="view-tab-week" role="tab" onclick="setCalendarView('week')" class="view-tab h-8 px-3 rounded-lg font-black uppercase tracking-[0.12em] text-[10px] flex items-center gap-1.5"><i class="fas fa-calendar-week text-[10px]"></i>Semana</button>
+                        <button id="view-tab-month" role="tab" onclick="setCalendarView('month')" class="view-tab h-8 px-3 rounded-lg font-black uppercase tracking-[0.12em] text-[10px] flex items-center gap-1.5"><i class="fas fa-table-cells text-[10px]"></i>Mês</button>
                     </div>
                     <button onclick="goToToday()" title="Ir para hoje" class="h-10 px-3 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-xl font-black uppercase tracking-[0.12em] text-[10px] flex items-center gap-1.5"><i class="fas fa-crosshairs text-[10px]"></i>Hoje</button>
                     <div class="h-10 flex items-center gap-1 rounded-xl bg-slate-100 p-1">
@@ -242,7 +242,7 @@
             </div>
 
             <div class="bg-white p-4 sm:p-6 rounded-3xl border border-slate-200/80">
-                <div id="calendar-month-view">
+                <div id="calendar-month-view" class="hidden">
                     <div class="calendar-grid mb-4">
                         <div class="text-center text-[10px] font-black uppercase text-red-500 tracking-widest">Dom</div>
                         <div class="text-center text-[10px] font-black uppercase text-slate-400 tracking-widest">Seg</div>
@@ -255,7 +255,7 @@
                     <div id="calendar-body" class="calendar-grid"></div>
                 </div>
 
-                <div id="calendar-week-view" class="hidden">
+                <div id="calendar-week-view">
                     <div class="week-scroll">
                         <div class="week-frame">
                             <div id="week-head" class="week-row week-head"></div>
