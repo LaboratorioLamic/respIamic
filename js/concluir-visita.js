@@ -55,6 +55,17 @@ function abrirConcluirVisita(id) {
     blocoAbst.classList.toggle('hidden', !usaAbst);
     inputAbst.value = usaAbst && app.abstinencia != null ? app.abstinencia : '';
 
+    // Coleta domiciliar: quem confirma a conclusão assume o coletador responsável.
+    // O aviso aparece antes de confirmar para que a troca não seja silenciosa.
+    const blocoColetador = document.getElementById('concluir-coletador-bloco');
+    const usaColetador = temCampo('coletador', agenda);
+    blocoColetador.classList.toggle('hidden', !usaColetador);
+    if (usaColetador) {
+        const nome = coletadorDoUsuarioAtual();
+        document.getElementById('concluir-coletador-nome').textContent =
+            nome ? formatAtendenteName(nome) : 'Usuário sem nome na lista de atendentes';
+    }
+
     document.getElementById('modal-view-record').classList.remove('active');
     document.getElementById('modal-concluir-visita').classList.add('active');
 }
@@ -108,6 +119,14 @@ function confirmarConcluirVisita() {
     });
 
     const record = { ...app, acompanhantes, abstinencia };
+
+    // Na coleta domiciliar o coletador é quem de fato realizou a coleta, então
+    // quem conclui a visita substitui o nome previsto no agendamento.
+    if (temCampo('coletador', agenda) && Object.values(marcados).some(Boolean)) {
+        const coletador = coletadorDoUsuarioAtual();
+        if (coletador) record.coletador = coletador;
+    }
+
     if (app.status !== 'Cancelado') {
         record.status = marcados['-1'] ? 'Concluído' : 'Agendado';
     }
@@ -125,6 +144,14 @@ function confirmarConcluirVisita() {
 
     fecharConcluirVisita();
     renderTable(); renderCalendar(); updateFilterDropdowns();
+}
+
+// Nome do usuário logado na grafia da lista oficial de atendentes. O campo
+// coletador só aceita nomes da lista — usuário fora dela não vira coletador.
+function coletadorDoUsuarioAtual() {
+    const nome = currentUser?.fullName;
+    if (!nome) return '';
+    return nomeOficialDe(nome) || '';
 }
 
 function _cvEscape(v) {

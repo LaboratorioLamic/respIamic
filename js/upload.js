@@ -615,6 +615,7 @@ function renderAnexosList(ctx) {
 // Fica na própria página, acima dos modais; clique no fundo ou Esc fecham.
 // Controles do lightbox aberto — preenchidos por _abrirImagemLightbox
 let _lightboxZoomIn = null, _lightboxZoomOut = null, _lightboxZoomReset = null;
+let _lightboxGirarHorario = null, _lightboxGirarAnti = null;
 let _lightboxMoveHandler = null, _lightboxUpHandler = null;
 
 function _fecharImagemLightbox() {
@@ -625,6 +626,7 @@ function _fecharImagemLightbox() {
     if (_lightboxUpHandler) window.removeEventListener('mouseup', _lightboxUpHandler);
     _lightboxMoveHandler = _lightboxUpHandler = null;
     _lightboxZoomIn = _lightboxZoomOut = _lightboxZoomReset = null;
+    _lightboxGirarHorario = _lightboxGirarAnti = null;
     box.remove();
 }
 
@@ -638,6 +640,10 @@ function _lightboxKeyHandler(e) {
         e.preventDefault(); _lightboxZoomOut();
     } else if (e.key === '0' && _lightboxZoomReset) {
         e.preventDefault(); _lightboxZoomReset();
+    } else if (e.key === '.' && _lightboxGirarHorario) {
+        e.preventDefault(); _lightboxGirarHorario();
+    } else if (e.key === ',' && _lightboxGirarAnti) {
+        e.preventDefault(); _lightboxGirarAnti();
     }
 }
 
@@ -661,6 +667,12 @@ function _abrirImagemLightbox(dataUrl, titulo) {
             <button type="button" class="img-lightbox-btn" data-lb="in" title="Aumentar (+)" aria-label="Aumentar zoom">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path><path d="M8 11h6"></path><path d="M11 8v6"></path></svg>
             </button>
+            <button type="button" class="img-lightbox-btn" data-lb="anti" title="Girar à esquerda (,)" aria-label="Girar no sentido anti-horário">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5v6h6"></path><path d="M3.5 11a9 9 0 1 1 1.6 5.2"></path></svg>
+            </button>
+            <button type="button" class="img-lightbox-btn" data-lb="hora" title="Girar à direita (.)" aria-label="Girar no sentido horário">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 5v6h-6"></path><path d="M20.5 11a9 9 0 1 0-1.6 5.2"></path></svg>
+            </button>
             <button type="button" class="img-lightbox-btn img-lightbox-close" data-lb="close" title="Fechar (Esc)" aria-label="Fechar">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
             </button>
@@ -674,16 +686,28 @@ function _abrirImagemLightbox(dataUrl, titulo) {
     const nivelEl = box.querySelector('[data-lb="nivel"]');
     img.src = dataUrl;
 
-    // Estado do zoom/deslocamento. O pan só existe com zoom > 1.
-    let zoom = 1, panX = 0, panY = 0;
+    // Estado do zoom/deslocamento/rotação. O pan só existe com zoom > 1.
+    let zoom = 1, panX = 0, panY = 0, giro = 0;
     let arrastando = false, moveu = false, iniX = 0, iniY = 0;
 
     const aplicar = () => {
         if (zoom <= 1) { panX = 0; panY = 0; }
-        img.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+        // A rotação vem depois do scale para girar a imagem já ampliada em
+        // torno do próprio centro, sem arrastar o enquadramento junto.
+        img.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom}) rotate(${giro}deg)`;
         nivelEl.textContent = `${Math.round(zoom * 100)}%`;
         box.classList.toggle('img-lightbox-zoomed', zoom > 1);
     };
+
+    // Gira em passos de 90°. O deslocamento volta ao centro porque o pan antigo
+    // aponta para outra região depois do giro e deixaria a imagem fora da tela.
+    const girar = (graus) => {
+        giro = (giro + graus) % 360;
+        panX = 0; panY = 0;
+        aplicar();
+    };
+    _lightboxGirarHorario = () => girar(90);
+    _lightboxGirarAnti = () => girar(-90);
 
     const setZoom = (valor) => {
         zoom = Math.min(_LIGHTBOX_ZOOM_MAX, Math.max(_LIGHTBOX_ZOOM_MIN, Math.round(valor * 100) / 100));
@@ -728,7 +752,9 @@ function _abrirImagemLightbox(dataUrl, titulo) {
             e.stopPropagation();
             if (btn.dataset.lb === 'in') _lightboxZoomIn();
             else if (btn.dataset.lb === 'out') _lightboxZoomOut();
-            else _fecharImagemLightbox();
+            else if (btn.dataset.lb === 'hora') _lightboxGirarHorario();
+            else if (btn.dataset.lb === 'anti') _lightboxGirarAnti();
+            else if (btn.dataset.lb === 'close') _fecharImagemLightbox();
             return;
         }
         // Só o clique no fundo fecha — imagem, legenda e barra não sobem até aqui
