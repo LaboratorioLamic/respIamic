@@ -226,6 +226,7 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                    <button onclick="switchTab('dados')" title="Abrir tabela de agendamentos" aria-label="Abrir tabela de agendamentos" class="h-10 px-3 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-xl font-black uppercase tracking-[0.12em] text-[10px] flex items-center gap-1.5"><i class="fas fa-table-list text-[10px]"></i>Tabela</button>
                     <button onclick="openHistoryModal({type:'global'})" title="Rastreabilidade" class="h-10 w-10 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-xl flex items-center justify-center"><i class="fas fa-clock-rotate-left text-sm"></i></button>
                     <div class="h-10 flex items-center gap-1 rounded-xl bg-slate-100 p-1" role="tablist" aria-label="Modo de visualização">
                         <button id="view-tab-month" role="tab" onclick="setCalendarView('month')" class="view-tab h-8 px-3 rounded-lg font-black uppercase tracking-[0.12em] text-[10px] flex items-center gap-1.5"><i class="fas fa-table-cells text-[10px]"></i>Mês</button>
@@ -326,6 +327,9 @@
                 <div class="p-5 sm:p-6 bg-gradient-to-b from-slate-50 to-white border-b border-slate-200">
                     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-5 mb-6">
                         <div class="flex items-center gap-4">
+                            <button onclick="switchTab('inicio')" title="Voltar ao início" aria-label="Voltar ao início" class="h-11 w-11 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-2xl flex items-center justify-center shrink-0 transition-colors">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
                             <div class="h-11 w-11 rounded-2xl bg-navy-900 flex items-center justify-center shadow-lg shrink-0" data-agenda-accent>
                                 <i id="agenda-icone-tabela" class="fas fa-lungs"></i>
                             </div>
@@ -334,9 +338,14 @@
                                 <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.22em] mt-1.5">Relação de agendamentos</p>
                             </div>
                         </div>
-                        <button onclick="openRecordModal()" class="w-full lg:w-auto px-6 py-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 font-black text-[11px] tracking-[0.16em] shadow-lg shadow-blue-600/25">
-                            <i class="fas fa-plus mr-2"></i>NOVO AGENDAMENTO
-                        </button>
+                        <div class="w-full lg:w-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                            <button onclick="switchTab('dashboard')" title="Voltar para a agenda" aria-label="Voltar para a agenda" class="px-5 py-3 bg-slate-100 hover:bg-navy-900 hover:text-white text-navy-900 rounded-2xl font-black text-[11px] tracking-[0.16em] uppercase flex items-center justify-center gap-2 transition-colors">
+                                <i class="fas fa-calendar-days"></i>Agenda
+                            </button>
+                            <button onclick="openRecordModal()" class="px-6 py-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 font-black text-[11px] tracking-[0.16em] shadow-lg shadow-blue-600/25">
+                                <i class="fas fa-plus mr-2"></i>NOVO AGENDAMENTO
+                            </button>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
@@ -667,11 +676,8 @@
                 <button type="button" onclick="editFromView()" class="view-btn view-btn-editar" title="Editar agendamento">
                     <i class="fas fa-pen-to-square"></i> Editar
                 </button>
-                <button type="button" id="view-btn-excluir" onclick="deleteFromView()" class="view-btn view-btn-excluir">
-                    <i class="fas fa-trash"></i> Excluir
-                </button>
-                <button type="button" onclick="closeViewRecord()" class="view-btn view-btn-fechar" title="Fechar">
-                    <i class="fas fa-xmark"></i> Fechar
+                <button type="button" id="view-btn-excluir" onclick="deleteFromView()" class="view-btn view-btn-excluir view-btn-icone" title="Excluir agendamento" aria-label="Excluir agendamento">
+                    <i class="fas fa-trash"></i>
                 </button>
             </div>
         </div>
@@ -691,6 +697,19 @@
                 </p>
                 <div id="concluir-aviso-checklist" class="hidden text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 rounded-xl p-3"></div>
                 <div id="concluir-lista" class="flex flex-col gap-2 max-h-72 overflow-y-auto"></div>
+
+                <!-- Abstinência — só nas agendas que usam o campo (espermograma) -->
+                <div id="concluir-abstinencia-bloco" class="hidden">
+                    <label class="block text-[10px] font-black text-green-700 uppercase mb-2">
+                        Dias de Abstinência <span class="text-red-500">(obrigatório)</span>
+                    </label>
+                    <input type="number" id="concluir-abstinencia" min="0" max="30" placeholder="Ex.: 3"
+                        class="w-full border border-green-200 bg-green-50/60 rounded-xl py-2.5 px-3 shadow-sm text-sm placeholder-slate-400">
+                    <p class="text-[10px] font-bold text-slate-400 mt-1">
+                        Fica registrado no agendamento e na rastreabilidade.
+                    </p>
+                </div>
+
                 <button type="button" onclick="marcarTodosConcluirVisita()"
                     class="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-navy-900">
                     <i class="fas fa-list-check mr-1"></i>Marcar todos

@@ -48,6 +48,13 @@ function abrirConcluirVisita(id) {
     document.getElementById('concluir-resumo').textContent =
         `${pacientes.length} paciente${pacientes.length === 1 ? '' : 's'} nesta visita`;
 
+    // Abstinência: obrigatória para concluir nas agendas que usam o campo
+    const blocoAbst = document.getElementById('concluir-abstinencia-bloco');
+    const inputAbst = document.getElementById('concluir-abstinencia');
+    const usaAbst = temCampo('abstinencia', agenda);
+    blocoAbst.classList.toggle('hidden', !usaAbst);
+    inputAbst.value = usaAbst && app.abstinencia != null ? app.abstinencia : '';
+
     document.getElementById('modal-view-record').classList.remove('active');
     document.getElementById('modal-concluir-visita').classList.add('active');
 }
@@ -79,6 +86,19 @@ function confirmarConcluirVisita() {
         marcados[c.dataset.indice] = c.checked;
     });
 
+    // Abstinência é obrigatória quando alguém está sendo concluído nesta agenda
+    let abstinencia = app.abstinencia;
+    if (temCampo('abstinencia', agenda) && Object.values(marcados).some(Boolean)) {
+        const val = document.getElementById('concluir-abstinencia').value;
+        const dias = val === '' ? null : parseInt(val);
+        if (dias == null || isNaN(dias) || dias < 0) {
+            showNotification('ERRO: Informe os dias de abstinência para concluir o agendamento.', 'error');
+            document.getElementById('concluir-abstinencia').focus();
+            return;
+        }
+        abstinencia = dias;
+    }
+
     const oldRecord = { ...app, acompanhantes: (app.acompanhantes || []).map(a => ({ ...a })) };
 
     // Só mexe em quem não está cancelado — cancelamento continua saindo da edição
@@ -87,7 +107,7 @@ function confirmarConcluirVisita() {
         return { ...a, status: marcados[i] ? 'Concluído' : 'Agendado' };
     });
 
-    const record = { ...app, acompanhantes };
+    const record = { ...app, acompanhantes, abstinencia };
     if (app.status !== 'Cancelado') {
         record.status = marcados['-1'] ? 'Concluído' : 'Agendado';
     }

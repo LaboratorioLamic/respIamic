@@ -496,6 +496,16 @@
     color: #fff;
 }
 
+/* Botão só-ícone (excluir): quadrado, sem rótulo, identificado pelo title */
+.view-btn-icone {
+    flex: 0 0 auto;
+    width: 2.875rem;
+    padding: 0.875rem 0;
+    gap: 0;
+}
+
+.view-btn-icone i { font-size: 0.875rem; }
+
 .view-btn-fechar {
     background: #fff;
     color: #64748b;
@@ -526,5 +536,10 @@
     }
     .view-btn i {
         font-size: 0.875rem;
+    }
+    .view-btn-icone {
+        flex: 0 0 auto;
+        width: 2.5rem;
+        padding: 0.75rem 0;
     }
 }
