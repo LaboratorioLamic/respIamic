@@ -21,14 +21,9 @@ function saveRecord(e) {
         return;
     }
 
-    // Validação específica para status "Concluído"
-    if (statusVal === 'Concluído' && faltando.length) {
-        const nomes = itensAtivos.map(i => CHECKLIST_ITENS[i].rotulo).join(', ');
-        showNotification(`ERRO: Para marcar o status como Concluído, o checklist (${nomes}) deve estar ativado.`, "error");
-        return;
-    }
-
-    // Aviso para checklist incompleto nos demais status
+    // Checklist pendente não bloqueia mais salvar como Concluído — só avisa.
+    // O registro concluído com pendência fica listrado verde/amarelo com
+    // ícone de alerta (ver table.js, calendar.js e modals.js).
     if (faltando.length) {
         pendingChecklistAction = () => {
             proceedWithSave(id, atendenteInput, valores, statusVal);

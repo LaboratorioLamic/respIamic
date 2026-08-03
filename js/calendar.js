@@ -106,7 +106,14 @@ function getAppointmentTheme(app, isPastDate) {
     if (app.status === 'Em andamento') return { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700', accent: 'bg-purple-600' };
     // Concluído: além do verde, ganha um selo de check no card. A cor sozinha
     // ficava perto demais dos agendados/em andamento em cards pequenos.
-    if (app.status === 'Concluído') return { bg: 'bg-green-50', border: 'border-green-300', text: 'text-green-700', accent: 'bg-green-600', done: true };
+    // Concluído com checklist pendente troca o verde sólido pelo listrado
+    // verde/amarelo — a visita foi concluída mesmo assim, só fica sinalizada.
+    if (app.status === 'Concluído') {
+        const checklistPendente = agenda.checklist.some(item => !app[CHECKLIST_ITENS[item].chave]);
+        return checklistPendente
+            ? { bg: '', border: 'border-yellow-400', text: 'text-green-700', accent: 'bg-green-600', done: true, checklistPendente: true }
+            : { bg: 'bg-green-50', border: 'border-green-300', text: 'text-green-700', accent: 'bg-green-600', done: true };
+    }
 
     const faixa = faixaEtariaDe(app, agenda);
     const t = temaFaixaEtaria(app, agenda);
@@ -419,7 +426,7 @@ function renderWeekView() {
             // reescrever histórico — remarcar uma falta é criar outro agendamento.
             const movivel = !pacienteEncerrado(a.status);
 
-            return `<div class="week-event ${theme.bg} ${theme.border} ${tight ? 'week-event-tight' : ''} ${theme.done ? 'week-event-done' : ''} ${theme.absent ? 'week-event-absent' : ''} ${theme.canceled ? 'week-event-canceled' : ''} ${distante ? 'card-distante' : ''} ${movivel ? 'week-event-movivel' : ''}"
+            return `<div class="week-event ${theme.bg} ${theme.border} ${tight ? 'week-event-tight' : ''} ${theme.done && !theme.checklistPendente ? 'week-event-done' : ''} ${theme.checklistPendente ? 'checklist-pendente-stripes' : ''} ${theme.absent ? 'week-event-absent' : ''} ${theme.canceled ? 'week-event-canceled' : ''} ${distante ? 'card-distante' : ''} ${movivel ? 'week-event-movivel' : ''}"
                 style="top:${top}px;height:${height}px;left:calc(${leftPct}% + 2px);width:calc(${width}% - 5px)"
                 ${movivel
                     // Card móvel: o clique é resolvido no pointerup (clique curto
@@ -439,7 +446,8 @@ function renderWeekView() {
                 </div>
                 ${theme.overdue ? '<span class="week-event-badge"><i class="fas fa-exclamation-triangle"></i></span>' : ''}
                 ${theme.absent ? '<span class="week-event-badge week-event-badge-absent" title="Paciente ausente"><i class="fas fa-user-xmark"></i></span>' : ''}
-                ${theme.done ? '<span class="week-event-badge week-event-badge-done" title="Concluído"><i class="fas fa-check"></i></span>' : ''}
+                ${theme.checklistPendente ? '<span class="week-event-badge week-event-badge-checklist-pendente" title="Concluído com checklist pendente"><i class="fas fa-triangle-exclamation"></i></span>'
+                    : theme.done ? '<span class="week-event-badge week-event-badge-done" title="Concluído"><i class="fas fa-check"></i></span>' : ''}
             </div>`;
         }).join('');
 

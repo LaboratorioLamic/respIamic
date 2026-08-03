@@ -89,8 +89,14 @@ function saveAppointmentsToFirebase(agendaId) {
     const agenda = getAgenda(id);
     const lista = appointmentsDe(id);
 
-    const obj = {};
-    lista.forEach(app => obj[app.id] = app);
+    // O Realtime Database rejeita `undefined` em qualquer campo do objeto e
+    // lança de forma síncrona no .set() — JSON.stringify/parse troca esses
+    // campos por ausência total (equivalente a null no Firebase) em vez de
+    // travar o salvamento inteiro.
+    const obj = JSON.parse(JSON.stringify(lista.reduce((acc, app) => {
+        acc[app.id] = app;
+        return acc;
+    }, {})));
 
     return _appointmentsRef(id).set(obj)
         .then(() => {

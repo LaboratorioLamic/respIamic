@@ -12,12 +12,14 @@ function abrirConcluirVisita(id) {
     const agenda = getAgenda(app.agendaId || currentAgendaId);
     _concluirVisitaId = app.id;
 
-    // Concluir exige o mesmo checklist que o formulário exige
+    // Checklist pendente não bloqueia mais a conclusão — só avisa. O card/linha
+    // do agendamento concluído fica com o tema listrado verde/amarelo (ver
+    // isChecklistComplete em table.js e calendar.js) para sinalizar a pendência.
     const faltando = agenda.checklist.filter(item => !app[CHECKLIST_ITENS[item].chave]);
     const aviso = document.getElementById('concluir-aviso-checklist');
     if (faltando.length) {
         aviso.innerHTML = `<i class="fas fa-triangle-exclamation mr-1"></i>Checklist pendente: ${
-            faltando.map(i => CHECKLIST_ITENS[i].rotulo).join(', ')}. Conclua o checklist na edição do agendamento.`;
+            faltando.map(i => CHECKLIST_ITENS[i].rotulo).join(', ')}. É possível concluir mesmo assim — o registro ficará sinalizado.`;
         aviso.classList.remove('hidden');
     } else {
         aviso.classList.add('hidden');
@@ -63,7 +65,7 @@ function abrirConcluirVisita(id) {
     if (usaColetador) {
         const nome = coletadorDoUsuarioAtual();
         document.getElementById('concluir-coletador-nome').textContent =
-            nome ? formatAtendenteName(nome) : 'Usuário sem nome na lista de atendentes';
+            nome || 'Usuário sem nome na lista de atendentes';
     }
 
     document.getElementById('modal-view-record').classList.remove('active');
@@ -85,20 +87,17 @@ function confirmarConcluirVisita() {
     if (!app) return fecharConcluirVisita();
 
     const agenda = getAgenda(app.agendaId || currentAgendaId);
-    const faltando = agenda.checklist.filter(item => !app[CHECKLIST_ITENS[item].chave]);
-    if (faltando.length) {
-        const nomes = faltando.map(i => CHECKLIST_ITENS[i].rotulo).join(', ');
-        showNotification(`ERRO: Para concluir, o checklist (${nomes}) deve estar ativado.`, 'error');
-        return;
-    }
 
     const marcados = {};
     document.querySelectorAll('#concluir-lista .concluir-check').forEach(c => {
         marcados[c.dataset.indice] = c.checked;
     });
 
-    // Abstinência é obrigatória quando alguém está sendo concluído nesta agenda
-    let abstinencia = app.abstinencia;
+    // Abstinência é obrigatória quando alguém está sendo concluído nesta agenda.
+    // `?? null`: o Firebase Realtime Database rejeita `undefined` em .set()
+    // (lança na hora, antes de salvar/fechar o modal) — registros antigos sem
+    // o campo preenchido tinham `app.abstinencia` undefined.
+    let abstinencia = app.abstinencia ?? null;
     if (temCampo('abstinencia', agenda) && Object.values(marcados).some(Boolean)) {
         const val = document.getElementById('concluir-abstinencia').value;
         const dias = val === '' ? null : parseInt(val);
@@ -126,6 +125,7 @@ function confirmarConcluirVisita() {
         const coletador = coletadorDoUsuarioAtual();
         if (coletador) record.coletador = coletador;
     }
+    if (record.coletador === undefined) record.coletador = null;
 
     if (app.status !== 'Cancelado') {
         record.status = marcados['-1'] ? 'Concluído' : 'Agendado';

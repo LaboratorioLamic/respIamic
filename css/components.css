@@ -39,3 +39,16 @@ tbody tr:hover { background-color: rgba(61,124,240,.045); }
     box-shadow: 0 0 0 4px rgba(248, 113, 113, .25) !important;
     border-color: #ef4444 !important;
 }
+
+/* ── CONCLUÍDO COM CHECKLIST PENDENTE ────────────────────────
+   A visita foi concluída mesmo faltando itens do checklist. Listrado
+   verde/amarelo em vez do verde sólido de "Concluído" avisa a pendência
+   sem impedir a conclusão (ver confirmarConcluirVisita em concluir-visita.js). */
+.checklist-pendente-stripes {
+    background-color: #f0fdf4;
+    background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(22, 163, 74, .16) 0 10px,
+        rgba(250, 204, 21, .22) 10px 20px
+    );
+}

@@ -161,7 +161,10 @@ function openDayDetails(dateStr) {
             textColor = 'text-purple-700';
             accentColor = 'bg-purple-600';
         } else if (app.status === 'Concluído') {
-            bgClass = 'bg-green-50 border-green-300 card-concluido';
+            const checklistPendente = agenda.checklist.some(item => !app[CHECKLIST_ITENS[item].chave]);
+            bgClass = checklistPendente
+                ? 'border-yellow-300 checklist-pendente-stripes'
+                : 'bg-green-50 border-green-300 card-concluido';
             textColor = 'text-green-700';
             accentColor = 'bg-green-600';
         } else if (temaFaixaEtaria(app, agenda)) {
@@ -178,7 +181,9 @@ function openDayDetails(dateStr) {
         let checklistBadge;
         if (app.status === 'Concluído') {
             // Selo próprio do concluído — não deixa confundir com "em andamento"
-            checklistBadge = '<div class="h-8 w-8 rounded-md border border-green-300 bg-green-600 text-white flex items-center justify-center shadow-sm" title="Concluído"><i class="fas fa-check-double"></i></div>';
+            checklistBadge = !isChecklistComplete
+                ? '<div class="h-8 w-8 rounded-md flex items-center justify-center" title="Concluído com checklist pendente"><i class="fas fa-triangle-exclamation text-yellow-500 text-lg"></i></div>'
+                : '<div class="h-8 w-8 rounded-md border border-green-300 bg-green-600 text-white flex items-center justify-center shadow-sm" title="Concluído"><i class="fas fa-check-double"></i></div>';
         } else if (app.status === 'Ausente') {
             // Ausência é desfecho: cobra checklist não faz sentido
             checklistBadge = '<div class="h-8 w-8 rounded-md border border-amber-400 bg-amber-500 text-white flex items-center justify-center shadow-sm" title="Paciente ausente"><i class="fas fa-user-xmark"></i></div>';
