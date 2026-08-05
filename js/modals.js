@@ -199,10 +199,21 @@ function openDayDetails(dateStr) {
         // Localidade distante — contorno de destaque sem perder a cor do status
         const distanteClass = temCampo('endereco', agenda) && app.distante ? 'card-distante' : '';
 
+        // Coleta em andamento — coletador no local, coletando (exclusivo domiciliar).
+        // Listras diagonais azuis sobrepõem a cor original do card (não a substituem)
+        // e um selo play com anel girando fica fixo à direita central do card.
+        const coletaAtivaOn = temCampo('endereco', agenda) && !!app.coletaAtiva && _coletaAtivaDisponivel(app, agenda);
+        const coletaListras = coletaAtivaOn ? '<div class="card-coleta-listras"></div>' : '';
+        const coletaSelo = coletaAtivaOn
+            ? `<span class="coleta-play-selo card-coleta-ativa-selo" title="Coleta em andamento"><i class="fas fa-play"></i></span>`
+            : '';
+
         return `
-        <div class="border rounded-xl p-4 ${bgClass} ${distanteClass} relative overflow-hidden">
-            <div class="absolute left-0 top-0 bottom-0 w-1.5 ${accentColor}"></div>
+        <div class="border rounded-xl p-4 ${bgClass} ${distanteClass} ${coletaAtivaOn ? 'card-coleta-ativa' : ''} relative overflow-hidden ${coletaAtivaOn ? 'pr-8' : ''}">
+            ${coletaListras}
+            <div class="absolute left-0 top-0 bottom-0 w-1.5 ${coletaAtivaOn ? 'card-coleta-accent' : accentColor}"></div>
             ${overdueBadge}
+            ${coletaSelo}
             <div class="absolute right-4 ${isOverdue ? 'top-8' : 'top-4'}">
                 ${checklistBadge}
             </div>

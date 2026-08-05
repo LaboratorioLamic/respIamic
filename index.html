@@ -31,6 +31,7 @@
     <link rel="stylesheet" href="css/notifications.css">
     <link rel="stylesheet" href="css/upload.css">
     <link rel="stylesheet" href="css/view-record.css">
+    <link rel="stylesheet" href="css/coleta-ativa.css?v=2">
 </head>
 <body class="font-sans text-slate-800 antialiased h-screen flex flex-col overflow-hidden">
     
@@ -649,7 +650,7 @@
 
     <!-- Janela de visualização do agendamento (somente leitura) -->
     <div id="modal-view-record" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[115] justify-center items-center p-4 overflow-y-auto">
-        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden border border-white/20 my-auto">
+        <div id="view-card" class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden border border-white/20 my-auto">
             <div id="view-barra-agenda" class="view-barra bg-blue-600"></div>
 
             <div class="view-header relative">
@@ -671,6 +672,9 @@
             <div id="view-corpo" class="view-corpo"></div>
 
             <div class="view-footer">
+                <button type="button" id="view-btn-coleta-ativa" onclick="toggleColetaAtiva()" class="view-btn view-btn-coleta-ativa view-btn-icone hidden" title="Iniciar coleta">
+                    <i class="fas fa-play"></i>
+                </button>
                 <button type="button" id="view-btn-concluir" onclick="abrirConcluirVisita()" class="view-btn view-btn-concluir" title="Concluir agenda">
                     <i class="fas fa-check-double"></i> Concluir
                 </button>
@@ -1865,6 +1869,7 @@
     <script src="js/calendar.js"></script>
     <script src="js/modals.js"></script>
     <script src="js/view-record.js"></script>
+    <script src="js/coleta-ativa.js"></script>
     <script src="js/concluir-visita.js"></script>
     <script src="js/ausencia-visita.js"></script>
     <script src="js/backup.js"></script>

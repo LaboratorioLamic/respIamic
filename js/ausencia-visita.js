@@ -100,6 +100,9 @@ function confirmarAusenciaVisita() {
     record.status = statusDerivadoDaVisita(record);
     record.chkConcluido = record.status === 'Concluído';
 
+    // Sem paciente pendente a visita deixa de estar "em coleta" no local
+    if (!resumoPacientes(record).pendentes) record.coletaAtiva = false;
+
     // A justificativa entra nos comentários com carimbo de data e autor, sem
     // apagar o que já estava escrito — o histórico da visita é cumulativo.
     if (justificativa) {

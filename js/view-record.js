@@ -301,6 +301,9 @@ function viewRecord(id) {
         const r = resumoPacientes(app);
         selosHtml += `<span class="view-selo bg-slate-100 text-slate-700"><i class="fas fa-users"></i> ${r.concluidos}/${r.total} concluídos</span>`;
     }
+    if (temCampo('endereco', agenda) && app.coletaAtiva && resumoPacientes(app).pendentes > 0) {
+        selosHtml += `<span class="view-selo view-selo-coleta-ativa"><span class="coleta-play-selo"><i class="fas fa-play"></i></span> Coletando</span>`;
+    }
     selos.innerHTML = selosHtml;
 
     // ── Corpo — cada bloco existe só se a agenda usar aqueles campos
@@ -375,6 +378,9 @@ function viewRecord(id) {
 
     const btnAusente = document.getElementById('view-btn-ausente');
     if (btnAusente) btnAusente.style.display = pendentes ? '' : 'none';
+
+    // Sinalização de coleta em andamento — só nas agendas domiciliares
+    if (typeof _vwAplicarColetaAtiva === 'function') _vwAplicarColetaAtiva(app, agenda);
 
     // Excluir só para administradores, como no restante do sistema
     const btnExcluir = document.getElementById('view-btn-excluir');

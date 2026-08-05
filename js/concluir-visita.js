@@ -133,6 +133,9 @@ function confirmarConcluirVisita() {
     record.status = statusDerivadoDaVisita(record);
     record.chkConcluido = record.status === 'Concluído';
 
+    // Sem paciente pendente a visita deixa de estar "em coleta" no local
+    if (!resumoPacientes(record).pendentes) record.coletaAtiva = false;
+
     setAppointments(appointments.map(a => a.id == record.id ? record : a));
     saveAppointmentsToFirebase();
     addAuditLog('edit', record, oldRecord);

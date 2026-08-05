@@ -426,7 +426,15 @@ function renderWeekView() {
             // reescrever histórico — remarcar uma falta é criar outro agendamento.
             const movivel = !pacienteEncerrado(a.status);
 
-            return `<div class="week-event ${theme.bg} ${theme.border} ${tight ? 'week-event-tight' : ''} ${theme.done && !theme.checklistPendente ? 'week-event-done' : ''} ${theme.checklistPendente ? 'checklist-pendente-stripes' : ''} ${theme.absent ? 'week-event-absent' : ''} ${theme.canceled ? 'week-event-canceled' : ''} ${distante ? 'card-distante' : ''} ${movivel ? 'week-event-movivel' : ''}"
+            // Coleta em andamento — coletador no local, coletando (exclusivo domiciliar).
+            // Contorno azul tracejado sobreposto ao tema de cor já existente do card,
+            // mais um selo de play com anel girando, fixo à direita central do card.
+            const coletaAtivaOn = temCampo('endereco', agenda) && !!a.coletaAtiva && resumoPacientes(a).pendentes > 0;
+            const coletaPlay = coletaAtivaOn
+                ? `<span class="coleta-play-selo week-event-play-selo" title="Coleta em andamento"><i class="fas fa-play"></i></span>`
+                : '';
+
+            return `<div class="week-event ${theme.bg} ${theme.border} ${tight ? 'week-event-tight' : ''} ${theme.done && !theme.checklistPendente ? 'week-event-done' : ''} ${theme.checklistPendente ? 'checklist-pendente-stripes' : ''} ${theme.absent ? 'week-event-absent' : ''} ${theme.canceled ? 'week-event-canceled' : ''} ${distante ? 'card-distante' : ''} ${coletaAtivaOn ? 'week-event-coleta-ativa' : ''} ${movivel ? 'week-event-movivel' : ''}"
                 style="top:${top}px;height:${height}px;left:calc(${leftPct}% + 2px);width:calc(${width}% - 5px)"
                 ${movivel
                     // Card móvel: o clique é resolvido no pointerup (clique curto
@@ -434,8 +442,9 @@ function renderWeekView() {
                     // onclick próprio — senão abriria o registro ao soltar o card.
                     ? `data-app-id="${a.id}" onpointerdown="event.stopPropagation(); weekPointerDown(event, ${a.id})"`
                     : `onclick="event.stopPropagation(); viewRecord(${a.id})"`}
-                title="${(tooltip + (movivel ? '\n↔ Segure para mover e remarcar' : '')).replace(/"/g, '&quot;')}">
+                title="${(tooltip + (coletaAtivaOn ? '\n▶ Coleta em andamento' : '') + (movivel ? '\n↔ Segure para mover e remarcar' : '')).replace(/"/g, '&quot;')}">
                 <span class="week-event-accent ${theme.accent}"></span>
+                ${coletaPlay}
                 <div class="week-event-body">
                     <div class="week-event-time ${theme.text}">
                         <span>${a.horaInicio}${compact || dividindo ? '' : ` – ${a.horaFim}`}</span>
