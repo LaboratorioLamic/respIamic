@@ -16,8 +16,9 @@ function agendaStats(agendaId) {
     const doDia = ativos.filter(a => a.data === hojeStr);
     const daSemana = ativos.filter(a => a.data >= iniStr && a.data <= fimStr);
     const pendentes = ativos.filter(a => a.status === 'Agendado');
+    const ausentes = ativos.filter(a => a.status === 'Ausente');
     const atrasados = ativos.filter(a => {
-        if (a.status === 'Concluído') return false;
+        if (a.status === 'Concluído' || a.status === 'Ausente') return false;
         const [y, m, d] = a.data.split('-').map(Number);
         return new Date(y, m - 1, d) < hoje;
     });
@@ -32,6 +33,7 @@ function agendaStats(agendaId) {
         hoje: doDia.length,
         semana: daSemana.length,
         pendentes: pendentes.length,
+        ausentes: ausentes.length,
         atrasados: atrasados.length,
         total: lista.length,
         capacidade,
@@ -68,9 +70,10 @@ function renderHomeCards() {
         const st = agendaStats(id);
         const ativa = id === currentAgendaId;
 
-        const alerta = st.atrasados > 0
-            ? `<span class="home-card-alert"><i class="fas fa-triangle-exclamation"></i>${st.atrasados} atrasado${st.atrasados > 1 ? 's' : ''}</span>`
-            : '';
+        const alerta = `
+            ${st.ausentes > 0 ? `<span class="home-card-alert home-card-alert-ausente"><i class="fas fa-user-xmark"></i>${st.ausentes} ausente${st.ausentes > 1 ? 's' : ''}</span>` : ''}
+            ${st.atrasados > 0 ? `<span class="home-card-alert home-card-alert-atrasado"><i class="fas fa-triangle-exclamation"></i>${st.atrasados} atrasado${st.atrasados > 1 ? 's' : ''}</span>` : ''}
+        `.trim();
 
         return `
         <article class="home-card home-card-${agenda.cor} ${ativa ? 'is-current' : ''}" data-agenda-card="${id}">
@@ -109,7 +112,7 @@ function renderHomeCards() {
                     </div>
                     <div class="home-gauge-track"><div class="home-gauge-fill" style="width:${st.ocupacao}%"></div></div>
                 </div>
-                ${alerta}
+                ${alerta ? `<div class="home-card-alerts">${alerta}</div>` : ''}
             </button>
 
             <div class="home-card-actions">

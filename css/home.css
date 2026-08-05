@@ -139,6 +139,19 @@
     align-self: flex-start;
 }
 
+.home-card-alerts {
+    display: flex; flex-wrap: wrap; gap: .4rem;
+    padding: 0 .15rem;
+}
+
+.home-card-alert-ausente {
+    color: #92400e; background: #fefce8; border-color: #fcd34d;
+}
+
+.home-card-alert-atrasado {
+    color: #7f1d1d; background: #fef2f2; border-color: #fecaca;
+}
+
 /* Minibotões */
 .home-card-actions {
     display: grid; grid-template-columns: repeat(3, 1fr);
