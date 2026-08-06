@@ -85,10 +85,17 @@ function applyAgendaConfig() {
     // Cabeçalhos das abas
     const setTexto = (id, txt) => { const el = document.getElementById(id); if (el) el.innerText = txt; };
     const setIcone = (id, classe) => { const el = document.getElementById(id); if (el) el.className = `fas ${classe}`; };
+    const setNomeAgenda = (id, nome, cidadeTag) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerHTML = cidadeTag
+            ? `${nome} <span class="agenda-cidade-tag"><i class="fas fa-city"></i>${cidadeTag}</span>`
+            : nome;
+    };
 
-    setTexto('agenda-nome-dashboard', agenda.nome);
-    setTexto('agenda-nome-tabela', agenda.nome);
-    setTexto('agenda-nome-indicadores', agenda.nome);
+    setNomeAgenda('agenda-nome-dashboard', agenda.nome, agenda.cidadeTag);
+    setNomeAgenda('agenda-nome-tabela', agenda.nome, agenda.cidadeTag);
+    setNomeAgenda('agenda-nome-indicadores', agenda.nome, agenda.cidadeTag);
     setIcone('agenda-icone-dashboard', agenda.icon);
     setIcone('agenda-icone-tabela', agenda.icon);
     setIcone('agenda-icone-indicadores', agenda.icon);
@@ -139,9 +146,9 @@ function applyAgendaConfig() {
     }
 
     // Cor de destaque dos cabeçalhos
-    const accentPorCor = { blue: 'text-blue-400', teal: 'text-teal-400', amber: 'text-amber-400' };
+    const accentPorCor = { blue: 'text-blue-400', teal: 'text-teal-400', amber: 'text-amber-400', ice: 'text-sky-400' };
     document.querySelectorAll('[data-agenda-accent]').forEach(el => {
-        el.classList.remove('text-blue-400', 'text-teal-400', 'text-amber-400');
+        el.classList.remove('text-blue-400', 'text-teal-400', 'text-amber-400', 'text-sky-400');
         el.classList.add(accentPorCor[agenda.cor] || 'text-blue-400');
     });
 

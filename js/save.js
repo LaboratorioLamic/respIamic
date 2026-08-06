@@ -169,7 +169,7 @@ function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
 
 // Agendas que exigem anexo avisam (sem bloquear) quando o registro vai sem nenhum.
 function exigeAnexo(agenda) {
-    return (agenda || currentAgenda()).id === 'coletaDomiciliar';
+    return ['coletaDomiciliar', 'coletaDomiciliarMilagres'].includes((agenda || currentAgenda()).id);
 }
 
 function proceedWithSaveAfterValidation(record, id) {

@@ -83,6 +83,7 @@ const AGENDAS = {
     coletaDomiciliar: {
         id: 'coletaDomiciliar',
         nome: 'Coleta Domiciliar',
+        cidadeTag: 'CRAJUBAR',
         curto: 'Domiciliar',
         subtitulo: 'Atendimento em casa',
         descricao: 'Agendamento de coleta realizada no endereço do paciente',
@@ -98,8 +99,46 @@ const AGENDAS = {
         janela: { 6: [[420, 660]], default: [[420, 660], [780, 1020]] },
         slotMin: 60,                        // 60 min entre um paciente e outro
         slotUnico: true,
-        limiteSlot: 3,                      // até 3 endereços distintos por horário
-        agrupaPorEndereco: true,            // pacientes do mesmo endereço não consomem vaga extra
+        limiteSlot: 3,                      // até 3 agendas por horário, mesmo que repitam endereço
+        agrupaPorEndereco: false,           // cada agendamento consome uma vaga, mesmo endereço não faz carona
+        limiteDia: 'slots',                 // 8 seg–sex, 4 no sábado
+        semana: { startHour: 7, endHour: 17 },
+
+        duracao: { tipo: 'fixa', fixaMin: 60 },
+
+        campos: { exame: false, substrato: false, metano: false, idade: true, pedido: true, abstinencia: false, endereco: true, pontoReferencia: true, coletador: true, multiPaciente: true },
+        faixaEtaria: ['rn', 'infantil', 'adolescente', 'adulto'],
+        substratos: {},
+
+        checklist: ['orientacao', 'anexo'],
+        regra48h: false,
+
+        kpis: ['total', 'concluidos', 'andamento', 'pendentes', 'cancelados'],
+        charts: ['barMensal', 'donutStatus'],
+        legenda: ['cancelado', 'concluido', 'atrasado', 'andamento', 'rn', 'infantil', 'adolescente', 'adulto']
+    },
+
+    coletaDomiciliarMilagres: {
+        id: 'coletaDomiciliarMilagres',
+        nome: 'Coleta Domiciliar',
+        cidadeTag: 'MILAGRES',
+        curto: 'Domiciliar Milagres',
+        subtitulo: 'Atendimento em casa',
+        descricao: 'Agendamento de coleta realizada no endereço do paciente',
+        icon: 'fa-house-medical',
+        cor: 'ice',
+
+        fbPath: 'agendas/coleta-domiciliar-milagres',
+        legacyPath: null,
+        lsKey: 'coletaDomiciliarMilagresLamicData',
+
+        dias: [1, 2, 3, 4, 5, 6],
+        // Seg–sex: 07:00–11:00 e 13:00–17:00 · Sábado: só a manhã
+        janela: { 6: [[420, 660]], default: [[420, 660], [780, 1020]] },
+        slotMin: 60,                        // 60 min entre um paciente e outro
+        slotUnico: true,
+        limiteSlot: 3,                      // até 3 agendas por horário, mesmo que repitam endereço
+        agrupaPorEndereco: false,           // cada agendamento consome uma vaga, mesmo endereço não faz carona
         limiteDia: 'slots',                 // 8 seg–sex, 4 no sábado
         semana: { startHour: 7, endHour: 17 },
 
@@ -137,6 +176,11 @@ const AGENDA_CORES = {
         bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700',
         accent: 'bg-amber-600', dot: 'bg-amber-500', chart: '#f59e0b',
         grad: 'from-amber-500 to-amber-700', ring: 'hover:border-amber-300'
+    },
+    ice: {
+        bg: 'bg-sky-50', border: 'border-sky-200', text: 'text-sky-700',
+        accent: 'bg-sky-500', dot: 'bg-sky-400', chart: '#38bdf8',
+        grad: 'from-sky-300 to-sky-500', ring: 'hover:border-sky-300'
     }
 };
 

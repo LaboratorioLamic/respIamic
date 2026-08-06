@@ -180,6 +180,31 @@
                 </div>
             </div>
 
+            <!-- Grupo: Coleta Domiciliar Milagres -->
+            <div class="drawer-group drawer-group-ice" data-drawer-group="coletaDomiciliarMilagres">
+                <button type="button" onclick="toggleDrawerGroup('coletaDomiciliarMilagres')" aria-expanded="false"
+                    aria-controls="drawer-panel-coletaDomiciliarMilagres" class="drawer-item drawer-group-header">
+                    <span class="drawer-ico"><i class="fas fa-house-medical"></i></span>
+                    <span class="drawer-label">Domiciliar Milagres</span>
+                    <i class="fas fa-chevron-down drawer-chevron"></i>
+                </button>
+                <div class="drawer-group-panel" id="drawer-panel-coletaDomiciliarMilagres">
+                    <div>
+                        <div class="drawer-subitems">
+                            <button onclick="drawerNavigateAgenda('coletaDomiciliarMilagres','dashboard')" data-drawer-agenda="coletaDomiciliarMilagres" data-drawer-tab="dashboard" class="drawer-subitem">
+                                <i class="fas fa-calendar-alt"></i>Agenda
+                            </button>
+                            <button onclick="drawerNavigateAgenda('coletaDomiciliarMilagres','dados')" data-drawer-agenda="coletaDomiciliarMilagres" data-drawer-tab="dados" class="drawer-subitem">
+                                <i class="fas fa-table-list"></i>Tabela
+                            </button>
+                            <button onclick="drawerNavigateAgenda('coletaDomiciliarMilagres','indicadores')" data-drawer-agenda="coletaDomiciliarMilagres" data-drawer-tab="indicadores" class="drawer-subitem">
+                                <i class="fas fa-chart-line"></i>Indicadores
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="pt-3">
                 <button onclick="drawerNavigate('config')" data-drawer-tab="config" id="drawer-btn-config" class="drawer-item hidden">
                     <span class="drawer-ico"><i class="fas fa-sliders-h"></i></span>

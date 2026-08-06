@@ -79,6 +79,7 @@
 .drawer-group-blue  { --group-accent: #2761da; --group-glow: rgba(61,124,240,.22); }
 .drawer-group-teal  { --group-accent: #0d9488; --group-glow: rgba(20,184,166,.22); }
 .drawer-group-amber { --group-accent: #d97706; --group-glow: rgba(245,158,11,.22); }
+.drawer-group-ice   { --group-accent: #0ea5e9; --group-glow: rgba(14,165,233,.22); }
 
 .drawer-group-header:hover { background: rgba(255,255,255,.07); color: #fff; }
 

@@ -83,7 +83,7 @@ function renderHomeCards() {
                 <div class="home-card-top">
                     <span class="home-card-icon"><i class="fas ${agenda.icon}"></i></span>
                     <div class="home-card-title">
-                        <h3>${agenda.nome}</h3>
+                        <h3>${agenda.nome}${agenda.cidadeTag ? ` <span class="agenda-cidade-tag"><i class="fas fa-city"></i>${agenda.cidadeTag}</span>` : ''}</h3>
                         <p>${agenda.subtitulo}</p>
                     </div>
                     ${ativa ? '<span class="home-card-flag">Ativa</span>' : ''}

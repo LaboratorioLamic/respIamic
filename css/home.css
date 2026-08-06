@@ -3,8 +3,8 @@
 .home-grid {
     display: grid;
     gap: 1.5rem;
-    grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
-    max-width: 62rem;
+    grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr));
+    max-width: 84rem;
     margin: 0 auto;
 }
 
@@ -42,6 +42,7 @@
 .home-card-blue  { --card-accent: #3d7cf0; --card-soft: #eff6ff; --card-ring: rgba(61,124,240,.16); --card-strong: #1d4ed8; }
 .home-card-teal  { --card-accent: #14b8a6; --card-soft: #f0fdfa; --card-ring: rgba(20,184,166,.16); --card-strong: #0f766e; }
 .home-card-amber { --card-accent: #f59e0b; --card-soft: #fffbeb; --card-ring: rgba(245,158,11,.18); --card-strong: #b45309; }
+.home-card-ice   { --card-accent: #38bdf8; --card-soft: #f0f9ff; --card-ring: rgba(56,189,248,.18); --card-strong: #0369a1; }
 
 /* Corpo clicável */
 .home-card-main {
@@ -87,6 +88,16 @@
     background: var(--card-soft); color: var(--card-strong);
     border: 1px solid var(--card-ring);
 }
+
+.agenda-cidade-tag {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font-size: .6rem; font-weight: 900; text-transform: uppercase; letter-spacing: .12em;
+    padding: .22rem .6rem .22rem .5rem; border-radius: 999px;
+    background: var(--card-accent, var(--agenda-cor, #f59e0b)); color: #fff;
+    vertical-align: middle;
+    box-shadow: 0 4px 10px -4px rgba(0,0,0,.35);
+}
+.agenda-cidade-tag i { font-size: .65rem; }
 
 .home-card-desc { font-size: .8rem; color: #64748b; line-height: 1.45; }
 
