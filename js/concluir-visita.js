@@ -4,6 +4,7 @@
 // O status do agendamento passa a ser derivado dos pacientes.
 
 let _concluirVisitaId = null;
+let _concluirTaxaPaga = false;
 
 function abrirConcluirVisita(id) {
     const app = appointments.find(a => a.id == (id != null ? id : _viewRecordId));
@@ -68,13 +69,55 @@ function abrirConcluirVisita(id) {
             nome || 'Usuário sem nome na lista de atendentes';
     }
 
+    // Taxa de coleta — só mostra o botão de pagamento quando há valor a receber
+    const blocoTaxa = document.getElementById('concluir-taxa-bloco');
+    const temTaxa = temCampo('endereco', agenda) && app.taxaColeta > 0;
+    blocoTaxa.classList.toggle('hidden', !temTaxa);
+    _concluirTaxaPaga = !!app.taxaColetaPaga;
+    if (temTaxa) {
+        document.getElementById('concluir-taxa-valor').textContent =
+            `R$ ${app.taxaColeta.toFixed(2).replace('.', ',')}`;
+        _atualizarConcluirTaxaUI();
+    }
+
     document.getElementById('modal-view-record').classList.remove('active');
     document.getElementById('modal-concluir-visita').classList.add('active');
+}
+
+function marcarTaxaColetaPagaConcluir() {
+    _concluirTaxaPaga = !_concluirTaxaPaga;
+    _atualizarConcluirTaxaUI();
+}
+
+function _atualizarConcluirTaxaUI() {
+    const bloco = document.getElementById('concluir-taxa-bloco');
+    const btn = document.getElementById('concluir-taxa-btn');
+    const icone = document.getElementById('concluir-taxa-icone');
+    const texto = document.getElementById('concluir-taxa-texto');
+
+    bloco.classList.toggle('border-amber-200', !_concluirTaxaPaga);
+    bloco.classList.toggle('bg-amber-50/60', !_concluirTaxaPaga);
+    bloco.classList.toggle('border-emerald-200', _concluirTaxaPaga);
+    bloco.classList.toggle('bg-emerald-50/60', _concluirTaxaPaga);
+
+    btn.classList.toggle('border-amber-300', !_concluirTaxaPaga);
+    btn.classList.toggle('text-amber-700', !_concluirTaxaPaga);
+    btn.classList.toggle('hover:bg-amber-100', !_concluirTaxaPaga);
+    btn.classList.toggle('bg-white', !_concluirTaxaPaga);
+    btn.classList.toggle('bg-emerald-600', _concluirTaxaPaga);
+    btn.classList.toggle('border-emerald-600', _concluirTaxaPaga);
+    btn.classList.toggle('text-white', _concluirTaxaPaga);
+    btn.classList.toggle('hover:bg-emerald-700', _concluirTaxaPaga);
+
+    icone.classList.toggle('fa-circle-notch', !_concluirTaxaPaga);
+    icone.classList.toggle('fa-circle-check', _concluirTaxaPaga);
+    texto.textContent = _concluirTaxaPaga ? 'Pago' : 'Marcar como pago';
 }
 
 function fecharConcluirVisita() {
     document.getElementById('modal-concluir-visita').classList.remove('active');
     _concluirVisitaId = null;
+    _concluirTaxaPaga = false;
 }
 
 function marcarTodosConcluirVisita() {
@@ -118,6 +161,9 @@ function confirmarConcluirVisita() {
     });
 
     const record = { ...app, acompanhantes, abstinencia };
+    if (temCampo('endereco', agenda) && app.taxaColeta > 0) {
+        record.taxaColetaPaga = _concluirTaxaPaga;
+    }
 
     // Na coleta domiciliar o coletador é quem de fato realizou a coleta, então
     // quem conclui a visita substitui o nome previsto no agendamento.

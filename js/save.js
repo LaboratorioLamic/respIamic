@@ -110,6 +110,8 @@ function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
         record.cidade      = document.getElementById('reg-cidade').value.trim().toUpperCase();
         record.estado      = document.getElementById('reg-estado').value.trim().toUpperCase();
         record.distante    = document.getElementById('reg-distante').checked;
+        record.taxaColeta     = taxaColetaValorNumerico();
+        record.taxaColetaPaga = document.getElementById('reg-taxa-pago').value === 'true';
     }
     if (temCampo('multiPaciente', agenda)) {
         record.acompanhantes = lerAcompanhantes();

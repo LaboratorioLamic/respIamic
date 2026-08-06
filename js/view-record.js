@@ -343,7 +343,13 @@ function viewRecord(id) {
     if (temCampo('endereco', agenda)) {
         let end = _vwEndereco(app);
         if (temCampo('pontoReferencia', agenda)) {
-            end += _vwCampo('Ponto de referência', app.pontoReferencia, { largo: true });
+            end += _vwCampo('Ponto de referência', app.pontoReferencia);
+        }
+        if (app.taxaColeta > 0 || app.taxaColetaPaga) {
+            const taxaTexto = app.taxaColeta > 0
+                ? `R$ ${app.taxaColeta.toFixed(2).replace('.', ',')}${app.taxaColetaPaga ? ' · Pago' : ' · A pagar'}`
+                : 'Pago';
+            end += _vwCampo('Valor a receber', taxaTexto, { classe: app.taxaColetaPaga ? 'text-emerald-600' : 'text-amber-600' });
         }
         end += _vwMapa(app);
         html += _vwBloco('Endereço', 'fa-location-dot', end);

@@ -727,6 +727,21 @@
                     </p>
                 </div>
 
+                <!-- Taxa de coleta — só aparece quando a visita tem valor a receber -->
+                <div id="concluir-taxa-bloco" class="hidden rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <p class="text-[10px] font-black text-amber-700 uppercase mb-1">Valor a receber</p>
+                            <p id="concluir-taxa-valor" class="text-sm font-black text-navy-900">R$ 0,00</p>
+                        </div>
+                        <button type="button" id="concluir-taxa-btn" onclick="marcarTaxaColetaPagaConcluir()"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95 bg-white border-amber-300 text-amber-700 hover:bg-amber-100">
+                            <i id="concluir-taxa-icone" class="fas fa-circle-notch text-[11px]"></i>
+                            <span id="concluir-taxa-texto">Marcar como pago</span>
+                        </button>
+                    </div>
+                </div>
+
                 <button type="button" onclick="marcarTodosConcluirVisita()"
                     class="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-navy-900">
                     <i class="fas fa-list-check mr-1"></i>Marcar todos
@@ -951,14 +966,37 @@
                                     <iframe id="mapa-endereco-iframe" class="w-full h-64 border-0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                                 </div>
                             </div>
-                            <label id="reg-distante-label" for="reg-distante"
-                                class="inline-flex items-center gap-2 cursor-pointer select-none pl-3 pr-3.5 py-2.5 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-violet-300 transition-all duration-200"
-                                title="Marque quando o endereço fica em localidade distante (deslocamento maior)">
-                                <input type="checkbox" id="reg-distante" onchange="atualizarDistanteUI()"
-                                    class="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500 cursor-pointer">
-                                <i id="reg-distante-icone" class="fas fa-road-circle-exclamation text-slate-300 text-sm transition-colors duration-200"></i>
-                                <span id="reg-distante-texto" class="text-[11px] font-black text-slate-500 uppercase tracking-wide transition-colors duration-200">Distante</span>
-                            </label>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <div id="reg-taxa-box"
+                                    class="flex items-center gap-2 pl-3.5 pr-2.5 py-2 rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200"
+                                    title="Valor a receber pela coleta domiciliar">
+                                    <i class="fas fa-sack-dollar text-emerald-500 text-sm"></i>
+                                    <div class="flex flex-col">
+                                        <label for="reg-taxa-valor" class="text-[9px] font-black text-slate-400 uppercase tracking-wide leading-none mb-1">Valor a receber *</label>
+                                        <div class="flex items-center gap-1">
+                                            <span class="text-[11px] font-black text-slate-400">R$</span>
+                                            <input type="text" id="reg-taxa-valor" inputmode="decimal" placeholder="0,00"
+                                                oninput="formatarTaxaColeta(this); atualizarTaxaColetaUI()"
+                                                onblur="atualizarTaxaColetaUI()"
+                                                class="w-20 border-0 border-b-2 border-slate-200 bg-transparent py-0.5 px-0 text-sm font-bold text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors duration-200">
+                                        </div>
+                                    </div>
+                                    <button type="button" id="btn-taxa-pago" onclick="toggleTaxaColetaPago()"
+                                        class="ml-1.5 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95">
+                                        <i id="reg-taxa-pago-icone" class="fas fa-circle-notch text-[11px] transition-transform duration-200"></i>
+                                        <span id="reg-taxa-pago-texto">A pagar</span>
+                                    </button>
+                                    <input type="hidden" id="reg-taxa-pago" value="false">
+                                </div>
+                                <label id="reg-distante-label" for="reg-distante"
+                                    class="inline-flex items-center gap-2 cursor-pointer select-none pl-3 pr-3.5 py-2.5 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-violet-300 transition-all duration-200"
+                                    title="Marque quando o endereço fica em localidade distante (deslocamento maior)">
+                                    <input type="checkbox" id="reg-distante" onchange="atualizarDistanteUI()"
+                                        class="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500 cursor-pointer">
+                                    <i id="reg-distante-icone" class="fas fa-road-circle-exclamation text-slate-300 text-sm transition-colors duration-200"></i>
+                                    <span id="reg-distante-texto" class="text-[11px] font-black text-slate-500 uppercase tracking-wide transition-colors duration-200">Distante</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>

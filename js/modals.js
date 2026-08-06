@@ -77,6 +77,9 @@ function openRecordModal() {
         document.getElementById('reg-estado').value = 'CE';
         document.getElementById('reg-distante').checked = false;
         atualizarDistanteUI();
+        document.getElementById('reg-taxa-valor').value = '';
+        document.getElementById('reg-taxa-pago').value = 'false';
+        atualizarTaxaColetaUI();
     }
 
     document.getElementById('modal-title').innerText = `Novo Agendamento — ${currentAgenda().nome}`;
@@ -419,6 +422,9 @@ function editRecord(id) {
     document.getElementById('reg-estado').value = app.estado || '';
     document.getElementById('reg-distante').checked = !!app.distante;
     atualizarDistanteUI();
+    document.getElementById('reg-taxa-valor').value = app.taxaColeta ? String(app.taxaColeta.toFixed(2)).replace('.', ',').replace(/\B(?=(\d{3})+(?=,))/g, '.') : '';
+    document.getElementById('reg-taxa-pago').value = app.taxaColetaPaga ? 'true' : 'false';
+    atualizarTaxaColetaUI();
     document.getElementById('reg-ponto-referencia').value = app.pontoReferencia || '';
     document.getElementById('reg-coletador').value = app.coletador || '';
     document.getElementById('reg-duracao').value = app.duracao;

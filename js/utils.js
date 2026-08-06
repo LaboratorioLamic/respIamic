@@ -346,6 +346,62 @@ function atualizarDistanteUI() {
     chkTexto.classList.toggle('text-violet-700', ativo);
 }
 
+// TAXA DE COLETA — máscara de valor (BRL) + alternância Pago/A pagar
+function formatarTaxaColeta(input) {
+    let digits = input.value.replace(/\D/g, '');
+    if (!digits) { input.value = ''; return; }
+    digits = digits.replace(/^0+(?=\d)/, '');
+    while (digits.length < 3) digits = '0' + digits;
+    const inteiro = digits.slice(0, -2).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const centavos = digits.slice(-2);
+    input.value = `${inteiro},${centavos}`;
+}
+
+function taxaColetaValorNumerico() {
+    const raw = document.getElementById('reg-taxa-valor').value.trim();
+    if (!raw) return 0;
+    return parseFloat(raw.replace(/\./g, '').replace(',', '.')) || 0;
+}
+
+function toggleTaxaColetaPago() {
+    const hidden = document.getElementById('reg-taxa-pago');
+    hidden.value = hidden.value === 'true' ? 'false' : 'true';
+    atualizarTaxaColetaUI();
+}
+
+function atualizarTaxaColetaUI() {
+    const box = document.getElementById('reg-taxa-box');
+    const btn = document.getElementById('btn-taxa-pago');
+    const icone = document.getElementById('reg-taxa-pago-icone');
+    const texto = document.getElementById('reg-taxa-pago-texto');
+    if (!box || !btn) return;
+
+    const pago = document.getElementById('reg-taxa-pago').value === 'true';
+    const temValor = taxaColetaValorNumerico() > 0;
+    const ok = pago || temValor;
+
+    box.classList.toggle('border-emerald-300', pago);
+    box.classList.toggle('bg-emerald-50/60', pago);
+    box.classList.toggle('border-amber-300', !pago && temValor);
+    box.classList.toggle('bg-amber-50/60', !pago && temValor);
+    box.classList.toggle('border-red-300', !ok);
+    box.classList.toggle('bg-red-50/50', !ok);
+    box.classList.toggle('border-slate-200', pago ? false : (temValor || !ok ? false : true));
+
+    btn.classList.toggle('bg-emerald-600', pago);
+    btn.classList.toggle('border-emerald-600', pago);
+    btn.classList.toggle('text-white', pago);
+    btn.classList.toggle('hover:bg-emerald-700', pago);
+    btn.classList.toggle('bg-white', !pago);
+    btn.classList.toggle('border-slate-200', !pago);
+    btn.classList.toggle('text-slate-500', !pago);
+    btn.classList.toggle('hover:border-emerald-400', !pago);
+
+    icone.classList.toggle('fa-circle-notch', !pago);
+    icone.classList.toggle('fa-circle-check', pago);
+    texto.textContent = pago ? 'Pago' : 'A pagar';
+}
+
 // BUSCA DE ENDEREÇO POR CEP (ViaCEP) — preenche logradouro/bairro/cidade automaticamente
 function formatCep(input) {
     const digits = input.value.replace(/\D/g, '').slice(0, 8);

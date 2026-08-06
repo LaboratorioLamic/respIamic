@@ -87,6 +87,9 @@ function validateAppointment(dataObj) {
         if (faltando.length) {
             return `Endereço incompleto. Preencha: ${faltando.join(', ')}.`;
         }
+        if (!dataObj.taxaColetaPaga && !(dataObj.taxaColeta > 0)) {
+            return "Informe o valor da taxa de coleta ou marque como Pago.";
+        }
     }
 
     // Intervalo mínimo entre marcações do mesmo paciente
