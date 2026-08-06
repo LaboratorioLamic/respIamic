@@ -88,7 +88,7 @@ function validateAppointment(dataObj) {
             return `Endereço incompleto. Preencha: ${faltando.join(', ')}.`;
         }
         if (!dataObj.taxaColetaPaga && !(dataObj.taxaColeta > 0)) {
-            return "Informe o valor da taxa de coleta ou marque como Pago.";
+            return "Informe o valor a receber ou marque como Pago.";
         }
     }
 
