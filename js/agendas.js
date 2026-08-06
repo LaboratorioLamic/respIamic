@@ -21,11 +21,11 @@ const AGENDAS = {
 
         // Janela operacional (minutos desde 00:00)
         dias: [1, 2, 3, 4, 5, 6],        // 0 = domingo
-        janela: { 6: [[420, 480]], default: [[420, 540]] },
+        janela: { 6: [[450, 480]], default: [[450, 540]] },
         slotMin: null,                   // horário livre dentro da janela
         slotUnico: false,                // não bloqueia slot ocupado
         limiteDia: 3,
-        semana: { startHour: 6, endHour: 14 },
+        semana: { startHour: 7, endHour: 14 },
 
         // Duração
         duracao: { tipo: 'porExame', porExame: { TRESP: 180, TSBAC: 120 } },
@@ -109,7 +109,7 @@ const AGENDAS = {
         faixaEtaria: ['rn', 'infantil', 'adolescente', 'adulto'],
         substratos: {},
 
-        checklist: ['orientacao', 'endereco', 'anexo'],
+        checklist: ['orientacao', 'anexo'],
         regra48h: false,
 
         kpis: ['total', 'concluidos', 'andamento', 'pendentes', 'cancelados'],
