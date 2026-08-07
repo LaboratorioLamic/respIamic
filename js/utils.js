@@ -490,7 +490,7 @@ async function buscarCep() {
             return;
         }
 
-        logradouroEl.value = data.logradouro || logradouroEl.value;
+        logradouroEl.value = (data.logradouro || logradouroEl.value).toUpperCase();
         bairroEl.value = (data.bairro || '').toUpperCase();
         cidadeEl.value = (data.localidade || '').toUpperCase();
         document.getElementById('reg-estado').value = data.uf || '';
