@@ -172,7 +172,20 @@ function exigeAnexo(agenda) {
     return ['coletaDomiciliar', 'coletaDomiciliarMilagres'].includes((agenda || currentAgenda()).id);
 }
 
+// Aviso de horário de exceção (06h–07h coleta domiciliar Crajubar)
+let _horarioExcecaoConfirmado = false;
+
 function proceedWithSaveAfterValidation(record, id) {
+    // Aviso de horário de exceção — 06h–07h só existe na coleta domiciliar Crajubar
+    if (record.agendaId === 'coletaDomiciliar' && record.horaInicio === '06:00' && !_horarioExcecaoConfirmado) {
+        showHorarioExcecaoModal(() => {
+            _horarioExcecaoConfirmado = true;
+            proceedWithSaveAfterValidation(record, id);
+        });
+        return;
+    }
+    _horarioExcecaoConfirmado = false;
+
     // Aviso de anexo faltando — cancelado não precisa de anexo
     if (exigeAnexo(currentAgenda()) && !(record.anexos || []).length
         && record.status !== 'Cancelado' && !_anexoAvisoConfirmado) {

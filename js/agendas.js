@@ -95,14 +95,14 @@ const AGENDAS = {
         lsKey: 'coletaDomiciliarLamicData',
 
         dias: [1, 2, 3, 4, 5, 6],
-        // Seg–sex: 07:00–11:00 e 13:00–17:00 · Sábado: só a manhã
-        janela: { 6: [[420, 660]], default: [[420, 660], [780, 1020]] },
+        // Seg–sex: 06:00–12:00 e 13:00–17:00 · Sábado: 06:00–11:00
+        janela: { 6: [[360, 660]], default: [[360, 720], [780, 1020]] },
         slotMin: 60,                        // 60 min entre um paciente e outro
         slotUnico: true,
         limiteSlot: 3,                      // até 3 agendas por horário, mesmo que repitam endereço
         agrupaPorEndereco: false,           // cada agendamento consome uma vaga, mesmo endereço não faz carona
-        limiteDia: 'slots',                 // 8 seg–sex, 4 no sábado
-        semana: { startHour: 7, endHour: 17 },
+        limiteDia: 'slots',                 // 9 seg–sex, 5 no sábado
+        semana: { startHour: 6, endHour: 17 },
 
         duracao: { tipo: 'fixa', fixaMin: 60 },
 

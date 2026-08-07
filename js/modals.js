@@ -44,6 +44,28 @@ function cancelPastDate() {
     pendingPastDateAction = null;
 }
 
+// Funções para modal de horário de exceção (06h–07h coleta domiciliar)
+let pendingHorarioExcecaoAction = null;
+
+function showHorarioExcecaoModal(callback) {
+    pendingHorarioExcecaoAction = callback;
+    document.getElementById('modal-horario-excecao').classList.add('active');
+}
+
+function confirmHorarioExcecao() {
+    document.getElementById('modal-horario-excecao').classList.remove('active');
+    if (pendingHorarioExcecaoAction) {
+        const acao = pendingHorarioExcecaoAction;
+        pendingHorarioExcecaoAction = null;
+        acao();
+    }
+}
+
+function cancelHorarioExcecao() {
+    document.getElementById('modal-horario-excecao').classList.remove('active');
+    pendingHorarioExcecaoAction = null;
+}
+
 function openRecordModal() {
     document.getElementById('record-form').reset();
     document.getElementById('reg-id').value = '';
@@ -66,6 +88,11 @@ function openRecordModal() {
     // Limpa o realce de nome inválido de uma tentativa anterior
     marcarCampoNomeValido('atendente', true);
     marcarCampoNomeValido('coletador', true);
+
+    // Atendente Responsável começa preenchido com o usuário logado
+    if (currentUser && currentUser.fullName) {
+        document.getElementById('reg-atendente').value = currentUser.fullName;
+    }
     
     // Oculta campo metano inicialmente
     updateSubstratos();

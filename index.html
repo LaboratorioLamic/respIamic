@@ -1297,6 +1297,43 @@
         </div>
     </div>
 
+    <!-- Modal de Alerta de Horário de Exceção (06h Coleta Domiciliar) -->
+    <div id="modal-horario-excecao" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[120] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/20">
+            <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-6 text-white">
+                <div class="flex items-center gap-4">
+                    <div class="h-12 w-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-clock text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-lg">Horário de Exceção</h3>
+                        <p class="text-[10px] text-white/80 font-bold uppercase tracking-widest">Coleta Domiciliar · 06h–07h</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <p class="text-slate-700 font-medium mb-4">O horário das <strong>06:00 às 07:00</strong> é uma faixa de exceção da coleta domiciliar, reservada para casos de necessidade.</p>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                    <p class="text-amber-800 text-sm font-medium">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Confirme apenas se este agendamento realmente precisa ser feito neste horário.
+                    </p>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="confirmHorarioExcecao()" class="flex-1 bg-navy-900 text-white font-black py-3 rounded-xl hover:bg-blue-600 shadow-lg transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-check mr-2"></i>Confirmar Horário
+                    </button>
+                    <button onclick="cancelHorarioExcecao()" class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-arrow-left mr-2"></i>Voltar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de Alerta de Data Passada -->
     <div id="modal-past-date" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[120] justify-center items-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/20 transform transition-all">
