@@ -172,12 +172,21 @@ function exigeAnexo(agenda) {
     return ['coletaDomiciliar', 'coletaDomiciliarMilagres'].includes((agenda || currentAgenda()).id);
 }
 
-// Aviso de horário de exceção (06h–07h coleta domiciliar Crajubar)
+// Aviso de horário de exceção (06h–07h coleta domiciliar Crajubar; domingo inteiro é exceção)
 let _horarioExcecaoConfirmado = false;
 
+function _horarioExigeAlertaExcecao(record) {
+    if (record.agendaId !== 'coletaDomiciliar') return false;
+    // Domingo: qualquer horário é exceção
+    const [y, m, d] = record.data.split('-').map(Number);
+    if (new Date(y, m - 1, d).getDay() === 0) return true;
+    // Demais dias: só a faixa 06h–07h
+    return record.horaInicio === '06:00';
+}
+
 function proceedWithSaveAfterValidation(record, id) {
-    // Aviso de horário de exceção — 06h–07h só existe na coleta domiciliar Crajubar
-    if (record.agendaId === 'coletaDomiciliar' && record.horaInicio === '06:00' && !_horarioExcecaoConfirmado) {
+    // Aviso de horário de exceção — 06h–07h nos demais dias, ou qualquer horário no domingo
+    if (_horarioExigeAlertaExcecao(record) && !_horarioExcecaoConfirmado) {
         showHorarioExcecaoModal(() => {
             _horarioExcecaoConfirmado = true;
             proceedWithSaveAfterValidation(record, id);
