@@ -103,7 +103,7 @@ function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
     }
     if (temCampo('endereco', agenda)) {
         record.cep         = document.getElementById('reg-cep').value.trim();
-        record.logradouro  = document.getElementById('reg-logradouro').value.trim();
+        record.logradouro  = document.getElementById('reg-logradouro').value.trim().toUpperCase();
         record.numero      = document.getElementById('reg-numero').value.trim();
         record.complemento = document.getElementById('reg-complemento').value.trim();
         record.bairro      = document.getElementById('reg-bairro').value.trim().toUpperCase();

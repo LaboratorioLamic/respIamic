@@ -114,14 +114,27 @@ function validarEstado() {
     document.getElementById('estados-popover').classList.add('hidden');
 }
 
-// SUGESTÕES POR HISTÓRICO — logradouro/bairro/cidade já usados em agendamentos anteriores
-function valoresHistorico(campo) {
+// SUGESTÕES POR HISTÓRICO — logradouro/bairro/cidade/UF já usados em agendamentos
+// anteriores. Os campos seguem a hierarquia UF > Cidade > Bairro > Logradouro: cada
+// nível mais específico só sugere valores compatíveis com o que já foi preenchido nos
+// níveis acima (ex.: bairro só mostra bairros da cidade/UF selecionadas).
+const HIERARQUIA_ENDERECO = ['estado', 'cidade', 'bairro', 'logradouro'];
+
+function valoresHistorico(campo, filtros = {}) {
     const vistos = new Set();
     const valores = [];
     Object.values(agendaData).forEach(lista => {
         lista.forEach(app => {
             const val = (app[campo] || '').trim();
             if (!val) return;
+
+            // Descarta registros que não batem com os níveis superiores já preenchidos
+            const bate = Object.entries(filtros).every(([campoFiltro, valorFiltro]) => {
+                if (!valorFiltro) return true;
+                return normalizeStr(app[campoFiltro] || '') === normalizeStr(valorFiltro);
+            });
+            if (!bate) return;
+
             const chave = normalizeStr(val);
             if (vistos.has(chave)) return;
             vistos.add(chave);
@@ -131,10 +144,25 @@ function valoresHistorico(campo) {
     return valores.sort((a, b) => a.localeCompare(b, 'pt-BR'));
 }
 
+// Monta os filtros hierárquicos acima do campo atual a partir do que já está
+// preenchido no formulário (UF > Cidade > Bairro > Logradouro).
+function filtrosHierarquiaAcima(campo) {
+    const idx = HIERARQUIA_ENDERECO.indexOf(campo);
+    if (idx <= 0) return {};
+    const filtros = {};
+    for (let i = 0; i < idx; i++) {
+        const campoSuperior = HIERARQUIA_ENDERECO[i];
+        const el = document.getElementById(`reg-${campoSuperior}`);
+        const val = el ? el.value.trim() : '';
+        if (val) filtros[campoSuperior] = val;
+    }
+    return filtros;
+}
+
 function filtrarSugestoes(campo, valor) {
     const popover = document.getElementById(`${campo}-popover`);
     const termo = normalizeStr(valor);
-    const opcoes = valoresHistorico(campo)
+    const opcoes = valoresHistorico(campo, filtrosHierarquiaAcima(campo))
         .filter(v => !termo || normalizeStr(v).includes(termo))
         .slice(0, 8);
 
@@ -152,9 +180,43 @@ function filtrarSugestoes(campo, valor) {
     popover.classList.remove('hidden');
 }
 
+// Acha, no histórico, um registro cujo campo bata com o valor escolhido — respeitando
+// os filtros hierárquicos já preenchidos — para poder puxar os campos vizinhos dele.
+function registroHistoricoPara(campo, valor, filtros = {}) {
+    const alvo = normalizeStr(valor);
+    let encontrado = null;
+    Object.values(agendaData).some(lista => lista.some(app => {
+        if (normalizeStr(app[campo] || '') !== alvo) return false;
+        const bate = Object.entries(filtros).every(([campoFiltro, valorFiltro]) => {
+            if (!valorFiltro) return true;
+            return normalizeStr(app[campoFiltro] || '') === normalizeStr(valorFiltro);
+        });
+        if (!bate) return false;
+        encontrado = app;
+        return true;
+    }));
+    return encontrado;
+}
+
 function selecionarSugestao(campo, valor) {
     document.getElementById(`reg-${campo}`).value = valor;
     document.getElementById(`${campo}-popover`).classList.add('hidden');
+
+    // Preenchimento inverso: escolher um nível mais específico (ex.: logradouro) também
+    // completa os níveis acima ainda vazios (bairro/cidade/UF), usando o registro
+    // histórico daquele valor — evita redigitar o que já se sabe pelo logradouro.
+    const idx = HIERARQUIA_ENDERECO.indexOf(campo);
+    if (idx <= 0) return;
+    const registro = registroHistoricoPara(campo, valor, filtrosHierarquiaAcima(campo));
+    if (!registro) return;
+
+    for (let i = 0; i < idx; i++) {
+        const campoSuperior = HIERARQUIA_ENDERECO[i];
+        const el = document.getElementById(`reg-${campoSuperior}`);
+        if (!el || el.value.trim()) continue;
+        const valSuperior = (registro[campoSuperior] || '').trim();
+        if (valSuperior) el.value = campoSuperior === 'estado' ? valSuperior.toUpperCase() : valSuperior;
+    }
 }
 
 function fecharSugestoesTardio(campo) {
