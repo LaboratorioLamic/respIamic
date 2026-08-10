@@ -59,12 +59,12 @@ const AGENDAS = {
         lsKey: 'espermogramaLamicData',
 
         dias: [1, 2, 3, 4, 5, 6],
-        // Seg–sex: 08:00–11:00 e 14:00–16:00 · Sábado: 08:00–10:00
-        janela: { 6: [[480, 600]], default: [[480, 660], [840, 960]] },
+        // Seg–sex: 08:00–11:00 e 13:00–15:00 · Sábado: 08:00–10:00
+        janela: { 6: [[480, 600]], default: [[480, 660], [780, 900]] },
         slotMin: 60,                        // 1 h entre um paciente e outro
         slotUnico: true,                    // um paciente por slot
         limiteDia: 'slots',                 // 3 manhã + 2 tarde seg–sex, 2 sáb
-        semana: { startHour: 8, endHour: 16 },
+        semana: { startHour: 8, endHour: 15 },
 
         duracao: { tipo: 'fixa', fixaMin: 60 },
 
