@@ -80,6 +80,7 @@ function openRecordModal() {
     // Modo criação — zera a lista de anexos e a zona de upload
     clearAnexosUpload('reg');
     limparAcompanhantes();
+    limparResponsavel();
 
     // Reseta Status e Comentários
     document.getElementById('reg-status').value = 'Agendado';
@@ -434,6 +435,7 @@ function editRecord(id) {
     document.getElementById('reg-paciente').value = app.paciente ? app.paciente.toUpperCase() : '';
     document.getElementById('reg-idade').value = app.idade;
     carregarAcompanhantes(app);
+    carregarResponsavel(app);
     document.getElementById('reg-contato').value = app.contato;
     document.getElementById('reg-exame').value = app.exame || '';
     updateSubstratos();

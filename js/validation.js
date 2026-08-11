@@ -4,6 +4,13 @@ const _DIAS_NOME = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 
 
 function validateAppointment(dataObj) {
     const agenda = currentAgenda();
+
+    // Paciente menor de 18 anos: responsável e grau de parentesco são obrigatórios.
+    if (!isNaN(dataObj.idade) && dataObj.idade < 18 &&
+        (!dataObj.responsavelNome || !dataObj.responsavelParentesco)) {
+        return "PACIENTE MENOR DE IDADE: informe o nome do responsável e o grau de parentesco.";
+    }
+
     const appDate = new Date(dataObj.data + 'T12:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);

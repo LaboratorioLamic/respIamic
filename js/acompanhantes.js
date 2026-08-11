@@ -1,3 +1,64 @@
+// ── RESPONSÁVEL DO PACIENTE ─────────────────────────────────
+// Campo opcional em geral; obrigatório automaticamente quando o paciente
+// titular é menor de 18 anos (idade em `reg-idade`).
+
+function _menorDeIdade() {
+    const idade = parseInt(document.getElementById('reg-idade').value);
+    return !isNaN(idade) && idade < 18;
+}
+
+// Abre/fecha manualmente a caixa do responsável (botão "Incluir Responsável").
+// Não permite fechar quando o paciente é menor — nesse caso o campo é obrigatório.
+function toggleResponsavel() {
+    const box = document.getElementById('box-responsavel');
+    if (!box.classList.contains('hidden') && _menorDeIdade()) return;
+    box.classList.toggle('hidden');
+}
+
+// Chamada a cada alteração da Idade — liga o modo obrigatório para menores de 18.
+function atualizarResponsavelPorIdade() {
+    const box = document.getElementById('box-responsavel');
+    const nome = document.getElementById('reg-responsavel-nome');
+    const parentesco = document.getElementById('reg-responsavel-parentesco');
+    const lblNome = document.getElementById('lbl-responsavel-nome');
+    const lblParentesco = document.getElementById('lbl-responsavel-parentesco');
+    const ajuda = document.getElementById('ajuda-responsavel-menor');
+    const btn = document.getElementById('btn-toggle-responsavel');
+
+    if (_menorDeIdade()) {
+        box.classList.remove('hidden');
+        nome.required = true;
+        parentesco.required = true;
+        lblNome.innerText = 'Nome do Responsável *';
+        lblParentesco.innerText = 'Grau de Parentesco *';
+        ajuda.classList.remove('hidden');
+        btn.classList.add('hidden');
+    } else {
+        nome.required = false;
+        parentesco.required = false;
+        lblNome.innerText = 'Nome do Responsável';
+        lblParentesco.innerText = 'Grau de Parentesco';
+        ajuda.classList.add('hidden');
+        btn.classList.remove('hidden');
+    }
+}
+
+function limparResponsavel() {
+    document.getElementById('box-responsavel').classList.add('hidden');
+    document.getElementById('reg-responsavel-nome').value = '';
+    document.getElementById('reg-responsavel-parentesco').value = '';
+    atualizarResponsavelPorIdade();
+}
+
+function carregarResponsavel(app) {
+    document.getElementById('reg-responsavel-nome').value = app.responsavelNome || '';
+    document.getElementById('reg-responsavel-parentesco').value = app.responsavelParentesco || '';
+    const box = document.getElementById('box-responsavel');
+    if (app.responsavelNome || app.responsavelParentesco) box.classList.remove('hidden');
+    else box.classList.add('hidden');
+    atualizarResponsavelPorIdade();
+}
+
 // Pacientes adicionais atendidos na MESMA visita domiciliar.
 // São pessoas do mesmo endereço, atendidas no mesmo horário: o agendamento
 // continua sendo um só e não consome vaga extra na agenda.

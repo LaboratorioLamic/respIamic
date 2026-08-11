@@ -79,6 +79,8 @@ function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
         paciente: document.getElementById('reg-paciente').value,
         idade: parseInt(document.getElementById('reg-idade').value),
         contato: document.getElementById('reg-contato').value,
+        responsavelNome: document.getElementById('reg-responsavel-nome').value.trim().toUpperCase(),
+        responsavelParentesco: document.getElementById('reg-responsavel-parentesco').value,
         pedido: document.getElementById('reg-pedido').value,
         atendente: document.getElementById('reg-atendente').value,
         chkConcluido: statusVal === 'Concluído', // legado/garantia
