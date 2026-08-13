@@ -320,6 +320,8 @@ function viewRecord(id) {
         + _vwCampo('Idade', idadeLabel(app.idade))
         + _vwContato(app.contato);
     if (temCampo('pedido', agenda)) paciente += _vwCampo('Nº do Pedido', app.pedido);
+    if (app.responsavelNome) paciente += _vwCampo('Responsável', app.responsavelNome);
+    if (app.responsavelParentesco) paciente += _vwCampo('Grau de parentesco', app.responsavelParentesco);
     html += _vwBloco('Paciente', 'fa-user', paciente);
 
     // Demais pessoas atendidas na mesma visita
