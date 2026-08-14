@@ -67,6 +67,25 @@ function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
         }
         document.getElementById('reg-coletador').value = coletadorOficial;
         marcarCampoNomeValido('coletador', true);
+
+        // Coletador auxiliar segue a mesma regra: opcional, mas se preenchido
+        // tem que ser nome da lista — e não pode repetir o responsável.
+        const auxInput = document.getElementById('reg-coletador-auxiliar').value.trim();
+        const auxOficial = nomeOficialDe(auxInput);
+        if (auxOficial === null) {
+            marcarCampoNomeValido('coletador-auxiliar', false);
+            document.getElementById('reg-coletador-auxiliar').focus();
+            showNotification(`COLETADOR AUXILIAR INVÁLIDO: "${auxInput}" não está na lista de atendentes. Digite para pesquisar e selecione um nome da lista.`, 'error');
+            return;
+        }
+        if (auxOficial && coletadorOficial && normalizeStr(auxOficial) === normalizeStr(coletadorOficial)) {
+            marcarCampoNomeValido('coletador-auxiliar', false);
+            document.getElementById('reg-coletador-auxiliar').focus();
+            showNotification('COLETADOR AUXILIAR INVÁLIDO: escolha uma pessoa diferente do coletador responsável.', 'error');
+            return;
+        }
+        document.getElementById('reg-coletador-auxiliar').value = auxOficial;
+        marcarCampoNomeValido('coletador-auxiliar', true);
     }
 
     const record = {
@@ -144,6 +163,7 @@ function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
         // Já validado acima e normalizado para a grafia da lista oficial —
         // um toUpperCase() aqui desfaria essa grafia.
         record.coletador = document.getElementById('reg-coletador').value.trim();
+        record.coletadorAuxiliar = document.getElementById('reg-coletador-auxiliar').value.trim();
     }
 
     // NOTA: O status "atrasado" é calculado dinamicamente nas funções de renderização

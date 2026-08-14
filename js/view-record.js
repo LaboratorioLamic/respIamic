@@ -358,7 +358,10 @@ function viewRecord(id) {
     }
 
     let equipe = _vwCampo('Atendente', app.atendente);
-    if (temCampo('coletador', agenda)) equipe += _vwCampo('Coletador', app.coletador);
+    if (temCampo('coletador', agenda)) {
+        equipe += _vwCampo('Coletador', app.coletador);
+        if (app.coletadorAuxiliar) equipe += _vwCampo('Coletador auxiliar', app.coletadorAuxiliar);
+    }
     html += _vwBloco('Atendimento', 'fa-user-nurse', equipe);
 
     html += _vwChecklist(app, agenda);

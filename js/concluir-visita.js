@@ -172,6 +172,9 @@ function confirmarConcluirVisita() {
         if (coletador) record.coletador = coletador;
     }
     if (record.coletador === undefined) record.coletador = null;
+    // Auxiliar é do agendamento, não de quem conclui: só normaliza o undefined
+    // dos registros anteriores ao campo (o Firebase rejeita undefined em .set()).
+    if (record.coletadorAuxiliar === undefined) record.coletadorAuxiliar = null;
 
     if (app.status !== 'Cancelado') {
         record.status = marcados['-1'] ? 'Concluído' : 'Agendado';

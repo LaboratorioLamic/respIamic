@@ -328,6 +328,36 @@ function conferirNomeOficial(campo) {
     }
 }
 
+// ── COLETADOR AUXILIAR ──────────────────────────────────────
+// Segunda pessoa que acompanha a coleta domiciliar. Opcional: o bloco só
+// aparece quando alguém pede, para o formulário não sugerir que faltou
+// preencher um campo na maioria das coletas, feitas por um coletador só.
+function abrirColetadorAuxiliar() {
+    document.getElementById('coletador-auxiliar-bloco').classList.remove('hidden');
+    document.getElementById('btn-coletador-auxiliar').classList.add('hidden');
+    document.getElementById('reg-coletador-auxiliar').focus();
+}
+
+// Remover limpa o campo: um bloco escondido com nome dentro voltaria a salvar
+// o auxiliar que a pessoa acabou de tirar.
+function removerColetadorAuxiliar() {
+    const el = document.getElementById('reg-coletador-auxiliar');
+    el.value = '';
+    marcarCampoNomeValido('coletador-auxiliar', true);
+    document.getElementById('coletador-auxiliar-popover').classList.add('hidden');
+    document.getElementById('coletador-auxiliar-bloco').classList.add('hidden');
+    document.getElementById('btn-coletador-auxiliar').classList.remove('hidden');
+}
+
+// Estado do bloco ao abrir o formulário: aberto só quando já existe auxiliar.
+function definirColetadorAuxiliar(nome) {
+    const valor = String(nome || '').trim();
+    document.getElementById('reg-coletador-auxiliar').value = valor;
+    marcarCampoNomeValido('coletador-auxiliar', true);
+    document.getElementById('coletador-auxiliar-bloco').classList.toggle('hidden', !valor);
+    document.getElementById('btn-coletador-auxiliar').classList.toggle('hidden', !!valor);
+}
+
 // MAPA DO ENDEREÇO — embed do Google Maps sem API key (busca por texto)
 function enderecoParaMapa() {
     const logradouro = document.getElementById('reg-logradouro').value.trim();

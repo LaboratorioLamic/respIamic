@@ -89,6 +89,7 @@ function openRecordModal() {
     // Limpa o realce de nome inválido de uma tentativa anterior
     marcarCampoNomeValido('atendente', true);
     marcarCampoNomeValido('coletador', true);
+    definirColetadorAuxiliar('');
 
     // Atendente Responsável começa preenchido com o usuário logado
     if (currentUser && currentUser.fullName) {
@@ -265,7 +266,7 @@ function openDayDetails(dateStr) {
             </div>
             <div class="pl-2 pt-3 border-t border-slate-200 mt-3 flex justify-between items-center">
                 <div class="flex flex-col">
-                    <span class="text-[10px] font-bold text-slate-500">👤 ${formatAtendenteName(app.atendente)}${temCampo('coletador', agenda) && app.coletador ? ` · 🚗 ${formatAtendenteName(app.coletador)}` : ''}</span>
+                    <span class="text-[10px] font-bold text-slate-500">👤 ${formatAtendenteName(app.atendente)}${temCampo('coletador', agenda) && app.coletador ? ` · 🚗 ${formatAtendenteName(app.coletador)}` : ''}${temCampo('coletador', agenda) && app.coletadorAuxiliar ? ` + ${formatAtendenteName(app.coletadorAuxiliar)}` : ''}</span>
                     ${app.status === 'Em andamento' 
                         ? '<span class="text-[10px] font-bold text-purple-600 mt-0.5">🔄 Em andamento</span>' 
                         : `<span class="text-[10px] font-bold text-slate-500 mt-0.5">Pedido: ${app.pedido}</span>`
@@ -456,6 +457,7 @@ function editRecord(id) {
     atualizarTaxaColetaUI();
     document.getElementById('reg-ponto-referencia').value = app.pontoReferencia || '';
     document.getElementById('reg-coletador').value = app.coletador || '';
+    definirColetadorAuxiliar(app.coletadorAuxiliar);
     document.getElementById('reg-duracao').value = app.duracao;
     document.getElementById('reg-hora-fim').value = app.horaFim;
     document.getElementById('reg-pedido').value = app.pedido;
@@ -464,7 +466,10 @@ function editRecord(id) {
     // Registros antigos podem ter nome fora da lista atual (atendente desligado,
     // por exemplo): marca na abertura para o erro ficar visível antes de salvar.
     conferirNomeOficial('atendente');
-    if (temCampo('coletador', currentAgenda())) conferirNomeOficial('coletador');
+    if (temCampo('coletador', currentAgenda())) {
+        conferirNomeOficial('coletador');
+        if (app.coletadorAuxiliar) conferirNomeOficial('coletador-auxiliar');
+    }
 
     // Modo edição — carrega os anexos já vinculados
     restoreAnexosUpload('reg', app.anexos || []);

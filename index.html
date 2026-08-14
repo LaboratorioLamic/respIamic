@@ -1071,14 +1071,39 @@
                     <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Ponto de Referência</label>
                     <input type="text" id="reg-ponto-referencia" placeholder="Ex.: em frente à praça" class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm">
                 </div>
-                <div class="col-span-1 md:col-span-2 hidden relative" data-agenda-campo="coletador">
-                    <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Coletador Responsável</label>
-                    <input type="text" id="reg-coletador" placeholder="Quem realizará a coleta..." autocomplete="off"
-                        oninput="filtrarAtendentes('coletador', this.value)"
-                        onfocus="filtrarAtendentes('coletador', this.value)"
-                        onblur="fecharSugestoesTardio('coletador'); conferirNomeOficial('coletador')"
-                        class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm uppercase placeholder-slate-400">
-                    <div id="coletador-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
+                <div class="col-span-1 md:col-span-2 hidden" data-agenda-campo="coletador">
+                    <div class="relative">
+                        <label class="block text-[10px] font-black text-slate-400 uppercase mb-2">Coletador Responsável</label>
+                        <input type="text" id="reg-coletador" placeholder="Quem realizará a coleta..." autocomplete="off"
+                            oninput="filtrarAtendentes('coletador', this.value)"
+                            onfocus="filtrarAtendentes('coletador', this.value)"
+                            onblur="fecharSugestoesTardio('coletador'); conferirNomeOficial('coletador')"
+                            class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm uppercase placeholder-slate-400">
+                        <div id="coletador-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
+                    </div>
+                    <!-- Coletador auxiliar — segunda pessoa que acompanha a coleta domiciliar.
+                         Fica escondido atrás do botão para não poluir o formulário no caso comum
+                         (um coletador só). -->
+                    <button type="button" id="btn-coletador-auxiliar" onclick="abrirColetadorAuxiliar()"
+                        class="mt-2 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide border border-slate-200 bg-white text-slate-500 shadow-sm hover:border-teal-300 hover:text-teal-700 transition-all duration-200 active:scale-95">
+                        <i class="fas fa-user-plus text-[11px]"></i>
+                        <span>Adicionar coletador auxiliar</span>
+                    </button>
+                    <div id="coletador-auxiliar-bloco" class="hidden relative mt-2">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-[10px] font-black text-slate-400 uppercase">Coletador Auxiliar</label>
+                            <button type="button" onclick="removerColetadorAuxiliar()"
+                                class="text-[10px] font-black uppercase text-slate-400 hover:text-red-600 transition-colors">
+                                <i class="fas fa-xmark mr-1"></i>Remover
+                            </button>
+                        </div>
+                        <input type="text" id="reg-coletador-auxiliar" placeholder="Quem acompanhará a coleta..." autocomplete="off"
+                            oninput="filtrarAtendentes('coletador-auxiliar', this.value)"
+                            onfocus="filtrarAtendentes('coletador-auxiliar', this.value)"
+                            onblur="fecharSugestoesTardio('coletador-auxiliar'); conferirNomeOficial('coletador-auxiliar')"
+                            class="w-full border border-slate-200 rounded-xl py-2.5 px-3 shadow-sm uppercase placeholder-slate-400">
+                        <div id="coletador-auxiliar-popover" class="hidden absolute z-20 mt-1.5 w-full max-h-56 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-xl py-1.5"></div>
+                    </div>
                 </div>
 
                 <div id="campo-pedido-container" class="col-span-1 md:col-span-1">

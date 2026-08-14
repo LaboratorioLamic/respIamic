@@ -111,6 +111,7 @@ function renderTable() {
             </td>
             <td class="p-5 ${temCampo('coletador', agenda) ? '' : 'hidden'}">
                 <div class="text-[10px] font-bold text-slate-600 uppercase">${app.coletador ? formatAtendenteName(app.coletador) : '—'}</div>
+                ${app.coletadorAuxiliar ? `<div class="text-[9px] font-bold text-slate-400 uppercase mt-0.5"><i class="fas fa-user-plus mr-1"></i>${formatAtendenteName(app.coletadorAuxiliar)}</div>` : ''}
             </td>
             <td class="p-5">
                 <div class="font-black text-slate-600 text-xs">${app.pedido}</div>

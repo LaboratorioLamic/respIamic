@@ -153,6 +153,10 @@ function duplicateRecord() {
     if (temCampo('endereco')) campos.push('reg-cep', 'reg-logradouro', 'reg-numero', 'reg-complemento', 'reg-bairro', 'reg-cidade');
     if (temCampo('pontoReferencia')) campos.push('reg-ponto-referencia');
     if (temCampo('coletador')) campos.push('reg-coletador');
+    // Auxiliar não entra em `campos`: só preencher o input deixaria o bloco
+    // escondido, com um nome invisível pronto para ser salvo.
+    const coletadorAuxiliar = temCampo('coletador')
+        ? document.getElementById('reg-coletador-auxiliar').value : '';
 
     const valores = {};
     campos.forEach(id => { const el = document.getElementById(id); if (el) valores[id] = el.value; });
@@ -174,6 +178,7 @@ function duplicateRecord() {
             document.getElementById('reg-distante').checked = distante;
             atualizarDistanteUI();
         }
+        if (coletadorAuxiliar) definirColetadorAuxiliar(coletadorAuxiliar);
         acompanhantes.forEach(a => adicionarAcompanhante(a));
     }, 150);
 }

@@ -23,6 +23,7 @@ const _auditFields = [
       fmt: v => (v || []).length ? v.map(a => a.nome).join(', ') : '—' },
     { key: 'pontoReferencia', label: 'Ponto de referência', fmt: v => v || '—' },
     { key: 'coletador',  label: 'Coletador',    fmt: v => v || '—' },
+    { key: 'coletadorAuxiliar', label: 'Coletador auxiliar', fmt: v => v || '—' },
     { key: 'status',     label: 'Status',       fmt: v => v || '—' },
     // Comentários entram na auditoria porque carregam a justificativa da
     // ausência — sem isso o motivo da falta não apareceria no histórico.
