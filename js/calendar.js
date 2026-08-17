@@ -229,12 +229,26 @@ function renderMonthView() {
             ? `<div class="absolute top-1 right-1 ${DISTANTE_TEMA.text}" title="Há coleta em localidade distante"><i class="fas ${DISTANTE_TEMA.icon} text-xs"></i></div>` : '';
         const isToday = calendarDate.getTime() === today.getTime();
 
+        // Resumo compacto do dia — no celular a coluna é estreita demais para uma
+        // bolinha por agendamento (quebravam em várias linhas e empurravam o
+        // rótulo de vagas para fora da célula). Vira contador + barra de ocupação.
+        const ocupadas = vagasOcupadasNoDia(dayApps, agenda);
+        const pct = limiteDia ? Math.min(100, Math.round((ocupadas / limiteDia) * 100)) : 0;
+        const barraCor = hasOverdue ? 'bg-red-500' : allCompleted ? 'bg-green-500' : pct >= 100 ? 'bg-amber-500' : cores.dot;
+        const resumoMobile = isHoliday
+            ? '<span class="day-compact-tag text-red-400">Feriado</span>'
+            : dayApps.length
+                ? `<span class="day-compact-count ${textColor}">${ocupadas}<span class="day-compact-limit">/${limiteDia}</span></span>
+                   <span class="day-compact-bar"><span class="day-compact-bar-fill ${barraCor}" style="width:${pct}%"></span></span>`
+                : '';
+
         body.innerHTML += `<div onclick="${clickAction}" class="calendar-day p-3 h-24 border rounded-2xl flex flex-col items-center group relative ${boxClass} ${isToday ? 'calendar-day-today' : ''}">
             ${holidayIcon}${distanteIcon}
             <span class="font-black text-sm ${textColor}">${day}</span>
-            <div class="mt-2 flex gap-1 justify-center flex-wrap">${dots}${canceledX}</div>
-            ${dayApps.length && !isHoliday ? `<span class="text-[8px] font-black uppercase tracking-wider mt-auto text-slate-500">${vagasOcupadasNoDia(dayApps, agenda)}/${limiteDia} Vagas</span>` : ''}
-            ${isHoliday ? '<span class="text-[8px] font-black uppercase tracking-wider mt-auto text-red-400">Feriado</span>' : ''}
+            <div class="day-dots mt-2 flex gap-1 justify-center flex-wrap">${dots}${canceledX}</div>
+            ${dayApps.length && !isHoliday ? `<span class="day-vagas text-[8px] font-black uppercase tracking-wider mt-auto text-slate-500">${ocupadas}/${limiteDia} Vagas</span>` : ''}
+            ${isHoliday ? '<span class="day-vagas text-[8px] font-black uppercase tracking-wider mt-auto text-red-400">Feriado</span>' : ''}
+            <div class="day-compact">${resumoMobile}</div>
         </div>`;
     }
 }
