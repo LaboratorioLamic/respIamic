@@ -148,80 +148,111 @@ function revDe(record) {
     return Number(record && record.rev) || 0;
 }
 
-function _erroDeConflito() {
-    const erro = new Error('CONFLITO_DE_EDICAO');
-    erro.conflito = true;
+// Motivos de recusa que NÃO são falha de rede — cada um tem sua orientação ao
+// usuário em _persistir.
+const CONFLITO_EDICAO   = 'CONFLITO_DE_EDICAO';    // outra pessoa salvou antes
+const CONFLITO_EXCLUSAO = 'CONFLITO_DE_EXCLUSAO';  // alterado durante a exclusão
+const REGISTRO_EXCLUIDO = 'REGISTRO_EXCLUIDO';     // apagado durante a edição
+
+function _erroDeConflito(tipo) {
+    const erro = new Error(tipo);
+    erro.conflito = tipo;
     return erro;
+}
+
+function _ehConflito(erro) {
+    return !!(erro && erro.conflito);
+}
+
+// Põe na lista local o registro EXATAMENTE como o servidor o devolveu — é dele
+// que vem a `rev` nova. Substituir o item na lista (em vez de mutar o objeto que
+// o chamador passou) mantém a lista como fonte única: uma segunda alteração
+// logo em seguida já parte da rev correta, sem depender de o chamador ter
+// guardado a mesma referência de objeto.
+function _aplicarRegistroLocal(agendaId, novo) {
+    const lista = appointmentsDe(agendaId);
+    const existe = lista.some(a => a.id == novo.id);
+    setAppointments(existe ? lista.map(a => a.id == novo.id ? novo : a) : [...lista, novo], agendaId);
+    _atualizarBackupLocal(agendaId);
+    return novo;
+}
+
+// Estado do registro no servidor, antes de gravar.
+//
+// O nó de cada agenda tem um listener `.on('value')` permanente (app-init.js),
+// então esta leitura é servida pelo cache já sincronizado: é o valor do
+// servidor, sem ida extra à rede. Ter o dado em mãos ANTES da transação é o que
+// permite abortar em `atual === null` lá dentro sem ambiguidade — nulo passa a
+// significar "excluído de verdade", nunca "cache ainda vazio".
+function _estadoNoServidor(ref) {
+    return ref.once('value').then(snap => snap.exists() ? snap.val() : null);
 }
 
 // `revEsperada` nula/ausente = grava sem checar (criação, importação).
 function salvarAgendamentoNoFirebase(record, agendaId, revEsperada) {
     const id = agendaId || record.agendaId || currentAgendaId;
     const ref = _appointmentsRef(id).child(String(record.id));
-
     const comRev = rev => _semUndefined({ ...record, rev });
 
-    const gravado = novo => {
-        // Reflete a rev nova no objeto que já está na lista local: sem isso, uma
-        // segunda alteração feita logo em seguida partiria de uma rev velha e
-        // seria recusada como conflito falso.
-        record.rev = novo.rev;
-        _atualizarBackupLocal(id);
-        return novo;
+    const registrarFalha = error => {
+        if (!_ehConflito(error)) {
+            console.error(`Erro ao salvar agendamento ${record.id} da agenda '${id}':`, error);
+        }
+        throw error;
     };
 
     if (revEsperada == null) {
         const novo = comRev(revDe(record) + 1);
-        return ref.set(novo).then(() => gravado(novo)).catch(error => {
-            console.error(`Erro ao salvar agendamento ${record.id} da agenda '${id}':`, error);
-            throw error;
-        });
+        return ref.set(novo)
+            .then(() => _aplicarRegistroLocal(id, novo))
+            .catch(registrarFalha);
     }
 
-    return ref.transaction(atual => {
-        // `atual` nulo pode ser só o cache local ainda vazio. Devolver um valor
-        // (em vez de abortar) faz o Firebase reexecutar esta função com o dado
-        // do servidor, e é aí que um conflito de verdade é detectado. Abortar
-        // às cegas no nulo produziria conflito falso a cada gravação.
-        //
-        // Consequência assumida: se o registro tiver sido REALMENTE excluído por
-        // outra pessoa enquanto este usuário editava, a gravação o recria. É o
-        // erro menos destrutivo dos dois — ressuscitar um registro é reversível
-        // (e fica no histórico), perder a edição em silêncio não é.
-        if (atual && revDe(atual) !== revEsperada) return;   // conflito real: aborta
-        return comRev(revEsperada + 1);
-    }).then(res => {
-        if (!res.committed) throw _erroDeConflito();
-        return gravado(res.snapshot.val());
-    }, error => {
-        console.error(`Erro ao salvar agendamento ${record.id} da agenda '${id}':`, error);
-        throw error;
-    });
+    return _estadoNoServidor(ref).then(atual => {
+        if (atual === null) throw _erroDeConflito(REGISTRO_EXCLUIDO);
+        if (revDe(atual) !== revEsperada) throw _erroDeConflito(CONFLITO_EDICAO);
+
+        return ref.transaction(atualNaTransacao => {
+            if (atualNaTransacao === null) return;                        // excluído no meio-tempo
+            if (revDe(atualNaTransacao) !== revEsperada) return;          // outro salvou primeiro
+            return comRev(revEsperada + 1);
+        }).then(res => {
+            if (!res.committed) throw _erroDeConflito(CONFLITO_EDICAO);
+            return _aplicarRegistroLocal(id, res.snapshot.val());
+        });
+    }).catch(registrarFalha);
 }
 
 function removerAgendamentoNoFirebase(recordId, agendaId, revEsperada) {
     const id = agendaId || currentAgendaId;
     const ref = _appointmentsRef(id).child(String(recordId));
-
     const removido = () => { _atualizarBackupLocal(id); };
 
-    if (revEsperada == null) {
-        return ref.remove().then(removido).catch(error => {
+    const registrarFalha = error => {
+        if (!_ehConflito(error)) {
             console.error(`Erro ao excluir agendamento ${recordId} da agenda '${id}':`, error);
-            throw error;
-        });
+        }
+        throw error;
+    };
+
+    if (revEsperada == null) {
+        return ref.remove().then(removido).catch(registrarFalha);
     }
 
-    return ref.transaction(atual => {
-        if (atual && revDe(atual) !== revEsperada) return;   // alterado por outro: aborta
-        return null;                                          // null remove o nó
-    }).then(res => {
-        if (!res.committed) throw _erroDeConflito();
-        removido();
-    }, error => {
-        console.error(`Erro ao excluir agendamento ${recordId} da agenda '${id}':`, error);
-        throw error;
-    });
+    return _estadoNoServidor(ref).then(atual => {
+        // Já não existe: o objetivo da operação está atingido, não é conflito.
+        if (atual === null) return removido();
+        if (revDe(atual) !== revEsperada) throw _erroDeConflito(CONFLITO_EXCLUSAO);
+
+        return ref.transaction(atualNaTransacao => {
+            if (atualNaTransacao === null) return null;                   // já removido
+            if (revDe(atualNaTransacao) !== revEsperada) return;          // alterado por outro
+            return null;                                                  // null remove o nó
+        }).then(res => {
+            if (!res.committed) throw _erroDeConflito(CONFLITO_EXCLUSAO);
+            removido();
+        });
+    }).catch(registrarFalha);
 }
 
 // Tempo sem resposta do servidor a partir do qual o usuário é avisado. Offline,
@@ -260,13 +291,27 @@ function _persistir(operacao, alvo, opcoes) {
         return true;
     }, erro => {
         respondeu = true; clearTimeout(avisoPendente);
-        showNotification(erro && erro.conflito
-            ? 'ALTERAÇÃO NÃO SALVA: outra pessoa alterou este agendamento enquanto você editava. Nada foi sobrescrito. Os dados foram recarregados — confira o que mudou e refaça sua alteração.'
-            : 'FALHA AO SALVAR: a alteração NÃO foi gravada no servidor. Os dados foram recarregados — refaça a operação.',
-            'error', 20000);
-        if (aoFalhar) aoFalhar();
-        return _recarregarAgenda(alvo).then(() => false);
+        showNotification(_mensagemDeFalha(erro), 'error', 20000);
+        // `aoFalhar` roda DEPOIS da recarga: quem reabre o registro na tela
+        // precisa mostrar a versão atual, não a que acabou de ser recusada.
+        return _recarregarAgenda(alvo).then(() => {
+            if (aoFalhar) aoFalhar();
+            return false;
+        });
     });
+}
+
+function _mensagemDeFalha(erro) {
+    switch (erro && erro.conflito) {
+        case CONFLITO_EDICAO:
+            return 'ALTERAÇÃO NÃO SALVA: outra pessoa alterou este agendamento enquanto você editava. Nada foi sobrescrito. Os dados foram recarregados — confira o que mudou e refaça sua alteração.';
+        case REGISTRO_EXCLUIDO:
+            return 'ALTERAÇÃO NÃO SALVA: este agendamento foi excluído por outra pessoa enquanto você editava. O registro NÃO foi recriado — cadastre de novo se ele ainda for necessário.';
+        case CONFLITO_EXCLUSAO:
+            return 'EXCLUSÃO CANCELADA: outra pessoa alterou este agendamento agora há pouco. O registro foi reaberto com a versão atual — confira a alteração antes de excluir de novo.';
+        default:
+            return 'FALHA AO SALVAR: a alteração NÃO foi gravada no servidor. Os dados foram recarregados — refaça a operação.';
+    }
 }
 
 // `opcoes.rev` — a rev que o usuário tinha em mãos quando começou a alterar

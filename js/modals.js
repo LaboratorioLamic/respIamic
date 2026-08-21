@@ -568,7 +568,10 @@ function confirmDeleteRecord() {
     removerAgendamento(deleted, {
         rev: _revEmExclusao,
         audit: { action: 'delete', oldRecord: null },
-        mensagem: "Agendamento excluído com sucesso."
+        mensagem: "Agendamento excluído com sucesso.",
+        // Exclusão recusada não pode virar beco sem saída: reabre o registro já
+        // recarregado para o usuário ver o que mudou e decidir de novo.
+        aoFalhar: () => { if (appointments.some(a => a.id === id)) viewRecord(id); }
     }).then(ok => {
         if (ok) apagarAnexosDoRegistro(deleted);   // remove os arquivos reais (Drive / imgBlobs)
     });
