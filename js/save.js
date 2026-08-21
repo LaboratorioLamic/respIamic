@@ -235,6 +235,8 @@ function proceedWithSaveAfterValidation(record, id) {
     // ver persistirAgendamento em firebase-data.js.
     closeModals(); renderTable(); renderCalendar(); updateDatalists(); updateFilterDropdowns();
     persistirAgendamento(record, {
+        // Só edição checa conflito: na criação não há versão anterior no servidor.
+        rev: isNew ? null : _revEmEdicao,
         audit: { action: isNew ? 'create' : 'edit', oldRecord },
         mensagem: id ? "Agendamento atualizado com sucesso!" : "Agendamento criado com sucesso!"
     });

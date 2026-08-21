@@ -24,6 +24,7 @@ function toggleColetaAtiva() {
 
     setAppointments(appointments.map(a => a.id == record.id ? record : a));
     persistirAgendamento(record, {
+        rev: revDe(app),
         audit: { action: 'edit', oldRecord },
         mensagem: record.coletaAtiva
             ? 'Coleta iniciada — visita marcada como em andamento no local.'

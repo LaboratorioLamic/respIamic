@@ -9,12 +9,15 @@
 // por isso `vagaLiberada()` só vale para o cancelamento.
 
 let _ausenciaVisitaId = null;
+// Rev do registro quando a janela foi aberta — ver revDe/persistirAgendamento.
+let _ausenciaVisitaRev = null;
 
 function abrirAusenciaVisita(id) {
     const app = appointments.find(a => a.id == (id != null ? id : _viewRecordId));
     if (!app) return;
 
     _ausenciaVisitaId = app.id;
+    _ausenciaVisitaRev = revDe(app);
 
     const lista = document.getElementById('ausencia-lista');
     const pacientes = pacientesDaVisita(app);
@@ -116,6 +119,7 @@ function confirmarAusenciaVisita() {
 
     const r = resumoPacientes(record);
     persistirAgendamento(record, {
+        rev: _ausenciaVisitaRev,
         audit: { action: 'edit', oldRecord },
         mensagem: r.ausentes === 1
             ? 'Ausência registrada para 1 paciente.'

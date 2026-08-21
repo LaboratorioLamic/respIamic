@@ -682,6 +682,7 @@ function remarcarAgendamento(id, novaData, novaHora) {
 
     setAppointments(appointments.map(a => a.id == id ? candidato : a));
     persistirAgendamento(candidato, {
+        rev: revDe(atual),
         audit: { action: 'edit', oldRecord: atual },
         mensagem: `${atual.paciente} remarcado para ${novaData.split('-').reverse().join('/')} às ${novaHora}.`
     });

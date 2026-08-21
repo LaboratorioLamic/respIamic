@@ -135,24 +135,93 @@ function _atualizarBackupLocal(agendaId) {
     localStorage.setItem(agenda.lsKey, JSON.stringify(appointmentsDe(agendaId)));
 }
 
-function salvarAgendamentoNoFirebase(record, agendaId) {
+// CONTROLE DE CONCORRÊNCIA (campo `rev`)
+// Cada gravação incrementa `rev`. Quem abre um registro para editar guarda a rev
+// que viu; no salvamento, uma transação recusa a escrita se a rev no servidor já
+// for outra — sinal de que alguém salvou o MESMO agendamento nesse meio-tempo.
+// Sem isso, o segundo a salvar sobrescrevia em silêncio os campos que o primeiro
+// tinha acabado de alterar (o registro sobrevive, os dados dele não).
+//
+// Registros anteriores a este campo não têm `rev`: valem como rev 0 e passam a
+// ter rev na primeira gravação.
+function revDe(record) {
+    return Number(record && record.rev) || 0;
+}
+
+function _erroDeConflito() {
+    const erro = new Error('CONFLITO_DE_EDICAO');
+    erro.conflito = true;
+    return erro;
+}
+
+// `revEsperada` nula/ausente = grava sem checar (criação, importação).
+function salvarAgendamentoNoFirebase(record, agendaId, revEsperada) {
     const id = agendaId || record.agendaId || currentAgendaId;
-    return _appointmentsRef(id).child(String(record.id)).set(_semUndefined(record))
-        .then(() => { _atualizarBackupLocal(id); })
-        .catch(error => {
+    const ref = _appointmentsRef(id).child(String(record.id));
+
+    const comRev = rev => _semUndefined({ ...record, rev });
+
+    const gravado = novo => {
+        // Reflete a rev nova no objeto que já está na lista local: sem isso, uma
+        // segunda alteração feita logo em seguida partiria de uma rev velha e
+        // seria recusada como conflito falso.
+        record.rev = novo.rev;
+        _atualizarBackupLocal(id);
+        return novo;
+    };
+
+    if (revEsperada == null) {
+        const novo = comRev(revDe(record) + 1);
+        return ref.set(novo).then(() => gravado(novo)).catch(error => {
             console.error(`Erro ao salvar agendamento ${record.id} da agenda '${id}':`, error);
             throw error;
         });
+    }
+
+    return ref.transaction(atual => {
+        // `atual` nulo pode ser só o cache local ainda vazio. Devolver um valor
+        // (em vez de abortar) faz o Firebase reexecutar esta função com o dado
+        // do servidor, e é aí que um conflito de verdade é detectado. Abortar
+        // às cegas no nulo produziria conflito falso a cada gravação.
+        //
+        // Consequência assumida: se o registro tiver sido REALMENTE excluído por
+        // outra pessoa enquanto este usuário editava, a gravação o recria. É o
+        // erro menos destrutivo dos dois — ressuscitar um registro é reversível
+        // (e fica no histórico), perder a edição em silêncio não é.
+        if (atual && revDe(atual) !== revEsperada) return;   // conflito real: aborta
+        return comRev(revEsperada + 1);
+    }).then(res => {
+        if (!res.committed) throw _erroDeConflito();
+        return gravado(res.snapshot.val());
+    }, error => {
+        console.error(`Erro ao salvar agendamento ${record.id} da agenda '${id}':`, error);
+        throw error;
+    });
 }
 
-function removerAgendamentoNoFirebase(recordId, agendaId) {
+function removerAgendamentoNoFirebase(recordId, agendaId, revEsperada) {
     const id = agendaId || currentAgendaId;
-    return _appointmentsRef(id).child(String(recordId)).remove()
-        .then(() => { _atualizarBackupLocal(id); })
-        .catch(error => {
+    const ref = _appointmentsRef(id).child(String(recordId));
+
+    const removido = () => { _atualizarBackupLocal(id); };
+
+    if (revEsperada == null) {
+        return ref.remove().then(removido).catch(error => {
             console.error(`Erro ao excluir agendamento ${recordId} da agenda '${id}':`, error);
             throw error;
         });
+    }
+
+    return ref.transaction(atual => {
+        if (atual && revDe(atual) !== revEsperada) return;   // alterado por outro: aborta
+        return null;                                          // null remove o nó
+    }).then(res => {
+        if (!res.committed) throw _erroDeConflito();
+        removido();
+    }, error => {
+        console.error(`Erro ao excluir agendamento ${recordId} da agenda '${id}':`, error);
+        throw error;
+    });
 }
 
 // Tempo sem resposta do servidor a partir do qual o usuário é avisado. Offline,
@@ -189,22 +258,27 @@ function _persistir(operacao, alvo, opcoes) {
         if (audit) addAuditLog(audit.action, audit.record || record, audit.oldRecord || null);
         if (mensagem) showNotification(mensagem, 'success');
         return true;
-    }, () => {
+    }, erro => {
         respondeu = true; clearTimeout(avisoPendente);
-        showNotification('FALHA AO SALVAR: a alteração NÃO foi gravada no servidor. Os dados foram recarregados — refaça a operação.', 'error', 20000);
+        showNotification(erro && erro.conflito
+            ? 'ALTERAÇÃO NÃO SALVA: outra pessoa alterou este agendamento enquanto você editava. Nada foi sobrescrito. Os dados foram recarregados — confira o que mudou e refaça sua alteração.'
+            : 'FALHA AO SALVAR: a alteração NÃO foi gravada no servidor. Os dados foram recarregados — refaça a operação.',
+            'error', 20000);
         if (aoFalhar) aoFalhar();
         return _recarregarAgenda(alvo).then(() => false);
     });
 }
 
+// `opcoes.rev` — a rev que o usuário tinha em mãos quando começou a alterar
+// (capturada ao abrir o formulário/modal). Ausente = grava sem checar conflito.
 function persistirAgendamento(record, opcoes = {}) {
     const alvo = opcoes.agendaId || record.agendaId || currentAgendaId;
-    return _persistir(salvarAgendamentoNoFirebase(record, alvo), alvo, { ...opcoes, record });
+    return _persistir(salvarAgendamentoNoFirebase(record, alvo, opcoes.rev), alvo, { ...opcoes, record });
 }
 
 function removerAgendamento(record, opcoes = {}) {
     const alvo = opcoes.agendaId || record.agendaId || currentAgendaId;
-    return _persistir(removerAgendamentoNoFirebase(record.id, alvo), alvo, { ...opcoes, record });
+    return _persistir(removerAgendamentoNoFirebase(record.id, alvo, opcoes.rev), alvo, { ...opcoes, record });
 }
 
 // Sobe o backup local caso o Firebase esteja vazio (ex.: primeiro acesso após falha)

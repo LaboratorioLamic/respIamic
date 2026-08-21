@@ -66,7 +66,15 @@ function cancelHorarioExcecao() {
     pendingHorarioExcecaoAction = null;
 }
 
+// Rev do registro no momento em que o usuário começou a mexer nele. É ela que a
+// gravação compara com a do servidor para detectar que outra pessoa salvou o
+// mesmo agendamento no meio do caminho. `null` = criação, não há com o que conflitar.
+let _revEmEdicao = null;
+let _revEmExclusao = null;
+let _revObs = null;
+
 function openRecordModal() {
+    _revEmEdicao = null;
     document.getElementById('record-form').reset();
     document.getElementById('reg-id').value = '';
     applyAgendaConfig();
@@ -429,6 +437,7 @@ function setupHolidaysRealtimeListener() {
 function editRecord(id) {
     const app = appointments.find(a => a.id == id);
     if(!app) return;
+    _revEmEdicao = revDe(app);
     applyAgendaConfig();
     document.getElementById('reg-id').value = app.id;
     document.getElementById('reg-data').value = app.data;
@@ -508,6 +517,7 @@ let _pendingDeleteId = null;
 
 function deleteRecord(id) {
     _pendingDeleteId = id;
+    _revEmExclusao = revDe(appointments.find(a => a.id === id));
     const input = document.getElementById('delete-confirm-input');
     input.value = '';
     const btn = document.getElementById('btn-confirm-delete');
@@ -556,6 +566,7 @@ function confirmDeleteRecord() {
     // Os anexos só são apagados depois que o servidor confirmar a exclusão do
     // registro — apagar antes deixaria o agendamento vivo e sem os arquivos.
     removerAgendamento(deleted, {
+        rev: _revEmExclusao,
         audit: { action: 'delete', oldRecord: null },
         mensagem: "Agendamento excluído com sucesso."
     }).then(ok => {
@@ -565,6 +576,7 @@ function confirmDeleteRecord() {
 
 function openObsModal(id) {
     const app = appointments.find(a => a.id == id);
+    _revObs = revDe(app);
     document.getElementById('obs-id').value = app.id;
     document.getElementById('obs-text').value = app.comentarios || '';
     document.getElementById('modal-obs').classList.add('active');
@@ -577,5 +589,5 @@ function saveObservation() {
     const record = { ...oldRecord, comentarios: document.getElementById('obs-text').value };
     setAppointments(appointments.map(a => a.id == id ? record : a));
     closeModals(); renderTable();
-    persistirAgendamento(record, { audit: { action: 'edit', oldRecord } });
+    persistirAgendamento(record, { rev: _revObs, audit: { action: 'edit', oldRecord } });
 }

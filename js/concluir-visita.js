@@ -4,6 +4,8 @@
 // O status do agendamento passa a ser derivado dos pacientes.
 
 let _concluirVisitaId = null;
+// Rev do registro quando a janela foi aberta — ver revDe/persistirAgendamento.
+let _concluirVisitaRev = null;
 let _concluirTaxaPaga = false;
 
 function abrirConcluirVisita(id) {
@@ -12,6 +14,7 @@ function abrirConcluirVisita(id) {
 
     const agenda = getAgenda(app.agendaId || currentAgendaId);
     _concluirVisitaId = app.id;
+    _concluirVisitaRev = revDe(app);
 
     // Checklist pendente não bloqueia mais a conclusão — só avisa. O card/linha
     // do agendamento concluído fica com o tema listrado verde/amarelo (ver
@@ -189,6 +192,7 @@ function confirmarConcluirVisita() {
 
     const r = resumoPacientes(record);
     persistirAgendamento(record, {
+        rev: _concluirVisitaRev,
         audit: { action: 'edit', oldRecord },
         mensagem: r.pendentes
             ? `Conclusão parcial: ${r.concluidos} de ${r.total} paciente(s) concluído(s).`
