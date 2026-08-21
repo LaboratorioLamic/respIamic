@@ -186,13 +186,14 @@ function confirmarConcluirVisita() {
     if (!resumoPacientes(record).pendentes) record.coletaAtiva = false;
 
     setAppointments(appointments.map(a => a.id == record.id ? record : a));
-    saveAppointmentsToFirebase();
-    addAuditLog('edit', record, oldRecord);
 
     const r = resumoPacientes(record);
-    showNotification(r.pendentes
-        ? `Conclusão parcial: ${r.concluidos} de ${r.total} paciente(s) concluído(s).`
-        : 'Visita concluída para todos os pacientes.', 'success');
+    persistirAgendamento(record, {
+        audit: { action: 'edit', oldRecord },
+        mensagem: r.pendentes
+            ? `Conclusão parcial: ${r.concluidos} de ${r.total} paciente(s) concluído(s).`
+            : 'Visita concluída para todos os pacientes.'
+    });
 
     fecharConcluirVisita();
     renderTable(); renderCalendar(); updateFilterDropdowns();

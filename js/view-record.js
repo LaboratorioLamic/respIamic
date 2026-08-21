@@ -397,6 +397,10 @@ function viewRecord(id) {
     const btnExcluir = document.getElementById('view-btn-excluir');
     if (btnExcluir) btnExcluir.style.display = isAdmin() ? '' : 'none';
 
+    if (temCampo('endereco', agenda) && app.coletaAtiva) {
+        try { toggleMapaView(); } catch (e) { console.error('Abrir mapa padrão falhou', e); }
+    }
+
     document.getElementById('modal-view-record').classList.add('active');
 }
 

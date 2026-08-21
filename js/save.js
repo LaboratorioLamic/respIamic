@@ -229,10 +229,15 @@ function proceedWithSaveAfterValidation(record, id) {
     const isNew = !id;
     const oldRecord = isNew ? null : appointments.find(a => a.id == id) || null;
     if(id) setAppointments(appointments.map(a => a.id == id ? record : a)); else setAppointments([...appointments, record]);
-    saveAppointmentsToFirebase();
-    addAuditLog(isNew ? 'create' : 'edit', record, oldRecord);
-    showNotification(id ? "Agendamento atualizado com sucesso!" : "Agendamento criado com sucesso!", "success");
+
+    // A tela atualiza na hora (o registro já está na lista local), mas a
+    // auditoria e o aviso de sucesso só saem depois que o Firebase confirmar —
+    // ver persistirAgendamento em firebase-data.js.
     closeModals(); renderTable(); renderCalendar(); updateDatalists(); updateFilterDropdowns();
+    persistirAgendamento(record, {
+        audit: { action: isNew ? 'create' : 'edit', oldRecord },
+        mensagem: id ? "Agendamento atualizado com sucesso!" : "Agendamento criado com sucesso!"
+    });
 }
 
 // MODAL DE AVISO — AGENDAMENTO SEM ANEXO

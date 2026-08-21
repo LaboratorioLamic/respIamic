@@ -113,13 +113,14 @@ function confirmarAusenciaVisita() {
     }
 
     setAppointments(appointments.map(a => a.id == record.id ? record : a));
-    saveAppointmentsToFirebase();
-    addAuditLog('edit', record, oldRecord);
 
     const r = resumoPacientes(record);
-    showNotification(r.ausentes === 1
-        ? 'Ausência registrada para 1 paciente.'
-        : `Ausência registrada para ${r.ausentes} pacientes.`, 'success');
+    persistirAgendamento(record, {
+        audit: { action: 'edit', oldRecord },
+        mensagem: r.ausentes === 1
+            ? 'Ausência registrada para 1 paciente.'
+            : `Ausência registrada para ${r.ausentes} pacientes.`
+    });
 
     fecharAusenciaVisita();
     renderTable(); renderCalendar(); updateFilterDropdowns();

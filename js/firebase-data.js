@@ -115,6 +115,98 @@ function saveAppointmentsToFirebase(agendaId) {
         });
 }
 
+// GRAVAÇÃO POR REGISTRO
+// Escreve só o nó do próprio agendamento (`.../appointments/<id>`). A gravação
+// da agenda inteira (saveAppointmentsToFirebase) continua existindo para
+// importação de backup e renomeação em massa, mas NÃO deve ser usada no
+// salvamento do dia a dia: com dois atendentes salvando ao mesmo tempo, o
+// último `.set()` do nó inteiro apaga o que o outro acabou de criar — foi
+// assim que registros sumiram da agenda sem nenhum log de exclusão.
+
+// O Realtime Database rejeita `undefined` em qualquer campo e lança de forma
+// síncrona no .set(); JSON.stringify/parse troca esses campos por ausência
+// total (equivalente a null) em vez de travar o salvamento inteiro.
+function _semUndefined(valor) {
+    return JSON.parse(JSON.stringify(valor));
+}
+
+function _atualizarBackupLocal(agendaId) {
+    const agenda = getAgenda(agendaId);
+    localStorage.setItem(agenda.lsKey, JSON.stringify(appointmentsDe(agendaId)));
+}
+
+function salvarAgendamentoNoFirebase(record, agendaId) {
+    const id = agendaId || record.agendaId || currentAgendaId;
+    return _appointmentsRef(id).child(String(record.id)).set(_semUndefined(record))
+        .then(() => { _atualizarBackupLocal(id); })
+        .catch(error => {
+            console.error(`Erro ao salvar agendamento ${record.id} da agenda '${id}':`, error);
+            throw error;
+        });
+}
+
+function removerAgendamentoNoFirebase(recordId, agendaId) {
+    const id = agendaId || currentAgendaId;
+    return _appointmentsRef(id).child(String(recordId)).remove()
+        .then(() => { _atualizarBackupLocal(id); })
+        .catch(error => {
+            console.error(`Erro ao excluir agendamento ${recordId} da agenda '${id}':`, error);
+            throw error;
+        });
+}
+
+// Tempo sem resposta do servidor a partir do qual o usuário é avisado. Offline,
+// o SDK do Firebase enfileira a escrita e a promessa não resolve nem rejeita —
+// sem esse aviso a tela ficaria muda, como se estivesse tudo salvo.
+const PERSIST_AVISO_MS = 8000;
+
+function _recarregarAgenda(agendaId) {
+    return loadAgendaFromFirebase(agendaId).then(() => {
+        renderHomeCards();
+        if (agendaId === currentAgendaId) {
+            renderTable(); renderCalendar(); updateDatalists(); updateFilterDropdowns();
+        }
+    });
+}
+
+// Persiste o agendamento e SÓ ENTÃO registra a auditoria e avisa "sucesso".
+// A ordem importa: gravar o histórico antes da confirmação do servidor gerava
+// entradas de "Criado" para registros que nunca chegaram ao banco — o registro
+// aparecia no histórico e não aparecia na agenda.
+function _persistir(operacao, alvo, opcoes) {
+    const { audit, record, mensagem, aoFalhar } = opcoes;
+    let respondeu = false;
+    const avisoPendente = setTimeout(() => {
+        if (respondeu) return;
+        showNotification('SALVAMENTO PENDENTE: o servidor ainda não confirmou a gravação. Mantenha esta página aberta e verifique a conexão.', 'warning', 15000);
+    }, PERSIST_AVISO_MS);
+
+    // `.then(ok, erro)` em vez de `.then().catch()`: um erro dentro do ramo de
+    // sucesso (auditoria, notificação) não pode ser confundido com falha de
+    // gravação e disparar o recarregamento.
+    return operacao.then(() => {
+        respondeu = true; clearTimeout(avisoPendente);
+        if (audit) addAuditLog(audit.action, audit.record || record, audit.oldRecord || null);
+        if (mensagem) showNotification(mensagem, 'success');
+        return true;
+    }, () => {
+        respondeu = true; clearTimeout(avisoPendente);
+        showNotification('FALHA AO SALVAR: a alteração NÃO foi gravada no servidor. Os dados foram recarregados — refaça a operação.', 'error', 20000);
+        if (aoFalhar) aoFalhar();
+        return _recarregarAgenda(alvo).then(() => false);
+    });
+}
+
+function persistirAgendamento(record, opcoes = {}) {
+    const alvo = opcoes.agendaId || record.agendaId || currentAgendaId;
+    return _persistir(salvarAgendamentoNoFirebase(record, alvo), alvo, { ...opcoes, record });
+}
+
+function removerAgendamento(record, opcoes = {}) {
+    const alvo = opcoes.agendaId || record.agendaId || currentAgendaId;
+    return _persistir(removerAgendamentoNoFirebase(record.id, alvo), alvo, { ...opcoes, record });
+}
+
 // Sobe o backup local caso o Firebase esteja vazio (ex.: primeiro acesso após falha)
 function syncLocalStorageToFirebase() {
     AGENDA_IDS.forEach(id => {

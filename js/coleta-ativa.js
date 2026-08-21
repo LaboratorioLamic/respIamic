@@ -23,13 +23,12 @@ function toggleColetaAtiva() {
     const record = { ...app, coletaAtiva: !app.coletaAtiva };
 
     setAppointments(appointments.map(a => a.id == record.id ? record : a));
-    saveAppointmentsToFirebase();
-    addAuditLog('edit', record, oldRecord);
-
-    showNotification(
-        record.coletaAtiva ? 'Coleta iniciada — visita marcada como em andamento no local.' : 'Coleta pausada.',
-        'success', 2500
-    );
+    persistirAgendamento(record, {
+        audit: { action: 'edit', oldRecord },
+        mensagem: record.coletaAtiva
+            ? 'Coleta iniciada — visita marcada como em andamento no local.'
+            : 'Coleta pausada.'
+    });
 
     // Reflete o novo estado em tudo que está na tela agora
     if (_viewRecordId === record.id) viewRecord(record.id);

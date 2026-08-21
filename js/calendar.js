@@ -681,10 +681,10 @@ function remarcarAgendamento(id, novaData, novaHora) {
     }
 
     setAppointments(appointments.map(a => a.id == id ? candidato : a));
-    saveAppointmentsToFirebase();
-    addAuditLog('edit', candidato, atual);
-    showNotification(
-        `${atual.paciente} remarcado para ${novaData.split('-').reverse().join('/')} às ${novaHora}.`, 'success');
+    persistirAgendamento(candidato, {
+        audit: { action: 'edit', oldRecord: atual },
+        mensagem: `${atual.paciente} remarcado para ${novaData.split('-').reverse().join('/')} às ${novaHora}.`
+    });
     renderTable(); renderCalendar(); updateFilterDropdowns();
 }
 

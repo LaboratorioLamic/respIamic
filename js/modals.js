@@ -548,24 +548,19 @@ function confirmDeleteRecord() {
     if (!id) return;
 
     const deleted = appointments.find(a => a.id === id);
-    setAppointments(appointments.filter(a => a.id !== id));
-    if (deleted) {
-        addAuditLog('delete', deleted);
-        apagarAnexosDoRegistro(deleted);   // remove os arquivos reais (Drive / imgBlobs)
-    }
+    if (!deleted) return;
 
-    saveAppointmentsToFirebase()
-        .then(() => {
-            renderTable();
-            renderCalendar();
-            closeModals();
-            showNotification("Agendamento excluído com sucesso.", "success");
-        })
-        .catch(error => {
-            console.error("Erro ao excluir agendamento:", error);
-            showNotification("Erro ao excluir o agendamento. Tente novamente.", "error");
-            loadAppointmentsFromFirebase();
-        });
+    setAppointments(appointments.filter(a => a.id !== id));
+    renderTable(); renderCalendar(); closeModals();
+
+    // Os anexos só são apagados depois que o servidor confirmar a exclusão do
+    // registro — apagar antes deixaria o agendamento vivo e sem os arquivos.
+    removerAgendamento(deleted, {
+        audit: { action: 'delete', oldRecord: null },
+        mensagem: "Agendamento excluído com sucesso."
+    }).then(ok => {
+        if (ok) apagarAnexosDoRegistro(deleted);   // remove os arquivos reais (Drive / imgBlobs)
+    });
 }
 
 function openObsModal(id) {
@@ -577,7 +572,10 @@ function openObsModal(id) {
 
 function saveObservation() {
     const id = document.getElementById('obs-id').value;
-    setAppointments(appointments.map(a => a.id == id ? {...a, comentarios: document.getElementById('obs-text').value} : a));
-    saveAppointmentsToFirebase();
+    const oldRecord = appointments.find(a => a.id == id);
+    if (!oldRecord) return;
+    const record = { ...oldRecord, comentarios: document.getElementById('obs-text').value };
+    setAppointments(appointments.map(a => a.id == id ? record : a));
     closeModals(); renderTable();
+    persistirAgendamento(record, { audit: { action: 'edit', oldRecord } });
 }
