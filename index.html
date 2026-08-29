@@ -1226,6 +1226,10 @@
                             <i class="fas fa-calendar-times text-red-500 text-xs"></i>
                         </div>
                     </button>
+                    <button id="btn-blocked-slots" onclick="openBlockedSlotsModal()" title="Horários disponíveis para marcação" class="relative h-8 w-8 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all">
+                        <i class="fas fa-hourglass-half text-sm"></i>
+                        <span id="blocked-slots-badge" class="hidden absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">0</span>
+                    </button>
                 </div>
                 <div class="flex items-center gap-2">
                     <button onclick="openDayHistory()" title="Histórico do dia" class="h-9 w-9 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all"><i class="fas fa-clock"></i></button>
@@ -1240,6 +1244,29 @@
                 <button onclick="closeModals(); openRecordModalWithDate(document.getElementById('day-details-date').innerText)" class="w-full bg-slate-100 text-navy-900 border border-slate-200 font-black py-4 rounded-xl shadow-sm hover:bg-slate-200 transition-all uppercase tracking-widest text-xs">
                     <i class="fas fa-plus mr-2"></i> Agendar neste dia
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-blocked-slots" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[110] justify-center items-center p-4">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh] max-h-[85dvh]">
+            <div class="bg-navy-900 p-6 text-white flex justify-between items-center shrink-0">
+                <div class="flex items-center gap-4">
+                    <div class="h-12 w-12 bg-white/10 rounded-xl flex items-center justify-center shrink-0">
+                        <i class="fas fa-hourglass-half text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-lg">Horários do Dia</h3>
+                        <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest"><span id="blocked-slots-date">00/00/0000</span> · <span id="blocked-slots-agenda"></span></p>
+                    </div>
+                </div>
+                <button onclick="closeBlockedSlotsModal()" class="h-9 w-9 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-all shrink-0"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="px-6 pt-4 shrink-0">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-relaxed">Desligue um horário para impedir novas marcações nele apenas neste dia.</p>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 min-h-0">
+                <div id="blocked-slots-list" class="flex flex-col gap-2"></div>
             </div>
         </div>
     </div>

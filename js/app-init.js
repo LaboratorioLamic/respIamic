@@ -8,6 +8,7 @@ window.onload = () => {
     loadAppointmentsFromFirebase();
     loadMotivosPerdaFromFirebase();
     setupHolidaysRealtimeListener();
+    setupBlockedSlotsRealtimeListener();
     setupAuditLogRealtimeListener();
 
     // Verificar sincronização inicial após carregar

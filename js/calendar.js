@@ -371,18 +371,23 @@ function renderWeekView() {
             // Horário disponível: ainda cabe um endereço novo na lotação do slot
             const livre = !agenda.slotUnico
                 || slotAceita(null, diaApps.filter(a => a.horaInicio === hora), agenda);
-            const selectable = dayOpen && inWindow && alinhado && livre;
+            // Horário desabilitado pelo setor responsável: sai da grade clicável
+            // e deixa de aceitar arrastar-e-soltar, mas continua visível listrado.
+            const bloqueado = inWindow && slotBloqueado(dateStr, hora, agenda);
+            const selectable = dayOpen && inWindow && alinhado && livre && !bloqueado;
             const top = ((m - viewStart) / 60) * WEEK_HOUR_PX;
             // Alvo de arrastar-e-soltar: qualquer horário da grade dentro da
             // janela do dia. A validação real (lotação, limite, etc.) roda no
             // drop, reaproveitando as mesmas regras do formulário.
-            const dropOk = inWindow && alinhado && !isHoliday && startWindows.length > 0;
+            const dropOk = inWindow && alinhado && !isHoliday && !bloqueado && startWindows.length > 0;
 
-            slots += `<div class="week-slot ${m % 60 === 0 ? 'week-slot-hour' : ''} ${inWindow ? 'week-slot-open' : 'week-slot-closed'} ${selectable ? 'week-slot-selectable' : ''} ${dropOk ? 'week-slot-drop' : ''}"
+            slots += `<div class="week-slot ${m % 60 === 0 ? 'week-slot-hour' : ''} ${inWindow ? 'week-slot-open' : 'week-slot-closed'} ${selectable ? 'week-slot-selectable' : ''} ${bloqueado ? 'week-slot-blocked' : ''} ${dropOk ? 'week-slot-drop' : ''}"
                 style="top:${top}px;height:${(Math.max(fimDoSlot - m, 1) / 60) * WEEK_HOUR_PX}px"
                 ${dropOk ? `data-drop-data="${dateStr}" data-drop-hora="${hora}"` : ''}
-                ${selectable ? `onclick="openRecordModalWithDate('${dateStr}','${hora}')" title="Agendar às ${hora}"` : ''}>
+                ${selectable ? `onclick="openRecordModalWithDate('${dateStr}','${hora}')" title="Agendar às ${hora}"` : ''}
+                ${bloqueado ? `onclick="avisarSlotBloqueado()" title="Horário indisponível para marcação"` : ''}>
                 ${selectable ? '<span class="week-slot-plus"><i class="fas fa-plus"></i></span>' : ''}
+                ${bloqueado ? '<i class="fas fa-hourglass-end week-slot-block-icon"></i>' : ''}
             </div>`;
 
             // Horário já ocupado e com vaga sobrando: os cards cobrem a célula,

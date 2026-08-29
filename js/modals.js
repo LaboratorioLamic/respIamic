@@ -145,7 +145,8 @@ function primeiroSlotLivre(iso) {
     const slots = slotsAgenda(new Date(y, m - 1, d).getDay(), agenda);
     const doDia = appointments.filter(a => a.data === iso && a.status !== 'Cancelado');
     const livre = slots.map(minToTime).find(h =>
-        slotAceita(null, doDia.filter(a => a.horaInicio === h), agenda)
+        !slotBloqueado(iso, h, agenda)
+        && slotAceita(null, doDia.filter(a => a.horaInicio === h), agenda)
     );
     return livre || null;
 }
@@ -293,6 +294,7 @@ function openDayDetails(dateStr) {
     
     // Verifica se o dia é feriado e atualiza o botão
     updateHolidayToggle(dateStr);
+    updateBlockedSlotsBadge(dateStr);
     
     // Oculta ou mostra o botão de agendar baseado no número de agendamentos ativos
     const activeApps = dayApps.filter(a => a.status !== 'Cancelado');
@@ -430,6 +432,158 @@ function setupHolidaysRealtimeListener() {
             holidays = data;
             console.log('Feriados atualizados em tempo real:', holidays);
             renderCalendar();
+        }
+    });
+}
+
+// ── HORÁRIOS BLOQUEADOS ─────────────────────────────────────
+// Bloqueio pontual: desabilita UM horário em UM dia de UMA agenda, sem fechar
+// o dia inteiro como o feriado faz. Estrutura: { agendaId: { data: { hora: true } } }
+const MSG_SLOT_BLOQUEADO = 'O horário está indisponível para marcação pois foi desabilitado pelo setor responsável. Em caso de dúvidas entrar em contato com o responsável';
+
+let blockedSlots = {};
+
+// Data (aaaa-mm-dd) do dia aberto no modal de detalhes
+function _dataDoDayDetails() {
+    return document.getElementById('day-details-date').innerText.split('/').reverse().join('-');
+}
+
+function slotsBloqueados(dateStr, agenda) {
+    const ag = agenda || currentAgenda();
+    return (blockedSlots[ag.id] || {})[dateStr] || {};
+}
+
+// Grade completa de horários de início do dia — a mesma usada para agendar.
+// Nas agendas de horário livre, slotsAgenda cai no passo padrão de 30 minutos.
+function gradeDoDia(dateStr, agenda) {
+    const ag = agenda || currentAgenda();
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return slotsAgenda(new Date(y, m - 1, d).getDay(), ag).map(minToTime);
+}
+
+// O horário de início cai em um slot desabilitado? Em agenda de horário livre o
+// paciente pode começar em qualquer minuto, então vale o slot que o contém.
+function slotBloqueado(dateStr, horaInicio, agenda) {
+    const ag = agenda || currentAgenda();
+    const bloqueados = slotsBloqueados(dateStr, ag);
+    if (!Object.keys(bloqueados).length) return false;
+    if (bloqueados[horaInicio]) return true;
+    if (ag.slotMin) return false;
+
+    const min = timeToMin(horaInicio);
+    if (min === null) return false;
+    const grade = gradeDoDia(dateStr, ag).map(timeToMin).sort((a, b) => a - b);
+    return grade.some((ini, i) => {
+        const fim = grade[i + 1] ?? (ini + 30);
+        return bloqueados[minToTime(ini)] && min >= ini && min < fim;
+    });
+}
+
+function avisarSlotBloqueado() {
+    showNotification(MSG_SLOT_BLOQUEADO, 'warning');
+}
+
+function openBlockedSlotsModal() {
+    const dateStr = _dataDoDayDetails();
+    document.getElementById('blocked-slots-date').innerText = dateStr.split('-').reverse().join('/');
+    document.getElementById('blocked-slots-agenda').innerText = currentAgenda().nome;
+    renderBlockedSlotsList(dateStr);
+    document.getElementById('modal-blocked-slots').classList.add('active');
+}
+
+function closeBlockedSlotsModal() {
+    document.getElementById('modal-blocked-slots').classList.remove('active');
+}
+
+function renderBlockedSlotsList(dateStr) {
+    const agenda = currentAgenda();
+    const lista = document.getElementById('blocked-slots-list');
+    if (!lista) return;
+
+    const grade = gradeDoDia(dateStr, agenda);
+    if (!grade.length) {
+        lista.innerHTML = '<p class="text-center py-6 text-slate-400 font-bold uppercase text-[10px]">A agenda não atende neste dia</p>';
+        return;
+    }
+
+    const bloqueados = slotsBloqueados(dateStr, agenda);
+    const doDia = appointments.filter(a => a.data === dateStr && a.status !== 'Cancelado');
+
+    lista.innerHTML = grade.map(hora => {
+        const off = !!bloqueados[hora];
+        const marcados = doDia.filter(a => a.horaInicio === hora).length;
+        const rotulo = off ? 'Indisponível' : marcados ? `${marcados} marcação(ões)` : 'Disponível';
+        return `
+        <div class="flex items-center justify-between gap-3 border rounded-xl px-4 py-3 ${off ? 'bg-red-50 border-red-200' : 'bg-white border-slate-200'}">
+            <div class="flex flex-col">
+                <span class="font-black text-sm ${off ? 'text-red-500 line-through' : 'text-navy-900'}">${hora}</span>
+                <span class="text-[9px] font-black uppercase tracking-widest ${off ? 'text-red-400' : 'text-slate-400'}">${rotulo}</span>
+            </div>
+            <button type="button" onclick="toggleBlockedSlot('${hora}')" title="${off ? 'Liberar horário' : 'Desabilitar horário'}"
+                class="relative h-8 w-14 shrink-0 rounded-full transition-all duration-300 shadow border-2 ${off ? 'bg-red-500 hover:bg-red-600 border-red-400/50' : 'bg-green-500 hover:bg-green-600 border-green-400/50'}">
+                <span class="absolute top-0.5 h-6 w-6 bg-white rounded-full shadow-md transition-all duration-300 flex items-center justify-center" style="left:${off ? '2px' : '22px'}">
+                    <i class="fas ${off ? 'fa-hourglass-end text-red-500' : 'fa-check text-green-500'} text-[10px]"></i>
+                </span>
+            </button>
+        </div>`;
+    }).join('');
+}
+
+function toggleBlockedSlot(hora) {
+    const dateStr = _dataDoDayDetails();
+    const agenda = currentAgenda();
+
+    if (slotsBloqueados(dateStr, agenda)[hora]) {
+        // Libera o horário e poda os nós que ficaram vazios
+        delete blockedSlots[agenda.id][dateStr][hora];
+        if (!Object.keys(blockedSlots[agenda.id][dateStr]).length) delete blockedSlots[agenda.id][dateStr];
+        if (!Object.keys(blockedSlots[agenda.id]).length) delete blockedSlots[agenda.id];
+    } else {
+        // Desabilitar um horário que já tem paciente marcado esconderia a marcação
+        const marcados = appointments.filter(a =>
+            a.data === dateStr && a.horaInicio === hora && a.status !== 'Cancelado');
+        if (marcados.length) {
+            showNotification('Não é possível desabilitar um horário com marcações. Cancele ou remarque antes.', 'warning');
+            return;
+        }
+        if (!blockedSlots[agenda.id]) blockedSlots[agenda.id] = {};
+        if (!blockedSlots[agenda.id][dateStr]) blockedSlots[agenda.id][dateStr] = {};
+        blockedSlots[agenda.id][dateStr][hora] = true;
+    }
+
+    saveBlockedSlotsToFirebase();
+    renderBlockedSlotsList(dateStr);
+    updateBlockedSlotsBadge(dateStr);
+    renderCalendar();
+}
+
+// Selo com a quantidade de horários desabilitados no dia aberto
+function updateBlockedSlotsBadge(dateStr) {
+    const badge = document.getElementById('blocked-slots-badge');
+    if (!badge) return;
+    const total = Object.keys(slotsBloqueados(dateStr)).length;
+    badge.innerText = total;
+    badge.classList.toggle('hidden', total === 0);
+}
+
+function saveBlockedSlotsToFirebase() {
+    database.ref('blockedSlots').set(blockedSlots)
+        .then(() => showNotification('Horários do dia atualizados com sucesso', 'success'))
+        .catch((error) => {
+            console.error('Erro ao salvar horários desabilitados:', error);
+            showNotification('Erro ao salvar horários desabilitados', 'error');
+        });
+}
+
+function setupBlockedSlotsRealtimeListener() {
+    database.ref('blockedSlots').on('value', (snapshot) => {
+        blockedSlots = snapshot.val() || {};
+        renderCalendar();
+        if (document.getElementById('modal-day-details')?.classList.contains('active')) {
+            updateBlockedSlotsBadge(_dataDoDayDetails());
+            if (document.getElementById('modal-blocked-slots')?.classList.contains('active')) {
+                renderBlockedSlotsList(_dataDoDayDetails());
+            }
         }
     });
 }

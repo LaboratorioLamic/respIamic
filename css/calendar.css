@@ -181,6 +181,22 @@
 .week-slot-closed { background: rgba(248,250,252,.55); }
 .week-slot-open { background: transparent; }
 
+/* Horário desabilitado pelo setor responsável — bloqueio pontual de um horário
+   naquele dia, diferente do feriado que fecha o dia inteiro. */
+.week-slot-blocked {
+    background: repeating-linear-gradient(45deg, rgba(239,68,68,.12) 0 5px, transparent 5px 10px);
+    cursor: not-allowed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.week-slot-block-icon {
+    font-size: 9px;
+    color: #ef4444;
+    opacity: .7;
+    pointer-events: none;
+}
+
 .week-slot-selectable {
     cursor: pointer;
     display: flex;

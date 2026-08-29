@@ -49,6 +49,16 @@ function validateAppointment(dataObj) {
         return `Os agendamentos desta agenda ocorrem de ${agenda.slotMin} em ${agenda.slotMin} minutos. Escolha um horário válido da grade.`;
     }
 
+    // Horário desabilitado pelo setor responsável neste dia. Editar um
+    // agendamento que já ocupava o horário continua permitido — o bloqueio vale
+    // para marcações novas e para remarcações vindas de outro horário.
+    if (dataObj.status !== 'Cancelado' && slotBloqueado(dataObj.data, dataObj.horaInicio, agenda)) {
+        const original = appointments.find(a => a.id == dataObj.id);
+        if (!original || original.data !== dataObj.data || original.horaInicio !== dataObj.horaInicio) {
+            return MSG_SLOT_BLOQUEADO;
+        }
+    }
+
     // Ocupação do dia: só o cancelamento devolve a vaga. Uma ausência mantém o
     // horário consumido — a vaga foi perdida pela falta e não é reaproveitada.
     const doDia = appointments.filter(a =>
