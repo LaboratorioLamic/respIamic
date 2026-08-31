@@ -53,7 +53,7 @@ function loadAgendaFromFirebase(agendaId) {
         .then(snapshot => {
             const lista = _toAppointmentList(snapshot.val());
             setAppointments(lista, agendaId);
-            localStorage.setItem(agenda.lsKey, JSON.stringify(lista));
+            _gravarBackupLocal(agenda.lsKey, lista);
             console.log(`Agenda '${agendaId}': ${lista.length} registros carregados do Firebase.`);
         })
         .catch(error => {
@@ -101,12 +101,12 @@ function saveAppointmentsToFirebase(agendaId) {
     return _appointmentsRef(id).set(obj)
         .then(() => {
             console.log(`Agenda '${id}': agendamentos salvos no Firebase.`);
-            localStorage.setItem(agenda.lsKey, JSON.stringify(lista));
+            _gravarBackupLocal(agenda.lsKey, lista);
         })
         .catch(error => {
             console.error(`Erro ao salvar agenda '${id}' no Firebase:`, error);
             if (!navigator.onLine) {
-                localStorage.setItem(agenda.lsKey, JSON.stringify(lista));
+                _gravarBackupLocal(agenda.lsKey, lista);
                 console.warn('Offline: dados salvos temporariamente no localStorage.');
             } else {
                 showNotification("Erro ao sincronizar com Firebase. Verifique sua conexão.", "error");
@@ -130,9 +130,26 @@ function _semUndefined(valor) {
     return JSON.parse(JSON.stringify(valor));
 }
 
+// Backup local é CONVENIÊNCIA, nunca condição de sucesso da gravação.
+// `localStorage.setItem` lança em situações comuns — cota estourada
+// (QuotaExceededError, agenda grande com muitos anexos) e navegação anônima /
+// cookies bloqueados (SecurityError). Como essa escrita acontecia DENTRO da
+// cadeia de promessas do salvamento, uma gravação já confirmada pelo servidor
+// virava "FALHA AO SALVAR: a alteração NÃO foi gravada" e ainda disparava o
+// recarregamento — o dado estava no banco e o usuário refazia a operação.
+function _gravarBackupLocal(chave, valor) {
+    try {
+        localStorage.setItem(chave, JSON.stringify(valor));
+        return true;
+    } catch (error) {
+        console.warn(`Backup local '${chave}' não pôde ser gravado (os dados no servidor estão íntegros):`, error);
+        return false;
+    }
+}
+
 function _atualizarBackupLocal(agendaId) {
     const agenda = getAgenda(agendaId);
-    localStorage.setItem(agenda.lsKey, JSON.stringify(appointmentsDe(agendaId)));
+    _gravarBackupLocal(agenda.lsKey, appointmentsDe(agendaId));
 }
 
 // CONTROLE DE CONCORRÊNCIA (campo `rev`)
@@ -169,11 +186,19 @@ function _ehConflito(erro) {
 // o chamador passou) mantém a lista como fonte única: uma segunda alteração
 // logo em seguida já parte da rev correta, sem depender de o chamador ter
 // guardado a mesma referência de objeto.
+// Roda DEPOIS de o servidor confirmar a gravação: nada aqui pode lançar, ou o
+// salvamento bem-sucedido seria relatado como falha (ver _gravarBackupLocal).
 function _aplicarRegistroLocal(agendaId, novo) {
-    const lista = appointmentsDe(agendaId);
-    const existe = lista.some(a => a.id == novo.id);
-    setAppointments(existe ? lista.map(a => a.id == novo.id ? novo : a) : [...lista, novo], agendaId);
-    _atualizarBackupLocal(agendaId);
+    try {
+        const lista = appointmentsDe(agendaId);
+        const existe = lista.some(a => a.id == novo.id);
+        setAppointments(existe ? lista.map(a => a.id == novo.id ? novo : a) : [...lista, novo], agendaId);
+        _atualizarBackupLocal(agendaId);
+    } catch (error) {
+        // O listener em tempo real (app-init.js) reconcilia a lista logo em
+        // seguida; o registro já está gravado no servidor.
+        console.warn(`Registro ${novo && novo.id} gravado no servidor, mas a lista local não pôde ser atualizada:`, error);
+    }
     return novo;
 }
 
@@ -301,6 +326,23 @@ function _persistir(operacao, alvo, opcoes) {
     });
 }
 
+// Falhas que NÃO são conflito de edição têm causas bem distintas e orientações
+// opostas — sem essa distinção o usuário via sempre "refaça a operação", mesmo
+// quando refazer não resolveria nada (permissão negada, sessão sem conexão).
+function _causaTecnica(erro) {
+    const codigo = String((erro && (erro.code || erro.message)) || '').toUpperCase();
+    if (!navigator.onLine || codigo.includes('NETWORK') || codigo.includes('UNAVAILABLE') || codigo.includes('DISCONNECT')) {
+        return 'SEM CONEXÃO com o servidor: a alteração NÃO foi gravada. Verifique a internet e refaça a operação.';
+    }
+    if (codigo.includes('PERMISSION_DENIED')) {
+        return 'PERMISSÃO NEGADA pelo servidor: a alteração NÃO foi gravada. Avise o responsável pelo sistema (regras do banco de dados).';
+    }
+    if (codigo.includes('MAXRETRY')) {
+        return 'FALHA AO SALVAR: o servidor está recebendo muitas alterações neste mesmo agendamento. Aguarde alguns segundos e refaça a operação.';
+    }
+    return null;
+}
+
 function _mensagemDeFalha(erro) {
     switch (erro && erro.conflito) {
         case CONFLITO_EDICAO:
@@ -310,7 +352,8 @@ function _mensagemDeFalha(erro) {
         case CONFLITO_EXCLUSAO:
             return 'EXCLUSÃO CANCELADA: outra pessoa alterou este agendamento agora há pouco. O registro foi reaberto com a versão atual — confira a alteração antes de excluir de novo.';
         default:
-            return 'FALHA AO SALVAR: a alteração NÃO foi gravada no servidor. Os dados foram recarregados — refaça a operação.';
+            return _causaTecnica(erro)
+                || 'FALHA AO SALVAR: a alteração NÃO foi gravada no servidor. Os dados foram recarregados — refaça a operação.';
     }
 }
 
@@ -341,7 +384,7 @@ function syncLocalStorageToFirebase() {
                     setAppointments(locais, id);
                     saveAppointmentsToFirebase(id);
                 } else {
-                    localStorage.setItem(agenda.lsKey, JSON.stringify(remotos));
+                    _gravarBackupLocal(agenda.lsKey, remotos);
                 }
             });
         } catch (error) {

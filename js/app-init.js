@@ -1,7 +1,18 @@
 // Inicialização da aplicação e listeners em tempo real
 
+// Versão da build carregada. Vem do `?v=` do próprio <script> no index.html,
+// então denuncia na hora um navegador servindo arquivo antigo do cache: se este
+// log não bater com o `?v=` publicado, é cache — não bug de dados.
+function _versaoCarregada() {
+    const atual = document.currentScript || Array.from(document.scripts).find(s => (s.src || '').includes('app-init.js'));
+    const m = /[?&]v=([^&]*)/.exec((atual && atual.src) || '');
+    return m ? m[1] : 'sem-versao';
+}
+const APP_VERSION = _versaoCarregada();
+
 // INICIALIZAÇÃO
 window.onload = () => {
+    console.log(`AgendaLAMIC — build ${APP_VERSION}`);
     loadAtendentes();
     initLoginOverlay();
     applyAgendaConfig();
@@ -22,7 +33,9 @@ window.onload = () => {
         database.ref(`${agenda.fbPath}/appointments`).on('value', (snapshot) => {
             const lista = _toAppointmentList(snapshot.val());
             setAppointments(lista, agendaId);
-            localStorage.setItem(agenda.lsKey, JSON.stringify(lista));
+            // Cota estourada / navegação anônima não podem derrubar o listener:
+            // sem o backup local a tela continua funcionando (ver _gravarBackupLocal).
+            _gravarBackupLocal(agenda.lsKey, lista);
 
             renderHomeCards();
             if (agendaId === currentAgendaId) {
