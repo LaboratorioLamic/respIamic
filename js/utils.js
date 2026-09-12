@@ -41,6 +41,8 @@ function calculateTimes() {
     const duracaoField = document.getElementById('reg-duracao');
     const fimField = document.getElementById('reg-hora-fim');
 
+    atualizarReservaEtariaUI();
+
     const minutos = agenda.duracao.tipo === 'fixa'
         ? agenda.duracao.fixaMin
         : duracaoAgenda(document.getElementById('reg-exame').value, agenda);
@@ -52,6 +54,29 @@ function calculateTimes() {
         const fim = (timeToMin(inicio) + minutos) % 1440;
         fimField.value = minToTime(fim);
     }
+}
+
+// Reserva etária — aviso no formulário. Espelha a regra validada em
+// validateAppointment(): nas agendas com `idadeMinima`, pacientes a partir
+// daquela idade só entram do horário `desdeMin` em diante.
+function atualizarReservaEtariaUI() {
+    const aviso = document.getElementById('aviso-reserva-etaria');
+    if (!aviso) return;
+
+    const reserva = currentAgenda().idadeMinima;
+    const idade = parseInt(document.getElementById('reg-idade').value);
+    const hora = document.getElementById('reg-hora-inicio');
+
+    if (!reserva || isNaN(idade) || idade < reserva.idade) {
+        aviso.classList.add('hidden');
+        hora.removeAttribute('min');
+        return;
+    }
+
+    const desde = minToTime(reserva.desdeMin);
+    hora.setAttribute('min', desde);
+    aviso.innerText = `A partir de ${reserva.idade} anos, só a partir das ${desde}.`;
+    aviso.classList.remove('hidden');
 }
 
 // ESTADOS (UF) — campo pesquisável por sigla ou nome, só aceita valores válidos

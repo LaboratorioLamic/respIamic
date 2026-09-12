@@ -25,6 +25,10 @@ const AGENDAS = {
         slotMin: null,                   // horário livre dentro da janela
         slotUnico: false,                // não bloqueia slot ocupado
         limiteDia: 3,
+
+        // Reserva etária: o começo da janela fica guardado para as crianças.
+        // A partir de `desdeMin` (08:30) todas as idades podem marcar.
+        idadeMinima: { idade: 14, desdeMin: 510 },
         semana: { startHour: 7, endHour: 14 },
 
         // Duração

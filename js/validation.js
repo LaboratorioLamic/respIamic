@@ -44,6 +44,19 @@ function validateAppointment(dataObj) {
         return `O horário permitido nesta agenda é ${turnos}${complemento}.`;
     }
 
+    // Reserva etária: nas agendas que declaram `idadeMinima`, o começo da janela
+    // fica reservado para pacientes mais novos. A regra vale só para marcações
+    // ativas — cancelar um agendamento que já está no horário continua liberado.
+    const reserva = agenda.idadeMinima;
+    if (reserva && dataObj.status !== 'Cancelado' &&
+        !isNaN(dataObj.idade) && dataObj.idade >= reserva.idade &&
+        inicioMin < reserva.desdeMin) {
+        const limiteDia = faixas[faixas.length - 1][1];
+        return limiteDia < reserva.desdeMin
+            ? `Pacientes com ${reserva.idade} anos ou mais só podem ser agendados a partir das ${minToTime(reserva.desdeMin)}, e ${_DIAS_NOME[dayOfWeek]} a agenda ${agenda.nome} atende só até ${minToTime(limiteDia)}. Escolha outro dia.`
+            : `Pacientes com ${reserva.idade} anos ou mais só podem ser agendados a partir das ${minToTime(reserva.desdeMin)}. O intervalo anterior fica reservado para pacientes mais novos.`;
+    }
+
     // Alinhamento à grade de slots, relativo ao início do turno
     if (agenda.slotMin && (inicioMin - faixa[0]) % agenda.slotMin !== 0) {
         return `Os agendamentos desta agenda ocorrem de ${agenda.slotMin} em ${agenda.slotMin} minutos. Escolha um horário válido da grade.`;
