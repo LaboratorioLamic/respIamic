@@ -48,13 +48,14 @@ function validateAppointment(dataObj) {
     // fica reservado para pacientes mais novos. A regra vale só para marcações
     // ativas — cancelar um agendamento que já está no horário continua liberado.
     const reserva = agenda.idadeMinima;
-    if (reserva && dataObj.status !== 'Cancelado' &&
+    const desdeMin = reservaDesdeMin(dayOfWeek, agenda);
+    if (reserva && desdeMin != null && dataObj.status !== 'Cancelado' &&
         !isNaN(dataObj.idade) && dataObj.idade >= reserva.idade &&
-        inicioMin < reserva.desdeMin) {
+        inicioMin < desdeMin) {
         const limiteDia = faixas[faixas.length - 1][1];
-        return limiteDia < reserva.desdeMin
-            ? `Pacientes com ${reserva.idade} anos ou mais só podem ser agendados a partir das ${minToTime(reserva.desdeMin)}, e ${_DIAS_NOME[dayOfWeek]} a agenda ${agenda.nome} atende só até ${minToTime(limiteDia)}. Escolha outro dia.`
-            : `Pacientes com ${reserva.idade} anos ou mais só podem ser agendados a partir das ${minToTime(reserva.desdeMin)}. O intervalo anterior fica reservado para pacientes mais novos.`;
+        return limiteDia < desdeMin
+            ? `Pacientes com ${reserva.idade} anos ou mais só podem ser agendados a partir das ${minToTime(desdeMin)}, e ${_DIAS_NOME[dayOfWeek]} a agenda ${agenda.nome} atende só até ${minToTime(limiteDia)}. Escolha outro dia.`
+            : `${_DIAS_NOME[dayOfWeek]}, pacientes com ${reserva.idade} anos ou mais só podem ser agendados a partir das ${minToTime(desdeMin)}. O intervalo anterior fica reservado para pacientes mais novos.`;
     }
 
     // Alinhamento à grade de slots, relativo ao início do turno

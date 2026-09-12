@@ -63,17 +63,23 @@ function atualizarReservaEtariaUI() {
     const aviso = document.getElementById('aviso-reserva-etaria');
     if (!aviso) return;
 
-    const reserva = currentAgenda().idadeMinima;
+    const agenda = currentAgenda();
+    const reserva = agenda.idadeMinima;
     const idade = parseInt(document.getElementById('reg-idade').value);
     const hora = document.getElementById('reg-hora-inicio');
+    const data = document.getElementById('reg-data').value;
 
-    if (!reserva || isNaN(idade) || idade < reserva.idade) {
+    // O corte muda por dia da semana, então sem data escolhida não há aviso.
+    const dia = data ? new Date(data + 'T12:00:00').getDay() : null;
+    const desdeMin = dia != null ? reservaDesdeMin(dia, agenda) : null;
+
+    if (!reserva || desdeMin == null || isNaN(idade) || idade < reserva.idade) {
         aviso.classList.add('hidden');
         hora.removeAttribute('min');
         return;
     }
 
-    const desde = minToTime(reserva.desdeMin);
+    const desde = minToTime(desdeMin);
     hora.setAttribute('min', desde);
     aviso.innerText = `A partir de ${reserva.idade} anos, só a partir das ${desde}.`;
     aviso.classList.remove('hidden');

@@ -27,8 +27,9 @@ const AGENDAS = {
         limiteDia: 3,
 
         // Reserva etária: o começo da janela fica guardado para as crianças.
-        // A partir de `desdeMin` (08:30) todas as idades podem marcar.
-        idadeMinima: { idade: 14, desdeMin: 510 },
+        // A partir de `desdeMin` (08:30) todas as idades podem marcar. No sábado
+        // a janela fecha 08:00, então lá a liberação acompanha o último horário.
+        idadeMinima: { idade: 14, desdeMin: { 6: 480, default: 510 } },
         semana: { startHour: 7, endHour: 14 },
 
         // Duração
@@ -267,6 +268,18 @@ function janelaAgenda(dayOfWeek, agenda) {
             .filter(([ini, fim]) => fim >= ini);
     }
     return faixas.map(f => [f[0], f[1]]);
+}
+
+// Primeiro minuto liberado para a idade da reserva etária neste dia.
+// `desdeMin` aceita um número (vale todo dia) ou um mapa por dia da semana,
+// no mesmo formato de `janela` — { 6: 480, default: 510 }.
+function reservaDesdeMin(dayOfWeek, agenda) {
+    const reserva = (agenda || currentAgenda()).idadeMinima;
+    if (!reserva) return null;
+    const d = reserva.desdeMin;
+    if (typeof d === 'number') return d;
+    const valor = d[dayOfWeek];
+    return valor != null ? valor : d.default;
 }
 
 // Faixas brutas configuradas (sem recuo da duração) — usadas em rótulos
