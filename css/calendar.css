@@ -29,6 +29,82 @@
     box-shadow: 0 2px 6px -2px rgba(61,124,240,.6);
 }
 
+/* ---------- Resumo denso do dia (coleta domiciliar) ---------- */
+/* O dia pode ter 27 vagas: em vez de 27 bolinhas, a célula mostra ocupação,
+   distribuição por status e apenas os selos do que exige ação. */
+.calendar-day-dense {
+    justify-content: flex-start;
+    align-items: stretch;
+    padding: .5rem .55rem .5rem;
+}
+.calendar-day-dense > span:first-of-type { text-align: left; font-size: 13px; line-height: 1.1; }
+.calendar-day-dense .day-vagas { align-self: center; }
+
+.day-dense {
+    display: flex;
+    flex-direction: column;
+    gap: .28rem;
+    width: 100%;
+    margin-top: auto;
+}
+.day-dense-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .3rem;
+    line-height: 1;
+}
+.day-dense-count { font-size: 15px; font-weight: 900; letter-spacing: -.02em; }
+.day-dense-limit { font-size: 10px; font-weight: 800; opacity: .5; }
+.day-dense-free {
+    font-size: 8px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+.day-dense-full { color: #d97706; }
+.day-dense-late { color: #dc2626; }
+.day-dense-done { color: #16a34a; }
+/* Dia sem agendamentos ativos: só o selo, ancorado no rodapé da célula */
+.day-dense-vazio .day-chips { margin-top: auto; }
+
+/* Barra de ocupação segmentada — o trecho vazio são as vagas livres */
+.day-bar {
+    display: flex;
+    width: 100%;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, .09);
+    overflow: hidden;
+}
+.day-bar-seg { display: block; height: 100%; }
+.day-bar-seg + .day-bar-seg { box-shadow: inset 1px 0 0 rgba(255, 255, 255, .7); }
+
+/* Selos de exceção */
+.day-chips { display: flex; flex-wrap: wrap; gap: .2rem; min-height: 14px; }
+.day-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .15rem;
+    height: 14px;
+    padding: 0 .28rem;
+    border-radius: 999px;
+    font-size: 8px;
+    font-weight: 900;
+    line-height: 1;
+    background: rgba(255, 255, 255, .75);
+    border: 1px solid currentColor;
+}
+.day-chip i { font-size: 7px; }
+.day-chip-warn   { color: #b45309; }
+.day-chip-far    { color: #6d28d9; }
+.day-chip-cancel { color: #dc2626; }
+.day-chip-live   { color: #fff; background: #7c3aed; border-color: #7c3aed; }
+.day-chip-live i { animation: day-chip-pulse 1.6s ease-in-out infinite; }
+@keyframes day-chip-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
 /* Resumo compacto do dia — só entra em cena no celular */
 .day-compact { display: none; }
 .day-compact-count { font-size: 13px; font-weight: 900; line-height: 1; }
@@ -49,6 +125,7 @@
     /* Bolinha por agendamento não cabe em coluna de ~46px: some em favor
        do contador + barra de ocupação, que lê melhor de relance. */
     .calendar-day .day-dots,
+    .calendar-day .day-dense,
     .calendar-day .day-vagas { display: none; }
     .calendar-day {
         height: 4.25rem;

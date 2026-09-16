@@ -120,7 +120,7 @@ const AGENDAS = {
 
         kpis: ['total', 'concluidos', 'andamento', 'pendentes', 'cancelados'],
         charts: ['barMensal', 'donutStatus'],
-        legenda: ['cancelado', 'concluido', 'atrasado', 'andamento', 'rn', 'infantil', 'adolescente', 'adulto']
+        legenda: ['cancelado', 'concluido', 'atrasado', 'andamento', 'rn', 'infantil', 'adolescente', 'adulto', 'selos']
     },
 
     coletaDomiciliarMilagres: {
@@ -158,7 +158,7 @@ const AGENDAS = {
 
         kpis: ['total', 'concluidos', 'andamento', 'pendentes', 'cancelados'],
         charts: ['barMensal', 'donutStatus'],
-        legenda: ['cancelado', 'concluido', 'atrasado', 'andamento', 'rn', 'infantil', 'adolescente', 'adulto']
+        legenda: ['cancelado', 'concluido', 'atrasado', 'andamento', 'rn', 'infantil', 'adolescente', 'adulto', 'selos']
     }
 };
 

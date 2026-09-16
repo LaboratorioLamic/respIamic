@@ -28,22 +28,22 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     
     <!-- Configuração de bibliotecas externas -->
-    <script src="js/tailwind-config.js?v=20260916c"></script>
-    <script src="js/chart-defaults.js?v=20260916c"></script>
+    <script src="js/tailwind-config.js?v=20260916d"></script>
+    <script src="js/chart-defaults.js?v=20260916d"></script>
 
     <!-- Estilos da aplicação -->
-    <link rel="stylesheet" href="css/variables.css?v=20260916c">
-    <link rel="stylesheet" href="css/base.css?v=20260916c">
-    <link rel="stylesheet" href="css/components.css?v=20260916c">
-    <link rel="stylesheet" href="css/calendar.css?v=20260916c">
-    <link rel="stylesheet" href="css/header.css?v=20260916c">
-    <link rel="stylesheet" href="css/drawer.css?v=20260916c">
-    <link rel="stylesheet" href="css/home.css?v=20260916c">
-    <link rel="stylesheet" href="css/login.css?v=20260916c">
-    <link rel="stylesheet" href="css/notifications.css?v=20260916c">
-    <link rel="stylesheet" href="css/upload.css?v=20260916c">
-    <link rel="stylesheet" href="css/view-record.css?v=20260916c">
-    <link rel="stylesheet" href="css/coleta-ativa.css?v=20260916c">
+    <link rel="stylesheet" href="css/variables.css?v=20260916d">
+    <link rel="stylesheet" href="css/base.css?v=20260916d">
+    <link rel="stylesheet" href="css/components.css?v=20260916d">
+    <link rel="stylesheet" href="css/calendar.css?v=20260916d">
+    <link rel="stylesheet" href="css/header.css?v=20260916d">
+    <link rel="stylesheet" href="css/drawer.css?v=20260916d">
+    <link rel="stylesheet" href="css/home.css?v=20260916d">
+    <link rel="stylesheet" href="css/login.css?v=20260916d">
+    <link rel="stylesheet" href="css/notifications.css?v=20260916d">
+    <link rel="stylesheet" href="css/upload.css?v=20260916d">
+    <link rel="stylesheet" href="css/view-record.css?v=20260916d">
+    <link rel="stylesheet" href="css/coleta-ativa.css?v=20260916d">
 </head>
 <body class="font-sans text-slate-800 antialiased h-screen flex flex-col overflow-hidden">
     
@@ -352,6 +352,19 @@
                         <div class="flex items-center gap-1" data-agenda-legenda="andamento">
                             <div class="h-3 w-3 rounded border border-purple-300 bg-purple-50"></div>
                             <span>Em andamento</span>
+                        </div>
+                        <!-- Selos do resumo mensal denso (coleta domiciliar) -->
+                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="selos">
+                            <span class="day-chip day-chip-warn"><i class="fas fa-clipboard-list"></i>n</span>
+                            <span>Checklist pendente</span>
+                        </div>
+                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="selos">
+                            <span class="day-chip day-chip-far"><i class="fas fa-road-circle-exclamation"></i></span>
+                            <span>Distante</span>
+                        </div>
+                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="selos">
+                            <span class="day-chip day-chip-live"><i class="fas fa-play"></i></span>
+                            <span>Coletando agora</span>
                         </div>
                     </div>
                 </div>
@@ -2104,38 +2117,38 @@
     </div>
 
     <!-- ── Infraestrutura ─────────────────────────────────────────── -->
-    <script src="js/firebase-config.js?v=20260916c"></script>
-    <script src="js/agendas.js?v=20260916c"></script>
-    <script src="js/state.js?v=20260916c"></script>
-    <script src="js/utils.js?v=20260916c"></script>
-    <script src="js/notifications.js?v=20260916c"></script>
+    <script src="js/firebase-config.js?v=20260916d"></script>
+    <script src="js/agendas.js?v=20260916d"></script>
+    <script src="js/state.js?v=20260916d"></script>
+    <script src="js/utils.js?v=20260916d"></script>
+    <script src="js/notifications.js?v=20260916d"></script>
 
     <!-- ── Domínio ────────────────────────────────────────────────── -->
-    <script src="js/auth.js?v=20260916c"></script>
-    <script src="js/audit.js?v=20260916c"></script>
-    <script src="js/firebase-data.js?v=20260916c"></script>
-    <script src="js/motivos-perda.js?v=20260916c"></script>
-    <script src="js/atendentes.js?v=20260916c"></script>
-    <script src="js/validation.js?v=20260916c"></script>
+    <script src="js/auth.js?v=20260916d"></script>
+    <script src="js/audit.js?v=20260916d"></script>
+    <script src="js/firebase-data.js?v=20260916d"></script>
+    <script src="js/motivos-perda.js?v=20260916d"></script>
+    <script src="js/atendentes.js?v=20260916d"></script>
+    <script src="js/validation.js?v=20260916d"></script>
 
     <!-- ── Interface ──────────────────────────────────────────────── -->
-    <script src="js/navigation.js?v=20260916c"></script>
-    <script src="js/home.js?v=20260916c"></script>
-    <script src="js/checklist.js?v=20260916c"></script>
-    <script src="js/acompanhantes.js?v=20260916c"></script>
-    <script src="js/upload.js?v=20260916c"></script>
-    <script src="js/save.js?v=20260916c"></script>
-    <script src="js/table.js?v=20260916c"></script>
-    <script src="js/charts.js?v=20260916c"></script>
-    <script src="js/calendar.js?v=20260916c"></script>
-    <script src="js/modals.js?v=20260916c"></script>
-    <script src="js/view-record.js?v=20260916c"></script>
-    <script src="js/coleta-ativa.js?v=20260916c"></script>
-    <script src="js/concluir-visita.js?v=20260916c"></script>
-    <script src="js/ausencia-visita.js?v=20260916c"></script>
-    <script src="js/backup.js?v=20260916c"></script>
+    <script src="js/navigation.js?v=20260916d"></script>
+    <script src="js/home.js?v=20260916d"></script>
+    <script src="js/checklist.js?v=20260916d"></script>
+    <script src="js/acompanhantes.js?v=20260916d"></script>
+    <script src="js/upload.js?v=20260916d"></script>
+    <script src="js/save.js?v=20260916d"></script>
+    <script src="js/table.js?v=20260916d"></script>
+    <script src="js/charts.js?v=20260916d"></script>
+    <script src="js/calendar.js?v=20260916d"></script>
+    <script src="js/modals.js?v=20260916d"></script>
+    <script src="js/view-record.js?v=20260916d"></script>
+    <script src="js/coleta-ativa.js?v=20260916d"></script>
+    <script src="js/concluir-visita.js?v=20260916d"></script>
+    <script src="js/ausencia-visita.js?v=20260916d"></script>
+    <script src="js/backup.js?v=20260916d"></script>
 
     <!-- ── Bootstrap ──────────────────────────────────────────────── -->
-    <script src="js/app-init.js?v=20260916c"></script>
+    <script src="js/app-init.js?v=20260916d"></script>
 </body>
 </html>

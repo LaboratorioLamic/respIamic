@@ -123,6 +123,59 @@ function getAppointmentTheme(app, isPastDate) {
     return { bg: cores.bg, border: cores.border, text: cores.text, accent };
 }
 
+// ── RESUMO DENSO DO DIA (agendas de alto volume) ────────────
+// Agendas domiciliares chegam a 27 vagas por dia (9 horários × 3 endereços).
+// Uma bolinha por agendamento vira uma nuvem ilegível dentro da célula: não dá
+// para contar de relance nem saber o que precisa de ação. Aqui o dia vira uma
+// barra de ocupação segmentada por status + contador + selos só das exceções.
+function agendaDensa(agenda) {
+    return temCampo('endereco', agenda);
+}
+
+// Quebra o dia por status, na mesma precedência de cor usada nos cards.
+function statusDoDia(dayApps, agenda, isPastDate) {
+    const conta = { concluidos: 0, andamento: 0, atrasados: 0, ausentes: 0, agendados: 0 };
+    dayApps.forEach(a => {
+        if (a.status === 'Concluído') conta.concluidos++;
+        else if (a.status === 'Ausente') conta.ausentes++;
+        else if (isPastDate) conta.atrasados++;
+        else if (a.status === 'Em andamento') conta.andamento++;
+        else conta.agendados++;
+    });
+    return conta;
+}
+
+// Barra de ocupação: cada segmento é uma fatia proporcional ao limite do dia,
+// então o vazio restante já comunica quantas vagas sobram.
+function barraOcupacaoHtml(conta, ocupadas, limiteDia, cores) {
+    const total = Math.max(limiteDia || ocupadas || 1, ocupadas);
+    const seg = (n, cls) => n ? `<span class="day-bar-seg ${cls}" style="width:${(n / total) * 100}%"></span>` : '';
+    return `<span class="day-bar">
+        ${seg(conta.concluidos, 'bg-green-500')}
+        ${seg(conta.atrasados, 'bg-red-500')}
+        ${seg(conta.ausentes, 'bg-amber-500')}
+        ${seg(conta.andamento, 'bg-purple-500')}
+        ${seg(conta.agendados, cores.dot)}
+    </span>`;
+}
+
+// Selos de exceção — só aparece o que exige ação do setor. Um dia tranquilo
+// mostra apenas contador e barra, sem ruído.
+function selosDoDia(dayApps, canceledApps, agenda) {
+    const selos = [];
+    const pendentes = dayApps.filter(a =>
+        a.status !== 'Cancelado' && a.status !== 'Em andamento'
+        && agenda.checklist.some(item => !a[CHECKLIST_ITENS[item].chave])).length;
+    const distantes = dayApps.filter(a => a.distante).length;
+    const emColeta = dayApps.filter(a => a.coletaAtiva && resumoPacientes(a).pendentes > 0).length;
+
+    if (emColeta) selos.push(`<span class="day-chip day-chip-live" title="${emColeta} coleta(s) em andamento agora"><i class="fas fa-play"></i>${emColeta > 1 ? emColeta : ''}</span>`);
+    if (pendentes) selos.push(`<span class="day-chip day-chip-warn" title="${pendentes} com checklist pendente"><i class="fas fa-clipboard-list"></i>${pendentes}</span>`);
+    if (distantes) selos.push(`<span class="day-chip day-chip-far" title="${distantes} em localidade distante"><i class="fas ${DISTANTE_TEMA.icon}"></i>${distantes > 1 ? distantes : ''}</span>`);
+    if (canceledApps.length) selos.push(`<span class="day-chip day-chip-cancel" title="${canceledApps.length} cancelado(s)"><i class="fas fa-ban"></i>${canceledApps.length}</span>`);
+    return selos.join('');
+}
+
 // VISÃO MENSAL
 function renderMonthView() {
     const agenda = currentAgenda();
@@ -136,6 +189,7 @@ function renderMonthView() {
     for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const dateObj = new Date(year, month, day);
+        const densa = agendaDensa(agenda);                          // resumo agregado no lugar das bolinhas
         const isClosed = !agenda.dias.includes(dateObj.getDay());   // dia sem atendimento nesta agenda
         const isSunday = dateObj.getDay() === 0;
         const isHoliday = holidays[dateStr];
@@ -195,7 +249,10 @@ function renderMonthView() {
 
                     if(hasAndamento) {
                         boxClass = 'bg-purple-50 border-purple-300 cursor-pointer';
-                    } else if(faixaDestaque) {
+                    } else if(faixaDestaque && !densa) {
+                        // Nas agendas densas o fundo fica reservado ao estado
+                        // operacional do dia: pintar pela faixa etária do primeiro
+                        // paciente encontrado só confundia quem lê o mês inteiro.
                         const t = FAIXA_ETARIA_TEMA[faixaDestaque];
                         boxClass = `${t.bg} ${t.border} cursor-pointer`;
                     } else {
@@ -205,7 +262,7 @@ function renderMonthView() {
             }
         }
 
-        const dots = dayApps.map(a => {
+        const dots = densa ? '' : dayApps.map(a => {
             // Verifica se o checklist está incompleto — só conta os itens usados pela agenda
             const isChecklistIncomplete = agenda.checklist.some(item => !a[CHECKLIST_ITENS[item].chave]);
             const shouldShowClipboard = isChecklistIncomplete && a.status !== 'Cancelado' && a.status !== 'Em andamento';
@@ -222,10 +279,10 @@ function renderMonthView() {
             }
             return `<div class="h-2 w-2 rounded-full ${dotCor}"></div>`;
         }).join('');
-        const canceledX = canceledApps.map(() => '<div class="h-2 w-2 rounded-full bg-red-500 flex items-center justify-center text-white text-[10px] font-black">×</div>').join('');
+        const canceledX = densa ? '' : canceledApps.map(() => '<div class="h-2 w-2 rounded-full bg-red-500 flex items-center justify-center text-white text-[10px] font-black">×</div>').join('');
         const holidayIcon = isHoliday ? '<div class="absolute top-1 right-1 text-red-400"><i class="fas fa-calendar-times text-xs"></i></div>' : '';
-        // Aviso de deslocamento — o dia tem ao menos uma coleta em localidade distante
-        const distanteIcon = !isHoliday && temCampo('endereco', agenda) && dayApps.some(a => a.distante)
+        // Aviso de deslocamento — nas agendas densas ele já vira selo no rodapé
+        const distanteIcon = !isHoliday && !densa && temCampo('endereco', agenda) && dayApps.some(a => a.distante)
             ? `<div class="absolute top-1 right-1 ${DISTANTE_TEMA.text}" title="Há coleta em localidade distante"><i class="fas ${DISTANTE_TEMA.icon} text-xs"></i></div>` : '';
         const isToday = calendarDate.getTime() === today.getTime();
 
@@ -242,11 +299,41 @@ function renderMonthView() {
                    <span class="day-compact-bar"><span class="day-compact-bar-fill ${barraCor}" style="width:${pct}%"></span></span>`
                 : '';
 
-        body.innerHTML += `<div onclick="${clickAction}" class="calendar-day p-3 h-24 border rounded-2xl flex flex-col items-center group relative ${boxClass} ${isToday ? 'calendar-day-today' : ''}">
+        // Corpo denso: contador de ocupação + barra por status + selos de exceção.
+        // Substitui a nuvem de bolinhas nas agendas que enchem o dia (domiciliar).
+        let corpoDenso = '';
+        if (densa && !isHoliday && dayApps.length) {
+            const conta = statusDoDia(dayApps, agenda, isPastDate);
+            const livres = Math.max(0, (limiteDia || 0) - ocupadas);
+            // Dia já vivido não tem "vaga livre" a oferecer: o que importa ali é
+            // quanto ficou em aberto (atrasado/ausente) ou se fechou tudo.
+            const rotulo = isPastDate
+                ? (conta.atrasados
+                    ? `<span class="day-dense-free day-dense-late">${conta.atrasados} em aberto</span>`
+                    : conta.ausentes
+                        ? `<span class="day-dense-free day-dense-full">${conta.ausentes} ausente${conta.ausentes > 1 ? 's' : ''}</span>`
+                        : '<span class="day-dense-free day-dense-done">Fechado</span>')
+                : livres
+                    ? `<span class="day-dense-free">${livres} livre${livres > 1 ? 's' : ''}</span>`
+                    : '<span class="day-dense-free day-dense-full">Lotado</span>';
+            corpoDenso = `<div class="day-dense">
+                <div class="day-dense-top">
+                    <span class="day-dense-count ${textColor}">${ocupadas}<span class="day-dense-limit">/${limiteDia}</span></span>
+                    ${rotulo}
+                </div>
+                ${barraOcupacaoHtml(conta, ocupadas, limiteDia, cores)}
+                <div class="day-chips">${selosDoDia(dayApps, canceledApps, agenda)}</div>
+            </div>`;
+        } else if (densa && !isHoliday && canceledApps.length) {
+            // Dia só com cancelados: ainda vale sinalizar que houve movimento
+            corpoDenso = `<div class="day-dense day-dense-vazio"><div class="day-chips">${selosDoDia(dayApps, canceledApps, agenda)}</div></div>`;
+        }
+
+        body.innerHTML += `<div onclick="${clickAction}" class="calendar-day ${densa ? 'calendar-day-dense' : 'p-3 items-center'} h-24 border rounded-2xl flex flex-col group relative ${boxClass} ${isToday ? 'calendar-day-today' : ''}">
             ${holidayIcon}${distanteIcon}
             <span class="font-black text-sm ${textColor}">${day}</span>
-            <div class="day-dots mt-2 flex gap-1 justify-center flex-wrap">${dots}${canceledX}</div>
-            ${dayApps.length && !isHoliday ? `<span class="day-vagas text-[8px] font-black uppercase tracking-wider mt-auto text-slate-500">${ocupadas}/${limiteDia} Vagas</span>` : ''}
+            ${densa ? corpoDenso : `<div class="day-dots mt-2 flex gap-1 justify-center flex-wrap">${dots}${canceledX}</div>`}
+            ${!densa && dayApps.length && !isHoliday ? `<span class="day-vagas text-[8px] font-black uppercase tracking-wider mt-auto text-slate-500">${ocupadas}/${limiteDia} Vagas</span>` : ''}
             ${isHoliday ? '<span class="day-vagas text-[8px] font-black uppercase tracking-wider mt-auto text-red-400">Feriado</span>' : ''}
             <div class="day-compact">${resumoMobile}</div>
         </div>`;
