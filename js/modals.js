@@ -114,8 +114,10 @@ function openRecordModal() {
         document.getElementById('reg-estado').value = 'CE';
         document.getElementById('reg-distante').checked = false;
         atualizarDistanteUI();
-        document.getElementById('reg-taxa-valor').value = '';
-        document.getElementById('reg-taxa-pago').value = 'false';
+        document.getElementById('reg-taxa-pedido').value = '';
+        document.getElementById('reg-taxa-taxa').value = '';
+        document.getElementById('reg-taxa-pedido-pago').value = 'false';
+        document.getElementById('reg-taxa-taxa-pago').value = 'false';
         atualizarTaxaColetaUI();
     }
 
@@ -615,8 +617,16 @@ function editRecord(id) {
     document.getElementById('reg-estado').value = app.estado || '';
     document.getElementById('reg-distante').checked = !!app.distante;
     atualizarDistanteUI();
-    document.getElementById('reg-taxa-valor').value = app.taxaColeta ? String(app.taxaColeta.toFixed(2)).replace('.', ',').replace(/\B(?=(\d{3})+(?=,))/g, '.') : '';
-    document.getElementById('reg-taxa-pago').value = app.taxaColetaPaga ? 'true' : 'false';
+    // Registros antigos só têm o total: ele vira o Pedido e a Taxa fica zerada.
+    const _taxaPedido = app.taxaColetaPedido != null ? app.taxaColetaPedido
+        : (app.taxaColetaTaxa != null ? (app.taxaColeta || 0) - app.taxaColetaTaxa : (app.taxaColeta || 0));
+    definirTaxaColetaCampo('reg-taxa-pedido', _taxaPedido);
+    definirTaxaColetaCampo('reg-taxa-taxa', app.taxaColetaTaxa || 0);
+    // Registros antigos têm só o flag geral: ele vale para as duas parcelas.
+    document.getElementById('reg-taxa-pedido-pago').value =
+        (app.taxaColetaPedidoPago != null ? app.taxaColetaPedidoPago : app.taxaColetaPaga) ? 'true' : 'false';
+    document.getElementById('reg-taxa-taxa-pago').value =
+        (app.taxaColetaTaxaPago != null ? app.taxaColetaTaxaPago : app.taxaColetaPaga) ? 'true' : 'false';
     atualizarTaxaColetaUI();
     document.getElementById('reg-ponto-referencia').value = app.pontoReferencia || '';
     document.getElementById('reg-coletador').value = app.coletador || '';

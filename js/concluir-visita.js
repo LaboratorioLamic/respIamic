@@ -6,7 +6,9 @@
 let _concluirVisitaId = null;
 // Rev do registro quando a janela foi aberta — ver revDe/persistirAgendamento.
 let _concluirVisitaRev = null;
-let _concluirTaxaPaga = false;
+// Pedido e taxa são quitados separadamente.
+let _concluirTaxaPaga = { pedido: false, taxa: false };
+let _concluirTaxaValores = { pedido: 0, taxa: 0 };
 
 function abrirConcluirVisita(id) {
     const app = appointments.find(a => a.id == (id != null ? id : _viewRecordId));
@@ -76,10 +78,23 @@ function abrirConcluirVisita(id) {
     const blocoTaxa = document.getElementById('concluir-taxa-bloco');
     const temTaxa = temCampo('endereco', agenda) && app.taxaColeta > 0;
     blocoTaxa.classList.toggle('hidden', !temTaxa);
-    _concluirTaxaPaga = !!app.taxaColetaPaga;
+
+    const taxaValor = app.taxaColetaTaxa || 0;
+    const pedidoValor = app.taxaColetaPedido != null ? app.taxaColetaPedido : (app.taxaColeta || 0) - taxaValor;
+    _concluirTaxaValores = { pedido: pedidoValor, taxa: taxaValor };
+    // Registros antigos só têm o flag geral: ele vale para as duas parcelas.
+    _concluirTaxaPaga = {
+        pedido: app.taxaColetaPedidoPago != null ? !!app.taxaColetaPedidoPago : !!app.taxaColetaPaga,
+        taxa:   app.taxaColetaTaxaPago   != null ? !!app.taxaColetaTaxaPago   : !!app.taxaColetaPaga
+    };
     if (temTaxa) {
-        document.getElementById('concluir-taxa-valor').textContent =
-            `R$ ${app.taxaColeta.toFixed(2).replace('.', ',')}`;
+        const brl = v => `R$ ${Number(v || 0).toFixed(2).replace('.', ',')}`;
+        document.getElementById('concluir-taxa-pedido-valor').textContent = brl(pedidoValor);
+        document.getElementById('concluir-taxa-taxa-valor').textContent = brl(taxaValor);
+        document.getElementById('concluir-taxa-valor').textContent = brl(app.taxaColeta);
+        // Parcela zerada não tem o que quitar: some da janela.
+        document.getElementById('concluir-taxa-pedido-linha').classList.toggle('hidden', !pedidoValor);
+        document.getElementById('concluir-taxa-taxa-linha').classList.toggle('hidden', !taxaValor);
         _atualizarConcluirTaxaUI();
     }
 
@@ -87,40 +102,59 @@ function abrirConcluirVisita(id) {
     document.getElementById('modal-concluir-visita').classList.add('active');
 }
 
-function marcarTaxaColetaPagaConcluir() {
-    _concluirTaxaPaga = !_concluirTaxaPaga;
+function marcarTaxaColetaPagaConcluir(parcela) {
+    if (parcela === 'taxa') _concluirTaxaPaga.taxa = !_concluirTaxaPaga.taxa;
+    else                    _concluirTaxaPaga.pedido = !_concluirTaxaPaga.pedido;
     _atualizarConcluirTaxaUI();
+}
+
+function _pintarBotaoConcluirTaxa(parcela, pago, rotulo) {
+    const btn = document.getElementById(`concluir-taxa-${parcela}-btn`);
+    const icone = document.getElementById(`concluir-taxa-${parcela}-icone`);
+    const texto = document.getElementById(`concluir-taxa-${parcela}-texto`);
+    if (!btn) return;
+
+    btn.classList.toggle('border-amber-300', !pago);
+    btn.classList.toggle('text-amber-700', !pago);
+    btn.classList.toggle('hover:bg-amber-100', !pago);
+    btn.classList.toggle('bg-white', !pago);
+    btn.classList.toggle('bg-emerald-600', pago);
+    btn.classList.toggle('border-emerald-600', pago);
+    btn.classList.toggle('text-white', pago);
+    btn.classList.toggle('hover:bg-emerald-700', pago);
+
+    icone.classList.toggle('fa-circle-notch', !pago);
+    icone.classList.toggle('fa-circle-check', pago);
+    texto.textContent = pago ? (parcela === 'taxa' ? 'Paga' : 'Pago') : rotulo;
 }
 
 function _atualizarConcluirTaxaUI() {
     const bloco = document.getElementById('concluir-taxa-bloco');
-    const btn = document.getElementById('concluir-taxa-btn');
-    const icone = document.getElementById('concluir-taxa-icone');
-    const texto = document.getElementById('concluir-taxa-texto');
+    if (!bloco) return;
 
-    bloco.classList.toggle('border-amber-200', !_concluirTaxaPaga);
-    bloco.classList.toggle('bg-amber-50/60', !_concluirTaxaPaga);
-    bloco.classList.toggle('border-emerald-200', _concluirTaxaPaga);
-    bloco.classList.toggle('bg-emerald-50/60', _concluirTaxaPaga);
+    const tudoPago = concluirTaxaTudoPaga();
 
-    btn.classList.toggle('border-amber-300', !_concluirTaxaPaga);
-    btn.classList.toggle('text-amber-700', !_concluirTaxaPaga);
-    btn.classList.toggle('hover:bg-amber-100', !_concluirTaxaPaga);
-    btn.classList.toggle('bg-white', !_concluirTaxaPaga);
-    btn.classList.toggle('bg-emerald-600', _concluirTaxaPaga);
-    btn.classList.toggle('border-emerald-600', _concluirTaxaPaga);
-    btn.classList.toggle('text-white', _concluirTaxaPaga);
-    btn.classList.toggle('hover:bg-emerald-700', _concluirTaxaPaga);
+    bloco.classList.toggle('border-amber-200', !tudoPago);
+    bloco.classList.toggle('bg-amber-50/60', !tudoPago);
+    bloco.classList.toggle('border-emerald-200', tudoPago);
+    bloco.classList.toggle('bg-emerald-50/60', tudoPago);
 
-    icone.classList.toggle('fa-circle-notch', !_concluirTaxaPaga);
-    icone.classList.toggle('fa-circle-check', _concluirTaxaPaga);
-    texto.textContent = _concluirTaxaPaga ? 'Pago' : 'Marcar como pago';
+    _pintarBotaoConcluirTaxa('pedido', _concluirTaxaPaga.pedido, 'Marcar como pago');
+    _pintarBotaoConcluirTaxa('taxa', _concluirTaxaPaga.taxa, 'Marcar como paga');
+}
+
+// Só conta como quitado quando nenhuma parcela com valor ficou em aberto.
+function concluirTaxaTudoPaga() {
+    const { pedido, taxa } = _concluirTaxaValores;
+    if (!pedido && !taxa) return _concluirTaxaPaga.pedido || _concluirTaxaPaga.taxa;
+    return (!pedido || _concluirTaxaPaga.pedido) && (!taxa || _concluirTaxaPaga.taxa);
 }
 
 function fecharConcluirVisita() {
     document.getElementById('modal-concluir-visita').classList.remove('active');
     _concluirVisitaId = null;
-    _concluirTaxaPaga = false;
+    _concluirTaxaPaga = { pedido: false, taxa: false };
+    _concluirTaxaValores = { pedido: 0, taxa: 0 };
 }
 
 function marcarTodosConcluirVisita() {
@@ -165,7 +199,9 @@ function confirmarConcluirVisita() {
 
     const record = { ...app, acompanhantes, abstinencia };
     if (temCampo('endereco', agenda) && app.taxaColeta > 0) {
-        record.taxaColetaPaga = _concluirTaxaPaga;
+        record.taxaColetaPedidoPago = _concluirTaxaPaga.pedido;
+        record.taxaColetaTaxaPago    = _concluirTaxaPaga.taxa;
+        record.taxaColetaPaga        = concluirTaxaTudoPaga();
     }
 
     // Na coleta domiciliar o coletador é quem de fato realizou a coleta, então

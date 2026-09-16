@@ -48,6 +48,66 @@ function _vwCampo(rotulo, valor, opts) {
         </div>`;
 }
 
+// Situação de pagamento da coleta domiciliar, normalizada: registros antigos
+// só têm o flag geral (taxaColetaPaga), que então vale para as duas parcelas.
+function _vwTaxaResumo(app) {
+    const taxa   = app.taxaColetaTaxa || 0;
+    const pedido = app.taxaColetaPedido != null ? app.taxaColetaPedido : (app.taxaColeta || 0) - taxa;
+    const pedidoPago = app.taxaColetaPedidoPago != null ? !!app.taxaColetaPedidoPago : !!app.taxaColetaPaga;
+    const taxaPaga   = app.taxaColetaTaxaPago   != null ? !!app.taxaColetaTaxaPago   : !!app.taxaColetaPaga;
+    const total = app.taxaColeta || 0;
+    const tudoPago = (!pedido && !taxa)
+        ? (pedidoPago || taxaPaga)
+        : (!pedido || pedidoPago) && (!taxa || taxaPaga);
+    const parcial = !tudoPago && (pedidoPago || taxaPaga);
+    return { pedido, taxa, pedidoPago, taxaPaga, total, tudoPago, parcial };
+}
+
+// Bloco financeiro da coleta domiciliar: Pedido + Taxa somando o Valor total.
+// Pedido e taxa são quitados separadamente, cada um com seu próprio selo.
+function _vwFinanceiro(app) {
+    if (!(app.taxaColeta > 0) && !app.taxaColetaPaga) return '';
+
+    const brl = v => `R$ ${Number(v || 0).toFixed(2).replace('.', ',')}`;
+    const r = _vwTaxaResumo(app);
+
+    const selo = pago => `
+        <span class="view-fin-selo ${pago ? 'view-fin-selo-pago' : 'view-fin-selo-apagar'}">
+            <i class="fas ${pago ? 'fa-circle-check' : 'fa-circle-notch'}"></i>
+            ${pago ? 'Pago' : 'A pagar'}
+        </span>`;
+
+    const parcela = (rotulo, valor, pago, tema, icone) => `
+        <div class="view-fin-card view-fin-${tema} ${pago ? 'view-fin-quitado' : ''}">
+            <span class="view-fin-rotulo"><i class="fas ${icone}"></i> ${_vwEscape(rotulo)}</span>
+            <span class="view-fin-valor">${_vwEscape(brl(valor))}</span>
+            ${selo(pago)}
+        </div>`;
+
+    const totalTema = r.tudoPago ? 'view-fin-pago' : (r.parcial ? 'view-fin-parcial' : 'view-fin-apagar');
+    const totalIcone = r.tudoPago ? 'fa-circle-check' : (r.parcial ? 'fa-circle-half-stroke' : 'fa-circle-notch');
+    const totalTexto = r.tudoPago ? 'Pago' : (r.parcial ? 'Pago em parte' : 'A pagar');
+
+    return `
+        <section class="view-bloco view-fin-bloco">
+            <h4 class="view-bloco-titulo"><i class="fas fa-sack-dollar"></i> Valores da coleta</h4>
+            <div class="view-fin-grid">
+                ${parcela('Pedido', r.pedido, r.pedidoPago, 'pedido', 'fa-file-invoice-dollar')}
+                <span class="view-fin-op">+</span>
+                ${parcela('Taxa', r.taxa, r.taxaPaga, 'taxa', 'fa-route')}
+                <span class="view-fin-op">=</span>
+                <div class="view-fin-card view-fin-total ${totalTema}">
+                    <span class="view-fin-rotulo"><i class="fas fa-coins"></i> Valor total</span>
+                    <span class="view-fin-valor">${_vwEscape(brl(r.total))}</span>
+                    <span class="view-fin-selo">
+                        <i class="fas ${totalIcone}"></i>
+                        ${totalTexto}
+                    </span>
+                </div>
+            </div>
+        </section>`;
+}
+
 function _vwBloco(titulo, icone, conteudo) {
     if (!conteudo || !conteudo.trim()) return '';
     return `
@@ -347,14 +407,9 @@ function viewRecord(id) {
         if (temCampo('pontoReferencia', agenda)) {
             end += _vwCampo('Ponto de referência', app.pontoReferencia);
         }
-        if (app.taxaColeta > 0 || app.taxaColetaPaga) {
-            const taxaTexto = app.taxaColeta > 0
-                ? `R$ ${app.taxaColeta.toFixed(2).replace('.', ',')}${app.taxaColetaPaga ? ' · Pago' : ' · A pagar'}`
-                : 'Pago';
-            end += _vwCampo('Valor a receber', taxaTexto, { classe: app.taxaColetaPaga ? 'text-emerald-600' : 'text-amber-600' });
-        }
         end += _vwMapa(app);
         html += _vwBloco('Endereço', 'fa-location-dot', end);
+        html += _vwFinanceiro(app);
     }
 
     let equipe = _vwCampo('Atendente', app.atendente);

@@ -131,8 +131,14 @@ function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
         record.cidade      = document.getElementById('reg-cidade').value.trim().toUpperCase();
         record.estado      = document.getElementById('reg-estado').value.trim().toUpperCase();
         record.distante    = document.getElementById('reg-distante').checked;
-        record.taxaColeta     = taxaColetaValorNumerico();
-        record.taxaColetaPaga = document.getElementById('reg-taxa-pago').value === 'true';
+        record.taxaColetaPedido = taxaColetaPedidoNumerico();
+        record.taxaColetaTaxa   = taxaColetaTaxaNumerico();
+        record.taxaColeta       = taxaColetaValorNumerico();
+        record.taxaColetaPedidoPago = taxaColetaParcelaPaga('pedido');
+        record.taxaColetaTaxaPago    = taxaColetaParcelaPaga('taxa');
+        // Mantido para o restante do sistema (filtros, conclusão, validação):
+        // só é true quando nada ficou em aberto.
+        record.taxaColetaPaga = taxaColetaTudoPago();
     }
     if (temCampo('multiPaciente', agenda)) {
         record.acompanhantes = lerAcompanhantes();

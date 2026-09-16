@@ -28,22 +28,22 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     
     <!-- Configuração de bibliotecas externas -->
-    <script src="js/tailwind-config.js?v=20260831a"></script>
-    <script src="js/chart-defaults.js?v=20260831a"></script>
+    <script src="js/tailwind-config.js?v=20260916c"></script>
+    <script src="js/chart-defaults.js?v=20260916c"></script>
 
     <!-- Estilos da aplicação -->
-    <link rel="stylesheet" href="css/variables.css?v=20260831a">
-    <link rel="stylesheet" href="css/base.css?v=20260831a">
-    <link rel="stylesheet" href="css/components.css?v=20260831a">
-    <link rel="stylesheet" href="css/calendar.css?v=20260831a">
-    <link rel="stylesheet" href="css/header.css?v=20260831a">
-    <link rel="stylesheet" href="css/drawer.css?v=20260831a">
-    <link rel="stylesheet" href="css/home.css?v=20260831a">
-    <link rel="stylesheet" href="css/login.css?v=20260831a">
-    <link rel="stylesheet" href="css/notifications.css?v=20260831a">
-    <link rel="stylesheet" href="css/upload.css?v=20260831a">
-    <link rel="stylesheet" href="css/view-record.css?v=20260831a">
-    <link rel="stylesheet" href="css/coleta-ativa.css?v=20260831a">
+    <link rel="stylesheet" href="css/variables.css?v=20260916c">
+    <link rel="stylesheet" href="css/base.css?v=20260916c">
+    <link rel="stylesheet" href="css/components.css?v=20260916c">
+    <link rel="stylesheet" href="css/calendar.css?v=20260916c">
+    <link rel="stylesheet" href="css/header.css?v=20260916c">
+    <link rel="stylesheet" href="css/drawer.css?v=20260916c">
+    <link rel="stylesheet" href="css/home.css?v=20260916c">
+    <link rel="stylesheet" href="css/login.css?v=20260916c">
+    <link rel="stylesheet" href="css/notifications.css?v=20260916c">
+    <link rel="stylesheet" href="css/upload.css?v=20260916c">
+    <link rel="stylesheet" href="css/view-record.css?v=20260916c">
+    <link rel="stylesheet" href="css/coleta-ativa.css?v=20260916c">
 </head>
 <body class="font-sans text-slate-800 antialiased h-screen flex flex-col overflow-hidden">
     
@@ -764,18 +764,37 @@
                     </p>
                 </div>
 
-                <!-- Taxa de coleta — só aparece quando a visita tem valor a receber -->
+                <!-- Taxa de coleta — só aparece quando a visita tem valor a receber.
+                     Pedido e taxa são quitados separadamente. -->
                 <div id="concluir-taxa-bloco" class="hidden rounded-xl border border-amber-200 bg-amber-50/60 p-3">
-                    <div class="flex items-center justify-between gap-3">
-                        <div>
-                            <p class="text-[10px] font-black text-amber-700 uppercase mb-1">Valor a receber</p>
+                    <p class="text-[10px] font-black text-amber-700 uppercase mb-2">Valor a receber</p>
+                    <div class="flex flex-col gap-2">
+                        <div id="concluir-taxa-pedido-linha" class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-[9px] font-black text-slate-400 uppercase">Pedido</p>
+                                <p id="concluir-taxa-pedido-valor" class="text-sm font-black text-navy-900">R$ 0,00</p>
+                            </div>
+                            <button type="button" id="concluir-taxa-pedido-btn" onclick="marcarTaxaColetaPagaConcluir('pedido')"
+                                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95">
+                                <i id="concluir-taxa-pedido-icone" class="fas fa-circle-notch text-[11px]"></i>
+                                <span id="concluir-taxa-pedido-texto">Marcar como pago</span>
+                            </button>
+                        </div>
+                        <div id="concluir-taxa-taxa-linha" class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-[9px] font-black text-slate-400 uppercase">Taxa</p>
+                                <p id="concluir-taxa-taxa-valor" class="text-sm font-black text-navy-900">R$ 0,00</p>
+                            </div>
+                            <button type="button" id="concluir-taxa-taxa-btn" onclick="marcarTaxaColetaPagaConcluir('taxa')"
+                                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95">
+                                <i id="concluir-taxa-taxa-icone" class="fas fa-circle-notch text-[11px]"></i>
+                                <span id="concluir-taxa-taxa-texto">Marcar como paga</span>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between gap-3 pt-2 border-t border-amber-200/80">
+                            <p class="text-[10px] font-black text-slate-500 uppercase">Valor total</p>
                             <p id="concluir-taxa-valor" class="text-sm font-black text-navy-900">R$ 0,00</p>
                         </div>
-                        <button type="button" id="concluir-taxa-btn" onclick="marcarTaxaColetaPagaConcluir()"
-                            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95 bg-white border-amber-300 text-amber-700 hover:bg-amber-100">
-                            <i id="concluir-taxa-icone" class="fas fa-circle-notch text-[11px]"></i>
-                            <span id="concluir-taxa-texto">Marcar como pago</span>
-                        </button>
                     </div>
                 </div>
 
@@ -1036,46 +1055,81 @@
 
                         <div class="mt-4 flex flex-wrap items-start justify-between gap-3">
                             <div class="flex-1 min-w-[220px]">
-                                <button type="button" id="btn-mapa-toggle" onclick="toggleMapaEndereco()"
-                                    class="group inline-flex items-center gap-2.5 pl-3.5 pr-4 py-2.5 bg-amber-600 hover:bg-amber-700 active:scale-95 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
-                                    <i class="fas fa-map-location-dot text-white text-sm transition-transform duration-300 group-hover:scale-125 group-hover:-rotate-6"></i>
-                                    <span id="btn-mapa-label" class="text-[11px] font-black text-white uppercase tracking-wide">Ver no mapa</span>
-                                    <i class="fas fa-chevron-down text-white text-[10px] transition-transform duration-300"></i>
-                                </button>
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <button type="button" id="btn-mapa-toggle" onclick="toggleMapaEndereco()"
+                                        class="group inline-flex items-center gap-2.5 pl-3.5 pr-4 py-2.5 bg-amber-600 hover:bg-amber-700 active:scale-95 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                                        <i class="fas fa-map-location-dot text-white text-sm transition-transform duration-300 group-hover:scale-125 group-hover:-rotate-6"></i>
+                                        <span id="btn-mapa-label" class="text-[11px] font-black text-white uppercase tracking-wide">Ver no mapa</span>
+                                        <i class="fas fa-chevron-down text-white text-[10px] transition-transform duration-300"></i>
+                                    </button>
+                                    <label id="reg-distante-label" for="reg-distante"
+                                        class="inline-flex items-center gap-2 cursor-pointer select-none pl-3 pr-3.5 py-2.5 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-violet-300 transition-all duration-200"
+                                        title="Marque quando o endereço fica em localidade distante (deslocamento maior)">
+                                        <input type="checkbox" id="reg-distante" onchange="atualizarDistanteUI()"
+                                            class="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500 cursor-pointer">
+                                        <i id="reg-distante-icone" class="fas fa-road-circle-exclamation text-slate-300 text-sm transition-colors duration-200"></i>
+                                        <span id="reg-distante-texto" class="text-[11px] font-black text-slate-500 uppercase tracking-wide transition-colors duration-200">Distante</span>
+                                    </label>
+                                </div>
                                 <div id="mapa-endereco-container" class="hidden mt-3 rounded-xl overflow-hidden border border-amber-200 shadow-sm">
                                     <iframe id="mapa-endereco-iframe" class="w-full h-64 border-0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                                 </div>
                             </div>
                             <div class="flex flex-wrap items-center gap-3">
                                 <div id="reg-taxa-box"
-                                    class="flex items-center gap-2 pl-3.5 pr-2.5 py-2 rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200"
+                                    class="flex flex-wrap items-center gap-2 pl-3.5 pr-2.5 py-2 rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200"
                                     title="Valor a receber pela coleta domiciliar">
                                     <i class="fas fa-sack-dollar text-emerald-500 text-sm"></i>
                                     <div class="flex flex-col">
-                                        <label for="reg-taxa-valor" class="text-[9px] font-black text-slate-400 uppercase tracking-wide leading-none mb-1">Valor a receber *</label>
-                                        <div class="flex items-center gap-1">
+                                        <label for="reg-taxa-pedido" class="text-[9px] font-black text-slate-400 uppercase tracking-wide leading-none mb-1">Pedido</label>
+                                        <div class="flex items-center gap-1.5">
                                             <span class="text-[11px] font-black text-slate-400">R$</span>
-                                            <input type="text" id="reg-taxa-valor" inputmode="decimal" placeholder="0,00"
+                                            <input type="text" id="reg-taxa-pedido" inputmode="decimal" placeholder="0,00"
                                                 oninput="formatarTaxaColeta(this); atualizarTaxaColetaUI()"
                                                 onblur="atualizarTaxaColetaUI()"
                                                 class="w-20 border-0 border-b-2 border-slate-200 bg-transparent py-0.5 px-0 text-sm font-bold text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors duration-200">
+                                            <button type="button" id="btn-taxa-pedido-pago" onclick="toggleTaxaColetaParcelaPaga('pedido')"
+                                                title="Marcar o pedido como pago"
+                                                class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95">
+                                                <i id="reg-taxa-pedido-pago-icone" class="fas fa-circle-notch text-[10px]"></i>
+                                                <span id="reg-taxa-pedido-pago-texto">A pagar</span>
+                                            </button>
                                         </div>
                                     </div>
-                                    <button type="button" id="btn-taxa-pago" onclick="toggleTaxaColetaPago()"
-                                        class="ml-1.5 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95">
-                                        <i id="reg-taxa-pago-icone" class="fas fa-circle-notch text-[11px] transition-transform duration-200"></i>
-                                        <span id="reg-taxa-pago-texto">A pagar</span>
-                                    </button>
-                                    <input type="hidden" id="reg-taxa-pago" value="false">
+                                    <span class="text-slate-300 font-black text-sm select-none">+</span>
+                                    <div class="flex flex-col">
+                                        <label for="reg-taxa-taxa" class="text-[9px] font-black text-slate-400 uppercase tracking-wide leading-none mb-1">Taxa</label>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-[11px] font-black text-slate-400">R$</span>
+                                            <input type="text" id="reg-taxa-taxa" inputmode="decimal" placeholder="0,00"
+                                                oninput="formatarTaxaColeta(this); atualizarTaxaColetaUI()"
+                                                onblur="atualizarTaxaColetaUI()"
+                                                class="w-20 border-0 border-b-2 border-slate-200 bg-transparent py-0.5 px-0 text-sm font-bold text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors duration-200">
+                                            <button type="button" id="btn-taxa-taxa-pago" onclick="toggleTaxaColetaParcelaPaga('taxa')"
+                                                title="Marcar a taxa como paga"
+                                                class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95">
+                                                <i id="reg-taxa-taxa-pago-icone" class="fas fa-circle-notch text-[10px]"></i>
+                                                <span id="reg-taxa-taxa-pago-texto">A pagar</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <span class="text-slate-300 font-black text-sm select-none">=</span>
+                                    <div class="flex flex-col">
+                                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-wide leading-none mb-1">Valor total *</span>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-[11px] font-black text-slate-400">R$</span>
+                                            <output id="reg-taxa-total" for="reg-taxa-pedido reg-taxa-taxa"
+                                                class="block w-20 border-0 border-b-2 border-slate-200 py-0.5 px-0 text-sm font-black text-slate-700">0,00</output>
+                                            <span id="reg-taxa-status"
+                                                class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wide border border-slate-200 text-slate-400">
+                                                <i id="reg-taxa-status-icone" class="fas fa-circle-notch text-[10px]"></i>
+                                                <span id="reg-taxa-status-texto">A pagar</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="reg-taxa-pedido-pago" value="false">
+                                    <input type="hidden" id="reg-taxa-taxa-pago" value="false">
                                 </div>
-                                <label id="reg-distante-label" for="reg-distante"
-                                    class="inline-flex items-center gap-2 cursor-pointer select-none pl-3 pr-3.5 py-2.5 rounded-xl border border-slate-200 bg-white shadow-sm hover:border-violet-300 transition-all duration-200"
-                                    title="Marque quando o endereço fica em localidade distante (deslocamento maior)">
-                                    <input type="checkbox" id="reg-distante" onchange="atualizarDistanteUI()"
-                                        class="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500 cursor-pointer">
-                                    <i id="reg-distante-icone" class="fas fa-road-circle-exclamation text-slate-300 text-sm transition-colors duration-200"></i>
-                                    <span id="reg-distante-texto" class="text-[11px] font-black text-slate-500 uppercase tracking-wide transition-colors duration-200">Distante</span>
-                                </label>
                             </div>
                         </div>
                     </div>
@@ -2050,38 +2104,38 @@
     </div>
 
     <!-- ── Infraestrutura ─────────────────────────────────────────── -->
-    <script src="js/firebase-config.js?v=20260831a"></script>
-    <script src="js/agendas.js?v=20260831a"></script>
-    <script src="js/state.js?v=20260831a"></script>
-    <script src="js/utils.js?v=20260831a"></script>
-    <script src="js/notifications.js?v=20260831a"></script>
+    <script src="js/firebase-config.js?v=20260916c"></script>
+    <script src="js/agendas.js?v=20260916c"></script>
+    <script src="js/state.js?v=20260916c"></script>
+    <script src="js/utils.js?v=20260916c"></script>
+    <script src="js/notifications.js?v=20260916c"></script>
 
     <!-- ── Domínio ────────────────────────────────────────────────── -->
-    <script src="js/auth.js?v=20260831a"></script>
-    <script src="js/audit.js?v=20260831a"></script>
-    <script src="js/firebase-data.js?v=20260831a"></script>
-    <script src="js/motivos-perda.js?v=20260831a"></script>
-    <script src="js/atendentes.js?v=20260831a"></script>
-    <script src="js/validation.js?v=20260831a"></script>
+    <script src="js/auth.js?v=20260916c"></script>
+    <script src="js/audit.js?v=20260916c"></script>
+    <script src="js/firebase-data.js?v=20260916c"></script>
+    <script src="js/motivos-perda.js?v=20260916c"></script>
+    <script src="js/atendentes.js?v=20260916c"></script>
+    <script src="js/validation.js?v=20260916c"></script>
 
     <!-- ── Interface ──────────────────────────────────────────────── -->
-    <script src="js/navigation.js?v=20260831a"></script>
-    <script src="js/home.js?v=20260831a"></script>
-    <script src="js/checklist.js?v=20260831a"></script>
-    <script src="js/acompanhantes.js?v=20260831a"></script>
-    <script src="js/upload.js?v=20260831a"></script>
-    <script src="js/save.js?v=20260831a"></script>
-    <script src="js/table.js?v=20260831a"></script>
-    <script src="js/charts.js?v=20260831a"></script>
-    <script src="js/calendar.js?v=20260831a"></script>
-    <script src="js/modals.js?v=20260831a"></script>
-    <script src="js/view-record.js?v=20260831a"></script>
-    <script src="js/coleta-ativa.js?v=20260831a"></script>
-    <script src="js/concluir-visita.js?v=20260831a"></script>
-    <script src="js/ausencia-visita.js?v=20260831a"></script>
-    <script src="js/backup.js?v=20260831a"></script>
+    <script src="js/navigation.js?v=20260916c"></script>
+    <script src="js/home.js?v=20260916c"></script>
+    <script src="js/checklist.js?v=20260916c"></script>
+    <script src="js/acompanhantes.js?v=20260916c"></script>
+    <script src="js/upload.js?v=20260916c"></script>
+    <script src="js/save.js?v=20260916c"></script>
+    <script src="js/table.js?v=20260916c"></script>
+    <script src="js/charts.js?v=20260916c"></script>
+    <script src="js/calendar.js?v=20260916c"></script>
+    <script src="js/modals.js?v=20260916c"></script>
+    <script src="js/view-record.js?v=20260916c"></script>
+    <script src="js/coleta-ativa.js?v=20260916c"></script>
+    <script src="js/concluir-visita.js?v=20260916c"></script>
+    <script src="js/ausencia-visita.js?v=20260916c"></script>
+    <script src="js/backup.js?v=20260916c"></script>
 
     <!-- ── Bootstrap ──────────────────────────────────────────────── -->
-    <script src="js/app-init.js?v=20260831a"></script>
+    <script src="js/app-init.js?v=20260916c"></script>
 </body>
 </html>

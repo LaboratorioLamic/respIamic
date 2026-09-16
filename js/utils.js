@@ -480,36 +480,62 @@ function formatarTaxaColeta(input) {
     input.value = `${inteiro},${centavos}`;
 }
 
-function taxaColetaValorNumerico() {
-    const raw = document.getElementById('reg-taxa-valor').value.trim();
+// Converte o texto mascarado (1.234,56) de um campo em número.
+function taxaColetaCampoNumerico(id) {
+    const el = document.getElementById(id);
+    const raw = el ? el.value.trim() : '';
     if (!raw) return 0;
     return parseFloat(raw.replace(/\./g, '').replace(',', '.')) || 0;
 }
 
-function toggleTaxaColetaPago() {
-    const hidden = document.getElementById('reg-taxa-pago');
+function taxaColetaPedidoNumerico() { return taxaColetaCampoNumerico('reg-taxa-pedido'); }
+function taxaColetaTaxaNumerico()   { return taxaColetaCampoNumerico('reg-taxa-taxa'); }
+
+// Valor total = Pedido + Taxa (campo de cálculo, não digitável)
+function taxaColetaValorNumerico() {
+    return taxaColetaPedidoNumerico() + taxaColetaTaxaNumerico();
+}
+
+function formatarTaxaColetaBRL(valor) {
+    return Number(valor || 0).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?=,))/g, '.');
+}
+
+// Preenche um campo mascarado a partir de um número (vazio quando 0/ausente).
+function definirTaxaColetaCampo(id, valor) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = valor ? formatarTaxaColetaBRL(valor) : '';
+}
+
+// Pedido e taxa são cobrados separadamente: cada um tem seu próprio Pago/A pagar.
+function toggleTaxaColetaParcelaPaga(parcela) {
+    const hidden = document.getElementById(`reg-taxa-${parcela}-pago`);
+    if (!hidden) return;
     hidden.value = hidden.value === 'true' ? 'false' : 'true';
     atualizarTaxaColetaUI();
 }
 
-function atualizarTaxaColetaUI() {
-    const box = document.getElementById('reg-taxa-box');
-    const btn = document.getElementById('btn-taxa-pago');
-    const icone = document.getElementById('reg-taxa-pago-icone');
-    const texto = document.getElementById('reg-taxa-pago-texto');
-    if (!box || !btn) return;
+function taxaColetaParcelaPaga(parcela) {
+    const hidden = document.getElementById(`reg-taxa-${parcela}-pago`);
+    return !!hidden && hidden.value === 'true';
+}
 
-    const pago = document.getElementById('reg-taxa-pago').value === 'true';
-    const temValor = taxaColetaValorNumerico() > 0;
-    const ok = pago || temValor;
+// Situação geral: só é "Pago" quando nada em aberto sobrou. Sem nenhum valor
+// lançado, vale o que as marcações dizem (cortesia marcada como paga).
+function taxaColetaTudoPago() {
+    const pedido = taxaColetaPedidoNumerico();
+    const taxa   = taxaColetaTaxaNumerico();
+    const pedidoPago = taxaColetaParcelaPaga('pedido');
+    const taxaPaga   = taxaColetaParcelaPaga('taxa');
+    if (!pedido && !taxa) return pedidoPago || taxaPaga;
+    return (!pedido || pedidoPago) && (!taxa || taxaPaga);
+}
 
-    box.classList.toggle('border-emerald-300', pago);
-    box.classList.toggle('bg-emerald-50/60', pago);
-    box.classList.toggle('border-amber-300', !pago && temValor);
-    box.classList.toggle('bg-amber-50/60', !pago && temValor);
-    box.classList.toggle('border-red-300', !ok);
-    box.classList.toggle('bg-red-50/50', !ok);
-    box.classList.toggle('border-slate-200', pago ? false : (temValor || !ok ? false : true));
+function _pintarBotaoTaxaPago(parcela, pago) {
+    const btn = document.getElementById(`btn-taxa-${parcela}-pago`);
+    const icone = document.getElementById(`reg-taxa-${parcela}-pago-icone`);
+    const texto = document.getElementById(`reg-taxa-${parcela}-pago-texto`);
+    if (!btn) return;
 
     btn.classList.toggle('bg-emerald-600', pago);
     btn.classList.toggle('border-emerald-600', pago);
@@ -523,6 +549,57 @@ function atualizarTaxaColetaUI() {
     icone.classList.toggle('fa-circle-notch', !pago);
     icone.classList.toggle('fa-circle-check', pago);
     texto.textContent = pago ? 'Pago' : 'A pagar';
+}
+
+function atualizarTaxaColetaUI() {
+    const box = document.getElementById('reg-taxa-box');
+    if (!box) return;
+
+    const pedido = taxaColetaPedidoNumerico();
+    const taxa   = taxaColetaTaxaNumerico();
+    const total  = pedido + taxa;
+    const temValor = total > 0;
+    const pago = taxaColetaTudoPago();
+    const ok = pago || temValor;
+
+    _pintarBotaoTaxaPago('pedido', taxaColetaParcelaPaga('pedido'));
+    _pintarBotaoTaxaPago('taxa', taxaColetaParcelaPaga('taxa'));
+
+    const totalEl = document.getElementById('reg-taxa-total');
+    if (totalEl) {
+        totalEl.textContent = formatarTaxaColetaBRL(total);
+        totalEl.classList.toggle('text-slate-300', !temValor);
+        totalEl.classList.toggle('text-slate-700', temValor);
+    }
+
+    // Selo do total: só reflete as parcelas, não é clicável.
+    const status = document.getElementById('reg-taxa-status');
+    const statusIcone = document.getElementById('reg-taxa-status-icone');
+    const statusTexto = document.getElementById('reg-taxa-status-texto');
+    if (status) {
+        const parcial = !pago && (taxaColetaParcelaPaga('pedido') || taxaColetaParcelaPaga('taxa'));
+        status.classList.toggle('border-emerald-300', pago);
+        status.classList.toggle('bg-emerald-50', pago);
+        status.classList.toggle('text-emerald-700', pago);
+        status.classList.toggle('border-amber-300', !pago && temValor);
+        status.classList.toggle('bg-amber-50', !pago && temValor);
+        status.classList.toggle('text-amber-700', !pago && temValor);
+        status.classList.toggle('border-slate-200', !pago && !temValor);
+        status.classList.toggle('text-slate-400', !pago && !temValor);
+
+        statusIcone.classList.toggle('fa-circle-check', pago);
+        statusIcone.classList.toggle('fa-circle-half-stroke', parcial);
+        statusIcone.classList.toggle('fa-circle-notch', !pago && !parcial);
+        statusTexto.textContent = pago ? 'Pago' : (parcial ? 'Parcial' : 'A pagar');
+    }
+
+    box.classList.toggle('border-emerald-300', pago);
+    box.classList.toggle('bg-emerald-50/60', pago);
+    box.classList.toggle('border-amber-300', !pago && temValor);
+    box.classList.toggle('bg-amber-50/60', !pago && temValor);
+    box.classList.toggle('border-red-300', !ok);
+    box.classList.toggle('bg-red-50/50', !ok);
+    box.classList.toggle('border-slate-200', pago ? false : (temValor || !ok ? false : true));
 }
 
 // BUSCA DE ENDEREÇO POR CEP (ViaCEP) — preenche logradouro/bairro/cidade automaticamente
