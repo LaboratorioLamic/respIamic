@@ -47,7 +47,7 @@ const AGENDAS = {
         // Indicadores
         kpis: ['total', 'tresp', 'tsbac', 'concluidos', 'andamento', 'pendentes', 'cancelados'],
         charts: ['barMensal', 'linhaTipo', 'donutExame', 'donutSubstrato'],
-        legenda: ['tresp', 'tsbac', 'cancelado', 'concluido', 'atrasado', 'adulto', 'infantil', 'andamento']
+        legenda: ['tresp', 'tsbac', 'cancelado', 'concluido', 'atrasado', 'infantil', 'andamento', 'selo-checklist']
     },
 
     espermograma: {
@@ -82,7 +82,7 @@ const AGENDAS = {
 
         kpis: ['total', 'concluidos', 'andamento', 'pendentes', 'cancelados'],
         charts: ['barMensal', 'donutStatus'],
-        legenda: ['agendado', 'cancelado', 'concluido', 'atrasado', 'andamento']
+        legenda: ['agendado', 'cancelado', 'concluido', 'atrasado', 'andamento', 'selo-checklist']
     },
 
     coletaDomiciliar: {
@@ -120,7 +120,7 @@ const AGENDAS = {
 
         kpis: ['total', 'concluidos', 'andamento', 'pendentes', 'cancelados'],
         charts: ['barMensal', 'donutStatus'],
-        legenda: ['cancelado', 'concluido', 'atrasado', 'andamento', 'rn', 'infantil', 'adolescente', 'adulto', 'selos']
+        legenda: ['cancelado', 'concluido', 'atrasado', 'andamento', 'rn', 'infantil', 'adolescente', 'menores', 'selo-checklist', 'selo-distante', 'selo-coleta']
     },
 
     coletaDomiciliarMilagres: {
@@ -158,7 +158,7 @@ const AGENDAS = {
 
         kpis: ['total', 'concluidos', 'andamento', 'pendentes', 'cancelados'],
         charts: ['barMensal', 'donutStatus'],
-        legenda: ['cancelado', 'concluido', 'atrasado', 'andamento', 'rn', 'infantil', 'adolescente', 'adulto', 'selos']
+        legenda: ['cancelado', 'concluido', 'atrasado', 'andamento', 'rn', 'infantil', 'adolescente', 'menores', 'selo-checklist', 'selo-distante', 'selo-coleta']
     }
 };
 

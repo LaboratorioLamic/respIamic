@@ -306,19 +306,19 @@
                 <div class="mt-5 pt-4 border-t border-slate-100 flex justify-center">
                     <div class="flex items-center justify-center gap-x-4 gap-y-2 text-[11px] font-semibold text-slate-500 flex-wrap">
                         <div class="flex items-center gap-1" data-agenda-legenda="tresp">
-                            <div class="h-2 w-2 rounded-full bg-blue-500"></div>
-                            <span>TRESP</span>
+                            <span class="day-chip day-chip-tresp">TRESP n</span>
+                            <span>Respiratório</span>
                         </div>
                         <div class="flex items-center gap-1" data-agenda-legenda="tsbac">
-                            <div class="h-2 w-2 rounded-full bg-emerald-500"></div>
-                            <span>TSBAC</span>
+                            <span class="day-chip day-chip-tsbac">TSBAC n</span>
+                            <span>Bacteriano</span>
                         </div>
                         <div class="flex items-center gap-1 hidden" data-agenda-legenda="agendado">
                             <div id="legenda-agendado-dot" class="h-2 w-2 rounded-full bg-teal-500"></div>
                             <span>Agendado</span>
                         </div>
                         <div class="flex items-center gap-1" data-agenda-legenda="cancelado">
-                            <div class="h-2 w-2 rounded-full bg-red-500 flex items-center justify-center text-white text-[10px] font-black">×</div>
+                            <span class="day-chip day-chip-cancel"><i class="fas fa-ban"></i>n</span>
                             <span>Cancelado</span>
                         </div>
                         <div class="flex items-center gap-1" data-agenda-legenda="concluido">
@@ -333,36 +333,36 @@
                             <div class="h-3 w-3 rounded border border-amber-400 bg-amber-100"></div>
                             <span>Ausente</span>
                         </div>
-                        <div class="flex items-center gap-1" data-agenda-legenda="adulto">
-                            <div class="h-3 w-3 rounded border border-blue-200 bg-blue-50"></div>
-                            <span>Adulto</span>
-                        </div>
                         <div class="flex items-center gap-1" data-agenda-legenda="infantil">
-                            <div class="h-3 w-3 rounded border border-orange-300 bg-orange-50"></div>
+                            <span class="day-chip day-chip-faixa day-chip-infantil">INF n</span>
                             <span>Infantil</span>
                         </div>
                         <div class="flex items-center gap-1 hidden" data-agenda-legenda="adolescente">
-                            <div class="h-3 w-3 rounded border border-amber-200 bg-amber-50"></div>
+                            <span class="day-chip day-chip-faixa day-chip-adolescente">ADO n</span>
                             <span>Adolescente</span>
                         </div>
                         <div class="flex items-center gap-1 hidden" data-agenda-legenda="rn">
-                            <div class="h-3 w-3 rounded border border-fuchsia-300 bg-fuchsia-50"></div>
+                            <span class="day-chip day-chip-faixa day-chip-rn">RN n</span>
                             <span>Recém-nascido</span>
+                        </div>
+                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="menores">
+                            <span class="day-chip day-chip-faixa day-chip-menores"><i class="fas fa-child"></i>n</span>
+                            <span>Menores de idade</span>
                         </div>
                         <div class="flex items-center gap-1" data-agenda-legenda="andamento">
                             <div class="h-3 w-3 rounded border border-purple-300 bg-purple-50"></div>
                             <span>Em andamento</span>
                         </div>
-                        <!-- Selos do resumo mensal denso (coleta domiciliar) -->
-                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="selos">
+                        <!-- Selos do resumo do dia na visão mensal -->
+                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="selo-checklist">
                             <span class="day-chip day-chip-warn"><i class="fas fa-clipboard-list"></i>n</span>
                             <span>Checklist pendente</span>
                         </div>
-                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="selos">
+                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="selo-distante">
                             <span class="day-chip day-chip-far"><i class="fas fa-road-circle-exclamation"></i></span>
                             <span>Distante</span>
                         </div>
-                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="selos">
+                        <div class="flex items-center gap-1 hidden" data-agenda-legenda="selo-coleta">
                             <span class="day-chip day-chip-live"><i class="fas fa-play"></i></span>
                             <span>Coletando agora</span>
                         </div>

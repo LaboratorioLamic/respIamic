@@ -98,10 +98,21 @@
     border: 1px solid currentColor;
 }
 .day-chip i { font-size: 7px; }
+/* Composição do dia (modalidade, faixa etária): preenchido, pesa menos que as
+   exceções, que ficam com contorno. */
+.day-chip-tresp { color: #1d4ed8; background: #dbeafe; border-color: #bfdbfe; }
+.day-chip-tsbac { color: #047857; background: #d1fae5; border-color: #a7f3d0; }
+.day-chip-faixa { letter-spacing: .02em; }
+.day-chip-rn          { color: #a21caf; background: #fae8ff; border-color: #f5d0fe; }
+.day-chip-infantil    { color: #c2410c; background: #ffedd5; border-color: #fed7aa; }
+.day-chip-adolescente { color: #b45309; background: #fef3c7; border-color: #fde68a; }
+/* Mais de uma faixa no mesmo dia: um selo só, com o total de menores */
+.day-chip-menores     { color: #c2410c; background: #ffedd5; border-color: #fed7aa; }
 .day-chip-warn   { color: #b45309; }
 .day-chip-far    { color: #6d28d9; }
 .day-chip-cancel { color: #dc2626; }
 .day-chip-live   { color: #fff; background: #7c3aed; border-color: #7c3aed; }
+.day-chip-mais   { color: #64748b; background: rgba(148, 163, 184, .18); border-color: transparent; }
 .day-chip-live i { animation: day-chip-pulse 1.6s ease-in-out infinite; }
 @keyframes day-chip-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 
