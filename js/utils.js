@@ -531,6 +531,62 @@ function taxaColetaTudoPago() {
     return (!pedido || pedidoPago) && (!taxa || taxaPaga);
 }
 
+// TIPO DE COBRANÇA — Particular e/ou Convênio (obrigatório, aceita os dois)
+const TAXA_COLETA_TIPOS = [
+    { chave: 'Particular', id: 'reg-taxa-tipo-particular' },
+    { chave: 'Convênio',   id: 'reg-taxa-tipo-convenio' }
+];
+
+function taxaColetaTiposSelecionados() {
+    return TAXA_COLETA_TIPOS
+        .filter(t => { const el = document.getElementById(t.id); return el && el.checked; })
+        .map(t => t.chave);
+}
+
+function definirTaxaColetaTipos(tipos) {
+    const lista = Array.isArray(tipos) ? tipos : (tipos ? [tipos] : []);
+    TAXA_COLETA_TIPOS.forEach(t => {
+        const el = document.getElementById(t.id);
+        if (el) el.checked = lista.includes(t.chave);
+    });
+}
+
+function toggleTaxaColetaTipoPopover(forcarFechar) {
+    const popover = document.getElementById('taxa-tipo-popover');
+    if (!popover) return;
+    if (forcarFechar) { popover.classList.add('hidden'); return; }
+    popover.classList.toggle('hidden');
+}
+
+// Clique fora fecha o popover do tipo.
+document.addEventListener('click', e => {
+    const popover = document.getElementById('taxa-tipo-popover');
+    if (!popover || popover.classList.contains('hidden')) return;
+    if (popover.contains(e.target) || e.target.closest('#btn-taxa-tipo')) return;
+    popover.classList.add('hidden');
+});
+
+function _pintarBotaoTaxaTipo(tipos) {
+    const btn = document.getElementById('btn-taxa-tipo');
+    const icone = document.getElementById('reg-taxa-tipo-icone');
+    const texto = document.getElementById('reg-taxa-tipo-texto');
+    if (!btn) return;
+
+    const ok = tipos.length > 0;
+    btn.classList.toggle('bg-emerald-600', ok);
+    btn.classList.toggle('border-emerald-600', ok);
+    btn.classList.toggle('text-white', ok);
+    btn.classList.toggle('hover:bg-emerald-700', ok);
+    btn.classList.toggle('bg-white', !ok);
+    btn.classList.toggle('border-red-300', !ok);
+    btn.classList.toggle('text-red-500', !ok);
+    btn.classList.toggle('hover:border-red-400', !ok);
+
+    icone.classList.toggle('fa-tags', ok);
+    icone.classList.toggle('fa-circle-exclamation', !ok);
+    texto.textContent = ok ? tipos.join(' + ') : 'Selecionar';
+}
+
 function _pintarBotaoTaxaPago(parcela, pago) {
     const btn = document.getElementById(`btn-taxa-${parcela}-pago`);
     const icone = document.getElementById(`reg-taxa-${parcela}-pago-icone`);
@@ -560,8 +616,11 @@ function atualizarTaxaColetaUI() {
     const total  = pedido + taxa;
     const temValor = total > 0;
     const pago = taxaColetaTudoPago();
-    const ok = pago || temValor;
+    const tipos = taxaColetaTiposSelecionados();
+    // O tipo é obrigatório: sem ele o box fica em estado de pendência.
+    const ok = (pago || temValor) && tipos.length > 0;
 
+    _pintarBotaoTaxaTipo(tipos);
     _pintarBotaoTaxaPago('pedido', taxaColetaParcelaPaga('pedido'));
     _pintarBotaoTaxaPago('taxa', taxaColetaParcelaPaga('taxa'));
 

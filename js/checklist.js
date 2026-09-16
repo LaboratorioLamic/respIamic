@@ -162,6 +162,8 @@ function duplicateRecord() {
     campos.forEach(id => { const el = document.getElementById(id); if (el) valores[id] = el.value; });
     // A marca de localidade distante acompanha o endereço copiado
     const distante = temCampo('endereco') && document.getElementById('reg-distante').checked;
+    // O tipo de cobrança também acompanha a duplicação
+    const tiposTaxa = temCampo('endereco') ? taxaColetaTiposSelecionados() : [];
     // As demais pessoas da visita também vêm junto
     const acompanhantes = temCampo('multiPaciente') ? lerAcompanhantes() : [];
 
@@ -177,6 +179,8 @@ function duplicateRecord() {
         if (temCampo('endereco')) {
             document.getElementById('reg-distante').checked = distante;
             atualizarDistanteUI();
+            definirTaxaColetaTipos(tiposTaxa);
+            atualizarTaxaColetaUI();
         }
         if (coletadorAuxiliar) definirColetadorAuxiliar(coletadorAuxiliar);
         acompanhantes.forEach(a => adicionarAcompanhante(a));

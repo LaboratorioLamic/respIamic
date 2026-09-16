@@ -1088,56 +1088,80 @@
                                     <iframe id="mapa-endereco-iframe" class="w-full h-64 border-0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                                 </div>
                             </div>
-                            <div class="flex flex-wrap items-center gap-3">
+                            <div class="flex items-center gap-3">
                                 <div id="reg-taxa-box"
-                                    class="flex flex-wrap items-center gap-2 pl-3.5 pr-2.5 py-2 rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200"
+                                    class="inline-flex flex-nowrap items-center gap-2 pl-3.5 pr-2.5 py-2 rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200"
                                     title="Valor a receber pela coleta domiciliar">
-                                    <i class="fas fa-sack-dollar text-emerald-500 text-sm"></i>
-                                    <div class="flex flex-col">
+                                    <i class="fas fa-sack-dollar shrink-0 text-emerald-500 text-sm"></i>
+                                    <div class="flex flex-col shrink-0">
                                         <label for="reg-taxa-pedido" class="text-[9px] font-black text-slate-400 uppercase tracking-wide leading-none mb-1">Pedido</label>
-                                        <div class="flex items-center gap-1.5">
-                                            <span class="text-[11px] font-black text-slate-400">R$</span>
+                                        <div class="flex flex-nowrap items-center gap-1.5">
+                                            <span class="shrink-0 text-[11px] font-black text-slate-400">R$</span>
                                             <input type="text" id="reg-taxa-pedido" inputmode="decimal" placeholder="0,00"
                                                 oninput="formatarTaxaColeta(this); atualizarTaxaColetaUI()"
                                                 onblur="atualizarTaxaColetaUI()"
                                                 class="w-20 border-0 border-b-2 border-slate-200 bg-transparent py-0.5 px-0 text-sm font-bold text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors duration-200">
                                             <button type="button" id="btn-taxa-pedido-pago" onclick="toggleTaxaColetaParcelaPaga('pedido')"
                                                 title="Marcar o pedido como pago"
-                                                class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95">
+                                                class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95">
                                                 <i id="reg-taxa-pedido-pago-icone" class="fas fa-circle-notch text-[10px]"></i>
                                                 <span id="reg-taxa-pedido-pago-texto">A pagar</span>
                                             </button>
                                         </div>
                                     </div>
-                                    <span class="text-slate-300 font-black text-sm select-none">+</span>
-                                    <div class="flex flex-col">
+                                    <span class="shrink-0 text-slate-300 font-black text-sm select-none">+</span>
+                                    <div class="flex flex-col shrink-0">
                                         <label for="reg-taxa-taxa" class="text-[9px] font-black text-slate-400 uppercase tracking-wide leading-none mb-1">Taxa</label>
-                                        <div class="flex items-center gap-1.5">
-                                            <span class="text-[11px] font-black text-slate-400">R$</span>
+                                        <div class="flex flex-nowrap items-center gap-1.5">
+                                            <span class="shrink-0 text-[11px] font-black text-slate-400">R$</span>
                                             <input type="text" id="reg-taxa-taxa" inputmode="decimal" placeholder="0,00"
                                                 oninput="formatarTaxaColeta(this); atualizarTaxaColetaUI()"
                                                 onblur="atualizarTaxaColetaUI()"
                                                 class="w-20 border-0 border-b-2 border-slate-200 bg-transparent py-0.5 px-0 text-sm font-bold text-slate-700 focus:outline-none focus:border-emerald-500 transition-colors duration-200">
                                             <button type="button" id="btn-taxa-taxa-pago" onclick="toggleTaxaColetaParcelaPaga('taxa')"
                                                 title="Marcar a taxa como paga"
-                                                class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95">
+                                                class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95">
                                                 <i id="reg-taxa-taxa-pago-icone" class="fas fa-circle-notch text-[10px]"></i>
                                                 <span id="reg-taxa-taxa-pago-texto">A pagar</span>
                                             </button>
                                         </div>
                                     </div>
-                                    <span class="text-slate-300 font-black text-sm select-none">=</span>
-                                    <div class="flex flex-col">
+                                    <span class="shrink-0 text-slate-300 font-black text-sm select-none">=</span>
+                                    <div class="flex flex-col shrink-0">
                                         <span class="text-[9px] font-black text-slate-400 uppercase tracking-wide leading-none mb-1">Valor total *</span>
-                                        <div class="flex items-center gap-1.5">
-                                            <span class="text-[11px] font-black text-slate-400">R$</span>
+                                        <div class="flex flex-nowrap items-center gap-1.5">
+                                            <span class="shrink-0 text-[11px] font-black text-slate-400">R$</span>
                                             <output id="reg-taxa-total" for="reg-taxa-pedido reg-taxa-taxa"
                                                 class="block w-20 border-0 border-b-2 border-slate-200 py-0.5 px-0 text-sm font-black text-slate-700">0,00</output>
                                             <span id="reg-taxa-status"
-                                                class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wide border border-slate-200 text-slate-400">
+                                                class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wide border border-slate-200 text-slate-400">
                                                 <i id="reg-taxa-status-icone" class="fas fa-circle-notch text-[10px]"></i>
                                                 <span id="reg-taxa-status-texto">A pagar</span>
                                             </span>
+                                        </div>
+                                    </div>
+                                    <span class="shrink-0 text-slate-200 font-black text-sm select-none">|</span>
+                                    <!-- Tipo de cobrança: obrigatório, aceita Particular e Convênio juntos. -->
+                                    <div class="flex flex-col shrink-0 relative">
+                                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-wide leading-none mb-1">Tipo *</span>
+                                        <button type="button" id="btn-taxa-tipo" onclick="toggleTaxaColetaTipoPopover()"
+                                            title="Selecione o tipo de cobrança (Particular e/ou Convênio)"
+                                            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wide border transition-all duration-200 active:scale-95">
+                                            <i id="reg-taxa-tipo-icone" class="fas fa-tags text-[10px]"></i>
+                                            <span id="reg-taxa-tipo-texto">Selecionar</span>
+                                            <i class="fas fa-chevron-down text-[8px] opacity-60"></i>
+                                        </button>
+                                        <div id="taxa-tipo-popover" class="hidden absolute z-30 top-full right-0 mt-1.5 w-40 bg-white border border-slate-200 rounded-xl shadow-xl py-1.5">
+                                            <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-slate-50">
+                                                <input type="checkbox" id="reg-taxa-tipo-particular" onchange="atualizarTaxaColetaUI()"
+                                                    class="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                                                <span class="text-[11px] font-black text-slate-600 uppercase tracking-wide">Particular</span>
+                                            </label>
+                                            <label class="flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-slate-50">
+                                                <input type="checkbox" id="reg-taxa-tipo-convenio" onchange="atualizarTaxaColetaUI()"
+                                                    class="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                                                <span class="text-[11px] font-black text-slate-600 uppercase tracking-wide">Convênio</span>
+                                            </label>
                                         </div>
                                     </div>
                                     <input type="hidden" id="reg-taxa-pedido-pago" value="false">

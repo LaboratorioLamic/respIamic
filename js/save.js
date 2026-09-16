@@ -136,6 +136,7 @@ function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
         record.taxaColeta       = taxaColetaValorNumerico();
         record.taxaColetaPedidoPago = taxaColetaParcelaPaga('pedido');
         record.taxaColetaTaxaPago    = taxaColetaParcelaPaga('taxa');
+        record.taxaColetaTipos       = taxaColetaTiposSelecionados();
         // Mantido para o restante do sistema (filtros, conclusão, validação):
         // só é true quando nada ficou em aberto.
         record.taxaColetaPaga = taxaColetaTudoPago();

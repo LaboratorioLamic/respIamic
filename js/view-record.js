@@ -88,9 +88,20 @@ function _vwFinanceiro(app) {
     const totalIcone = r.tudoPago ? 'fa-circle-check' : (r.parcial ? 'fa-circle-half-stroke' : 'fa-circle-notch');
     const totalTexto = r.tudoPago ? 'Pago' : (r.parcial ? 'Pago em parte' : 'A pagar');
 
+    // Tipo de cobrança: pode ser Particular, Convênio ou os dois juntos.
+    const tipos = Array.isArray(app.taxaColetaTipos) ? app.taxaColetaTipos.filter(Boolean) : [];
+    const tiposHtml = tipos.length
+        ? `<div class="view-fin-tipos">${tipos.map(t => `
+            <span class="view-fin-tipo view-fin-tipo-${t === 'Convênio' ? 'convenio' : 'particular'}">
+                <i class="fas ${t === 'Convênio' ? 'fa-id-card-clip' : 'fa-user'}"></i>
+                ${_vwEscape(t)}
+            </span>`).join('')}</div>`
+        : '';
+
     return `
         <section class="view-bloco view-fin-bloco">
             <h4 class="view-bloco-titulo"><i class="fas fa-sack-dollar"></i> Valores da coleta</h4>
+            ${tiposHtml}
             <div class="view-fin-grid">
                 ${parcela('Pedido', r.pedido, r.pedidoPago, 'pedido', 'fa-file-invoice-dollar')}
                 <span class="view-fin-op">+</span>

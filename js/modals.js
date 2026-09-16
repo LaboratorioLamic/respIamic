@@ -118,6 +118,8 @@ function openRecordModal() {
         document.getElementById('reg-taxa-taxa').value = '';
         document.getElementById('reg-taxa-pedido-pago').value = 'false';
         document.getElementById('reg-taxa-taxa-pago').value = 'false';
+        definirTaxaColetaTipos([]);
+        toggleTaxaColetaTipoPopover(true);
         atualizarTaxaColetaUI();
     }
 
@@ -627,6 +629,8 @@ function editRecord(id) {
         (app.taxaColetaPedidoPago != null ? app.taxaColetaPedidoPago : app.taxaColetaPaga) ? 'true' : 'false';
     document.getElementById('reg-taxa-taxa-pago').value =
         (app.taxaColetaTaxaPago != null ? app.taxaColetaTaxaPago : app.taxaColetaPaga) ? 'true' : 'false';
+    definirTaxaColetaTipos(app.taxaColetaTipos);
+    toggleTaxaColetaTipoPopover(true);
     atualizarTaxaColetaUI();
     document.getElementById('reg-ponto-referencia').value = app.pontoReferencia || '';
     document.getElementById('reg-coletador').value = app.coletador || '';

@@ -121,6 +121,9 @@ function validateAppointment(dataObj) {
         if (!dataObj.taxaColetaPaga && !(dataObj.taxaColeta > 0)) {
             return "Informe o valor do Pedido e/ou a Taxa, ou marque como Pago.";
         }
+        if (!Array.isArray(dataObj.taxaColetaTipos) || !dataObj.taxaColetaTipos.length) {
+            return "Selecione o Tipo da coleta: Particular e/ou Convênio.";
+        }
     }
 
     // Intervalo mínimo entre marcações do mesmo paciente
