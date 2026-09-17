@@ -279,7 +279,10 @@ function renderMonthView() {
         const today = startOfDay(new Date());
         const calendarDate = startOfDay(new Date(year, month, day));
         const isPastDate = calendarDate < today;
-        const hasOverdue = isPastDate && dayApps.some(a => a.status !== 'Concluído');
+        // Ausente é desfecho, não pendência: pinta âmbar, não vermelho.
+        // Vermelho fica reservado ao que passou da data e segue em aberto.
+        const hasAbsent = dayApps.some(a => a.status === 'Ausente');
+        const hasOverdue = isPastDate && dayApps.some(a => a.status !== 'Concluído' && a.status !== 'Ausente');
 
         // Define classes baseado no estado do dia
         let boxClass, textColor, clickAction;
@@ -307,6 +310,10 @@ function renderMonthView() {
                     // Dias com agendamentos atrasados ficam vermelhos
                     boxClass = 'bg-red-50 border-red-300 cursor-pointer';
                     textColor = 'text-red-700';
+                } else if(hasAbsent) {
+                    // Ausência é desfecho de alerta: âmbar, sem confundir com atraso
+                    boxClass = 'bg-amber-50 border-amber-300 cursor-pointer';
+                    textColor = 'text-amber-700';
                 } else if(allCompleted) {
                     // Dias com todos agendamentos concluídos ficam verdes
                     boxClass = 'bg-green-50 border-green-300 cursor-pointer';
@@ -336,7 +343,7 @@ function renderMonthView() {
         // rótulo de vagas para fora da célula). Vira contador + barra de ocupação.
         const ocupadas = vagasOcupadasNoDia(dayApps, agenda);
         const pct = limiteDia ? Math.min(100, Math.round((ocupadas / limiteDia) * 100)) : 0;
-        const barraCor = hasOverdue ? 'bg-red-500' : allCompleted ? 'bg-green-500' : pct >= 100 ? 'bg-amber-500' : cores.dot;
+        const barraCor = hasOverdue ? 'bg-red-500' : hasAbsent ? 'bg-amber-500' : allCompleted ? 'bg-green-500' : pct >= 100 ? 'bg-amber-500' : cores.dot;
         const resumoMobile = isHoliday
             ? '<span class="day-compact-tag text-red-400">Feriado</span>'
             : dayApps.length
