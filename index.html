@@ -1088,12 +1088,12 @@
                                     <iframe id="mapa-endereco-iframe" class="w-full h-64 border-0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3">
+                            <div class="flex flex-wrap items-center gap-3">
                                 <div id="reg-taxa-box"
-                                    class="inline-flex flex-nowrap items-center gap-2 pl-3.5 pr-2.5 py-2 rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200"
+                                    class="flex w-full flex-wrap sm:inline-flex sm:w-auto sm:flex-nowrap items-center gap-2 pl-3.5 pr-2.5 py-2 rounded-xl border border-slate-200 bg-white shadow-sm transition-all duration-200"
                                     title="Valor a receber pela coleta domiciliar">
                                     <i class="fas fa-sack-dollar shrink-0 text-emerald-500 text-sm"></i>
-                                    <div class="flex flex-col shrink-0">
+                                    <div class="flex flex-col shrink-0 grow sm:grow-0 min-w-[9rem]">
                                         <label for="reg-taxa-pedido" class="text-[9px] font-black text-slate-400 uppercase tracking-wide leading-none mb-1">Pedido</label>
                                         <div class="flex flex-nowrap items-center gap-1.5">
                                             <span class="shrink-0 text-[11px] font-black text-slate-400">R$</span>
@@ -1109,8 +1109,8 @@
                                             </button>
                                         </div>
                                     </div>
-                                    <span class="shrink-0 text-slate-300 font-black text-sm select-none">+</span>
-                                    <div class="flex flex-col shrink-0">
+                                    <span class="hidden sm:inline shrink-0 text-slate-300 font-black text-sm select-none">+</span>
+                                    <div class="flex flex-col shrink-0 grow sm:grow-0 min-w-[9rem]">
                                         <label for="reg-taxa-taxa" class="text-[9px] font-black text-slate-400 uppercase tracking-wide leading-none mb-1">Taxa</label>
                                         <div class="flex flex-nowrap items-center gap-1.5">
                                             <span class="shrink-0 text-[11px] font-black text-slate-400">R$</span>
@@ -1126,8 +1126,8 @@
                                             </button>
                                         </div>
                                     </div>
-                                    <span class="shrink-0 text-slate-300 font-black text-sm select-none">=</span>
-                                    <div class="flex flex-col shrink-0">
+                                    <span class="hidden sm:inline shrink-0 text-slate-300 font-black text-sm select-none">=</span>
+                                    <div class="flex flex-col shrink-0 grow sm:grow-0 min-w-[9rem]">
                                         <span class="text-[9px] font-black text-slate-400 uppercase tracking-wide leading-none mb-1">Valor total *</span>
                                         <div class="flex flex-nowrap items-center gap-1.5">
                                             <span class="shrink-0 text-[11px] font-black text-slate-400">R$</span>
@@ -1140,9 +1140,9 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <span class="shrink-0 text-slate-200 font-black text-sm select-none">|</span>
+                                    <span class="hidden sm:inline shrink-0 text-slate-200 font-black text-sm select-none">|</span>
                                     <!-- Tipo de cobrança: obrigatório, aceita Particular e Convênio juntos. -->
-                                    <div class="flex flex-col shrink-0 relative">
+                                    <div class="flex flex-col shrink-0 grow sm:grow-0 relative">
                                         <span class="text-[9px] font-black text-slate-400 uppercase tracking-wide leading-none mb-1">Tipo *</span>
                                         <button type="button" id="btn-taxa-tipo" onclick="toggleTaxaColetaTipoPopover()"
                                             title="Selecione o tipo de cobrança (Particular e/ou Convênio)"
