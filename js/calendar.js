@@ -507,8 +507,11 @@ function renderWeekView() {
             const alinhado = !agenda.slotMin || !faixa || (m - faixa[0]) % agenda.slotMin === 0;
             const hora = minToTime(m);
             // Horário disponível: ainda cabe um endereço novo na lotação do slot
+            // Inclui a margem de encaixe excepcional: o horário cheio segue
+            // clicável nas domiciliares, e a confirmação acontece ao salvar.
             const livre = !agenda.slotUnico
-                || slotAceita(null, diaApps.filter(a => a.horaInicio === hora), agenda);
+                || slotAceita(null, diaApps.filter(a => a.horaInicio === hora), agenda)
+                || slotAceitaComExcecao(null, diaApps.filter(a => a.horaInicio === hora), agenda);
             // Horário desabilitado pelo setor responsável: sai da grade clicável
             // e deixa de aceitar arrastar-e-soltar, mas continua visível listrado.
             const bloqueado = inWindow && slotBloqueado(dateStr, hora, agenda);
@@ -822,14 +825,25 @@ function remarcarAgendamento(id, novaData, novaHora) {
             : erro, 'error');
         return;
     }
+    // Ler logo após validar: uma nova validação zera o sinal.
+    const slotExcedente = _slotExcedenteNaValidacao;
 
-    setAppointments(appointments.map(a => a.id == id ? candidato : a));
-    persistirAgendamento(candidato, {
-        rev: revDe(atual),
-        audit: { action: 'edit', oldRecord: atual },
-        mensagem: `${atual.paciente} remarcado para ${novaData.split('-').reverse().join('/')} às ${novaHora}.`
-    });
-    renderTable(); renderCalendar(); updateFilterDropdowns();
+    const gravar = () => {
+        setAppointments(appointments.map(a => a.id == id ? candidato : a));
+        persistirAgendamento(candidato, {
+            rev: revDe(atual),
+            audit: { action: 'edit', oldRecord: atual },
+            mensagem: `${atual.paciente} remarcado para ${novaData.split('-').reverse().join('/')} às ${novaHora}.`
+        });
+        renderTable(); renderCalendar(); updateFilterDropdowns();
+    };
+
+    // Horário já no limite: o encaixe extra passa pela mesma confirmação do formulário.
+    if (slotExcedente) {
+        showSlotExcedenteModal(candidato, gravar);
+        return;
+    }
+    gravar();
 }
 
 // Distribui colunas para agendamentos que se sobrepõem no mesmo dia

@@ -178,6 +178,8 @@ function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
     // Ao alterar a data para hoje ou futuro, a visualização será atualizada automaticamente
     
     const error = validateAppointment(record);
+    // Precisa ser lido logo após validar: uma nova validação zera o sinal.
+    const slotExcedente = !error && _slotExcedenteNaValidacao;
     if (error) {
         if (error === "DATA_PASSADA") {
             // Mostrar modal elegante de confirmação para data passada
@@ -192,6 +194,13 @@ function proceedWithSave(id, atendenteInput, chkValores, statusVal) {
         }
     }
     
+    // Endereço além do limite do horário: só segue após confirmar que a equipe
+    // de coleta domiciliar foi comunicada.
+    if (slotExcedente) {
+        showSlotExcedenteModal(record, () => proceedWithSaveAfterValidation(record, id));
+        return;
+    }
+
     // Se não houver erro, continuar com salvamento normal
     proceedWithSaveAfterValidation(record, id);
 }

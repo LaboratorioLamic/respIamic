@@ -1532,6 +1532,56 @@
         </div>
     </div>
 
+    <!-- Modal de Encaixe Excepcional (4º endereço no mesmo horário, coleta domiciliar) -->
+    <div id="modal-slot-excedente" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[120] justify-center items-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/20 transform transition-all">
+            <div class="bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 p-6 text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12"></div>
+                <div class="relative flex items-center gap-4">
+                    <div class="h-12 w-12 bg-white/20 rounded-2xl flex items-center justify-center shrink-0 backdrop-blur-sm">
+                        <i class="fas fa-route text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black uppercase tracking-tight text-lg leading-tight">Encaixe Excepcional</h3>
+                        <p class="text-[10px] text-white/80 font-bold uppercase tracking-widest">Coleta Domiciliar · Endereço extra</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-xs font-black uppercase tracking-wide">
+                        <i class="fas fa-clock text-[11px]"></i>
+                        <span id="slot-excedente-hora">--:--</span>
+                    </span>
+                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-black uppercase tracking-wide">
+                        <i class="fas fa-location-dot text-[11px]"></i>
+                        <span id="slot-excedente-ordinal">4º</span> endereço
+                    </span>
+                </div>
+
+                <p class="text-slate-700 font-medium mb-4">Este horário já atingiu o limite de endereços da rota. O encaixe é possível, mas depende da disponibilidade da equipe em campo.</p>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                    <p class="text-amber-800 text-sm font-medium">
+                        <i class="fas fa-triangle-exclamation mr-2"></i>
+                        Este agendamento <strong>deve ser comunicado e confirmado</strong> com a equipe responsável pela coleta domiciliar antes de ser considerado garantido.
+                    </p>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="confirmSlotExcedente()" class="flex-1 bg-navy-900 text-white font-black py-3 rounded-xl hover:bg-blue-600 shadow-lg transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-check mr-2"></i>Já Comuniquei
+                    </button>
+                    <button onclick="cancelSlotExcedente()" class="flex-1 border-2 border-slate-200 text-slate-600 font-black py-3 rounded-xl hover:bg-slate-50 transition-all uppercase tracking-widest text-xs">
+                        <i class="fas fa-arrow-left mr-2"></i>Voltar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de Alerta de Data Passada -->
     <div id="modal-past-date" class="modal fixed inset-0 bg-navy-900/90 backdrop-blur-md z-[120] justify-center items-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/20 transform transition-all">

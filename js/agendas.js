@@ -105,6 +105,7 @@ const AGENDAS = {
         slotMin: 60,                        // 60 min entre um paciente e outro
         slotUnico: true,
         limiteSlot: 3,                      // até 3 agendas por horário, mesmo que repitam endereço
+        limiteSlotExcedivel: 1,             // 4º endereço permitido mediante confirmação com a equipe de coleta
         agrupaPorEndereco: false,           // cada agendamento consome uma vaga, mesmo endereço não faz carona
         limiteDia: 'slots',                 // 9 seg–sex, 5 no sáb/dom
         semana: { startHour: 6, endHour: 17 },
@@ -143,6 +144,7 @@ const AGENDAS = {
         slotMin: 60,                        // 60 min entre um paciente e outro
         slotUnico: true,
         limiteSlot: 3,                      // até 3 agendas por horário, mesmo que repitam endereço
+        limiteSlotExcedivel: 1,             // 4º endereço permitido mediante confirmação com a equipe de coleta
         agrupaPorEndereco: false,           // cada agendamento consome uma vaga, mesmo endereço não faz carona
         limiteDia: 'slots',                 // 8 seg–sex, 4 no sábado
         semana: { startHour: 7, endHour: 17 },
@@ -364,6 +366,19 @@ function slotAceita(candidato, lista, agenda) {
     if (limite == null) return true;
     if (ag.agrupaPorEndereco && candidato && lista.some(a => mesmoEndereco(a, candidato))) return true;
     return vagasOcupadasNoSlot(lista, ag) < limite;
+}
+
+// O horário já estourou o limite, mas ainda cabe na margem excepcional?
+// Nas domiciliares o 4º endereço é aceito mediante confirmação com a equipe
+// de coleta — daí o excedente ser sinalizado, não barrado.
+function slotAceitaComExcecao(candidato, lista, agenda) {
+    const ag = agenda || currentAgenda();
+    const margem = ag.limiteSlotExcedivel || 0;
+    if (!margem) return false;
+    const limite = limiteDoSlot(ag);
+    if (limite == null) return false;
+    if (ag.agrupaPorEndereco && candidato && lista.some(a => mesmoEndereco(a, candidato))) return true;
+    return vagasOcupadasNoSlot(lista, ag) < limite + margem;
 }
 
 // Vagas por horário — `limiteSlot` quando definido, 1 nas agendas de slot único,

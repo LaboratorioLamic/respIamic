@@ -66,6 +66,34 @@ function cancelHorarioExcecao() {
     pendingHorarioExcecaoAction = null;
 }
 
+// Funções para modal de encaixe excepcional (endereço além do limite do horário)
+let pendingSlotExcedenteAction = null;
+
+function showSlotExcedenteModal(record, callback) {
+    pendingSlotExcedenteAction = callback;
+    const agenda = currentAgenda();
+    const limite = limiteDoSlot(agenda);
+    const hora = document.getElementById('slot-excedente-hora');
+    const ordinal = document.getElementById('slot-excedente-ordinal');
+    if (hora) hora.textContent = (record && record.horaInicio) || '--:--';
+    if (ordinal) ordinal.textContent = `${(limite || 3) + 1}º`;
+    document.getElementById('modal-slot-excedente').classList.add('active');
+}
+
+function confirmSlotExcedente() {
+    document.getElementById('modal-slot-excedente').classList.remove('active');
+    if (pendingSlotExcedenteAction) {
+        const acao = pendingSlotExcedenteAction;
+        pendingSlotExcedenteAction = null;
+        acao();
+    }
+}
+
+function cancelSlotExcedente() {
+    document.getElementById('modal-slot-excedente').classList.remove('active');
+    pendingSlotExcedenteAction = null;
+}
+
 // Rev do registro no momento em que o usuário começou a mexer nele. É ela que a
 // gravação compara com a do servidor para detectar que outra pessoa salvou o
 // mesmo agendamento no meio do caminho. `null` = criação, não há com o que conflitar.

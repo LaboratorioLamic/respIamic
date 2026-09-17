@@ -2,8 +2,13 @@
 
 const _DIAS_NOME = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
 
+// Sinaliza que a última validação passou usando a margem excepcional do horário
+// (endereço além do limite). Lida por save.js para pedir confirmação.
+let _slotExcedenteNaValidacao = false;
+
 function validateAppointment(dataObj) {
     const agenda = currentAgenda();
+    _slotExcedenteNaValidacao = false;
 
     // Paciente menor de 18 anos: responsável e grau de parentesco são obrigatórios.
     if (!isNaN(dataObj.idade) && dataObj.idade < 18 &&
@@ -84,10 +89,16 @@ function validateAppointment(dataObj) {
     if (agenda.slotUnico && dataObj.status !== 'Cancelado') {
         const noSlot = doDia.filter(a => a.horaInicio === dataObj.horaInicio);
         if (!slotAceita(dataObj, noSlot, agenda)) {
-            const limiteSlot = limiteDoSlot(agenda);
-            return limiteSlot > 1
-                ? `O horário das ${dataObj.horaInicio} já tem ${limiteSlot} endereços. Só é possível encaixar mais um agendamento se for no mesmo endereço de um dos existentes.`
-                : `Já existe um agendamento às ${dataObj.horaInicio}. Escolha outro horário.`;
+            // Margem excepcional (domiciliares): o endereço extra passa, mas o
+            // salvamento pede confirmação com a equipe de coleta.
+            if (slotAceitaComExcecao(dataObj, noSlot, agenda)) {
+                _slotExcedenteNaValidacao = true;
+            } else {
+                const limiteSlot = limiteDoSlot(agenda);
+                return limiteSlot > 1
+                    ? `O horário das ${dataObj.horaInicio} já tem ${limiteSlot} endereços. Só é possível encaixar mais um agendamento se for no mesmo endereço de um dos existentes.`
+                    : `Já existe um agendamento às ${dataObj.horaInicio}. Escolha outro horário.`;
+            }
         }
     }
 
@@ -96,7 +107,10 @@ function validateAppointment(dataObj) {
     const vagasDia = vagasOcupadasNoDia(doDia, agenda);
     const jaTemEndereco = agenda.agrupaPorEndereco
         && doDia.some(a => a.horaInicio === dataObj.horaInicio && mesmoEndereco(a, dataObj));
-    if (vagasDia >= limite && !jaTemEndereco && dataObj.status !== 'Cancelado') {
+    // O encaixe excepcional de horário também abre a margem do dia: barrar aqui
+    // anularia a exceção sempre que a grade estivesse cheia.
+    const margemDia = _slotExcedenteNaValidacao ? (agenda.limiteSlotExcedivel || 0) : 0;
+    if (vagasDia >= limite + margemDia && !jaTemEndereco && dataObj.status !== 'Cancelado') {
         return `Limite diário alcançado (Máx ${limite} ativos).`;
     }
 
